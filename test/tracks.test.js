@@ -1094,25 +1094,63 @@ test('round 17 (BEHAVIOR): adLikelyOpen answers "is a pre-roll likely on this op
   assert.strictEqual(TM.adLikelyOpen({ wasPlaying: false, hasPlayedThisLoad: true, lastStopAt: now - M + 1, now: now, idleMs: M }), false,
     'one ms under the gap is still the same session');
 });
-test('round 17: the video shows itself exactly where ADS ARE LIKELY - session start, not every song', function () {
+test('round 19: a new song RAISES THE THEATER unless the video is parked - the ad-likely guess is retired', function () {
   var src = readSrc('music/shared/tracks.js');
   var body = extractFunctionBody(src, /function wireNowPlaying\(\) \{/);
-  // Operator: "detect not playing anything -> playing (first load or idle time)
-  // and show the yt video - most likely to have ads. not between every song tho".
-  // A YouTube pre-roll fires when a listening SESSION starts (a fresh embed after
-  // load or after a real gap), not on each queue advance.
-  assert.ok(/var wasPlaying = !!nowPlaying;/.test(body),
-    'the open must read nowPlaying BEFORE it is reassigned - that is the "was anything already playing" signal');
-  assert.ok(/var adLikely = adLikelyOpen\(\{ wasPlaying: wasPlaying, hasPlayedThisLoad: hasPlayedThisLoad, lastStopAt: lastStopAt, idleMs: VID_IDLE_MS \}\);/.test(body),
-    'the open must decide via the PURE adLikelyOpen predicate (behaviour-tested above), not an inline expression only a browser could exercise');
-  assert.ok(/setVid\(adLikely \? 'theater' : \(vidState \|\| readVidPref\(\)\), true\);/.test(body),
-    'ad-likely opens SHOW the video; every other open CARRIES the state the user left it in (never a jump, never a yank)');
+  // Operator 2026-09-17, verbatim: "show the theatre view of the video when a new
+  // song starts - so I can shut off the skip button on the yt video".
+  // Round 17 tried to PREDICT where a pre-roll would fire and show the theater only
+  // there. The ad boundary is undetectable cross-origin, so it was always a guess,
+  // and the cost is asymmetric: guessing "no ad" traps him inside one (three rounds
+  // have now shipped that trap), guessing "ad" costs one tap on a scrim.
+  assert.ok(/var carried = vidState \|\| readVidPref\(\);/.test(body),
+    'the open must still resolve the carried state - parking has to survive a song change');
+  assert.ok(/setVid\(carried === 'hid' \? 'hid' : 'theater', true\);/.test(body),
+    'every new song opens THEATER (the only geometry where YouTube Skip is a real tap target) EXCEPT an explicitly parked one');
+  // use-not-mention: the round-19 rationale NAMES adLikelyOpen in prose directly
+  // above the call site it replaced, so a raw scan matches the comment and passes
+  // with the heuristic still wired. Strip comments, then assert on what is left.
+  var code = body.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+  assert.ok(!/adLikelyOpen\s*\(/.test(code),
+    'the open path must no longer CALL the ad-likely heuristic - retired from the decision, not merely unused');
   assert.ok(/hasPlayedThisLoad = true;/.test(body), 'the open must mark the load as having played');
-  // The carry var is what makes a mid-session open honest - it tracks every transition.
+  // The carry var is what lets a park survive to the next open.
   assert.ok(/vidState = state;/.test(extractFunctionBody(src, /function setVid\(state, fromOpen\) \{/)),
-    'setVid must keep the carry var current so the next open can continue the state');
+    'setVid must keep the carry var current so the next open can honour a park');
   // Round 16 still stands underneath: nothing hides it on a timer.
   assert.ok(!/AUTOMIN|startCountdown/.test(body), 'round 16 stands - no auto-hide machinery may return');
+});
+test('round 19: the kept theater is SCRIMMED, and its dismissal is deliberately not remembered', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var css = readSrc('music/shared/tracks.css');
+  // The #342 defect was a modal surface with NO modal affordance - a 245px card over
+  // live-looking content, swallowing taps. The scrim is that missing affordance, so
+  // it is the load-bearing half of round 19: without it this is the old bug back.
+  assert.ok(/class="bt-st-scrim" data-vidscrim/.test(src), 'the scrim element must be rendered with the player');
+  assert.ok(/\.bt-player\.mini\.vidopen \.bt-st-scrim\{[^}]*position:fixed/.test(css.replace(/\s*\n\s*/g, '')),
+    'the scrim shows ONLY for a theater with no sheet behind it (.mini.vidopen) and must be viewport-fixed');
+  assert.ok(/\.bt-player\.mini\.vidopen \.bt-st-scrim\{[^}]*pointer-events:auto/.test(css.replace(/\s*\n\s*/g, '')),
+    'pointer-events:auto is load-bearing - the mini player disables them broadly, and a tap-dead scrim IS the silent-overlay bug');
+  assert.ok(/:not\(\.bt-st-scrim\)/.test(css),
+    'the mini stage rule must exempt the scrim, or CSS hides the very thing that makes the theater honest');
+  // Dismissal must NOT write the preference, or the next song opens docked and the
+  // whole round-19 ask is undone after a single tap.
+  var scrimWiring = src.slice(src.indexOf("querySelector('[data-vidscrim]')"), src.indexOf("var pipHideBtn"));
+  assert.ok(/setVid\('pip', true\)/.test(scrimWiring),
+    "the scrim dismissal must pass fromOpen=true - docking is a this-song act, never a standing preference");
+});
+test('round 19: the dock reserves space where content is pinned to the bottom', function () {
+  var src = readSrc('music/shared/tracks.js');
+  var book = readSrc('music/shared/songbook.css');
+  // The PIP is position:fixed over a corner. A scrolling view can scroll clear of it;
+  // the Tune tab cannot - its reference-tone strings are pinned to the bottom of a
+  // height:100% flex column. Measured red before this: E and A both hit-tested to
+  // .bt-st-media, two of four strings dead while anything played.
+  assert.ok(/classList\.toggle\('pipdock', state === 'pip'\)/.test(src),
+    'setVid must publish the dock state on <body> - CSS has no parent selector to reach it otherwise');
+  assert.ok(/classList\.remove\('pipdock'\)/.test(src), 'closing the player must release the reserved space');
+  assert.ok(/body\.pipdock #s-tune \.tunerWrap\{padding-bottom:\d+px;\}/.test(book.replace(/\s*\n\s*/g, '')),
+    'the Tune tab must reserve the dock height so every string stays tappable');
 });
 test('round 17: the idle clock starts on a REAL stop, and the signals are module-scoped', function () {
   var src = readSrc('music/shared/tracks.js');

@@ -1,6 +1,6 @@
 {
   "name": "video-adlikely",
-  "note": "ROUND 18 CONTRACT (S-FIRSTSESSION-TAP-BLOCKED, resolved 2026-09-05 - PR #342 merged). This scenario owns the REMEMBERED PREFERENCE (music.vidPref.v1), not the video's visible FORM - video-pip.json owns the form. It previously asserted a fresh device opens the video as `vidopen` (the THEATER card). That is no longer the fresh-play form on a MINI player: minimizeStudio() now demotes a theater to the corner PIP dock, because the theater is placed for an OPEN sheet (fixed top:58, 245px, z-96) and on a mini player it pinned the iframe over the top ~300px of EVERY tab, eating taps on the library, Compose and Tune. The assert below was re-authored to the claim it was always really making - ROUND 16's law, that the app never hides the video on its own, so the ad Skip surface is reachable without hunting - stated independently of WHICH visible form (corner PIP on a mini player, theater in the open sheet). Every other assert here is about the preference pendulum and is unchanged: parking is a user act and is remembered, the next open honors it, showing it again flips it back, and a queue advance mid-session carries the parked state. ",
+  "note": "ROUND 19 CONTRACT (operator UAT 2026-09-17). This scenario owns the REMEMBERED PREFERENCE (music.vidPref.v1); video-pip.json owns the visible FORM. The two have swapped form twice now, which is exactly why they are split: round 17 opened a fresh play as the THEATER, round 18 (PR #342) demoted it to the corner PIP to stop it eating taps, and round 19 restores the theater WITH a scrim so it announces itself instead. Through all three the PREFERENCE contract below never changed, and that is the point of this file. What round 19 DOES change here is which control parks the video, because the park handle belongs to whichever form is on screen: a theater parks with [data-thmin] (its own down-arrow), a docked PIP parks with [data-piphide] (the slim tab on its left edge). This scenario taps [data-thmin] again, as it did before round 18. THE INVARIANTS: a fresh device shows the video (round 16's law - the Skip surface is never hidden unasked) and writes NOTHING; PARKING is a user act and IS remembered; a later open HONORS the park with no re-tap; showing it again flips the memory back; and a QUEUE ADVANCE carries the parked state - round 19 raises a theater on every new song EXCEPT a parked one, so 'hid' is the single standing choice that survives a song change. Docking a theater to the PIP via the scrim is deliberately NOT remembered (it is a this-song dismissal) - video-pip.json guards that half.",
   "url": "/music/play/",
   "steps": [
     {
@@ -28,7 +28,7 @@
     },
     {
       "action": "tap",
-      "selector": "[data-piphide]"
+      "selector": "[data-thmin]"
     },
     {
       "action": "wait",
@@ -36,7 +36,7 @@
     },
     {
       "action": "evalAssert",
-      "label": "PARKING IS A USER ACT -> it is remembered ('hid'), and the player wears the parked class",
+      "label": "PARKING IS A USER ACT -> it is remembered ('hid'), and the player wears the parked class. The theater's own down-arrow is the park control while a theater is the form on screen (round 19); [data-piphide] is the same act from a docked PIP.",
       "js": "(function(){var p=document.querySelector('.bt-player');return p.classList.contains('vidhid')&&localStorage.getItem('music.vidPref.v1')==='hid';})()"
     },
     {

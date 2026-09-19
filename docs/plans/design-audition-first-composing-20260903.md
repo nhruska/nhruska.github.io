@@ -67,3 +67,40 @@ an implementation detail. Flagged, not assumed.
 Build 1 + 2 together - they are one coherent feature ("catch the sketch, name
 it"), they need no change to the strip's feel, and they convert an existing habit
 into shipped songs. Hold 3 to emphasis-only. Ask before 4.
+
+---
+
+## OPERATOR DECISION, 2026-09-17
+
+Verbatim: **"it should be in the compose section - or move users into compose"**
+
+That answers the open question flagged in item 4, and it picks a side on the one
+thing this doc could not decide for itself: **where audition-first lives.**
+
+The answer is Compose, not a second sketching surface bolted onto the Studio
+strip. Two readings of "or move users into compose", and both land in the same
+place:
+
+| Reading | What it means to build |
+|---|---|
+| **Audition belongs to Compose** | Item 4 is promoted from "ask first" to the chosen direction: lower Compose's commit-cost so tap = hear and a second deliberate act commits. Compose becomes the palette it should have been. |
+| **The Studio strip is a doorway, not a destination** | Item 1's tap-trail stays valuable, but its job is explicitly to HAND OFF - "Keep these 4 -> Compose" moves him into Compose with the sketch already seeded, rather than growing sketching features where he happened to start. |
+
+**What this rules out:** building a parallel composing surface inside the Studio.
+The strip stays a palette that captures and hands off; it does not grow slots,
+editing, or persistence. That keeps the four properties at the top of this doc
+intact - the moment the strip gains commitment mechanics, it stops being the calm
+thing he preferred.
+
+**Revised build order** (supersedes the Recommendation above):
+
+1. **Item 4 first, not last** - audition mode IN Compose (tap = hear, second act
+   commits). This is now the headline, because the operator has made the call the
+   old ordering was waiting on.
+2. **Item 1 as the doorway** - tap-trail capture whose affordance moves him into
+   Compose with the sequence seeded (the `seedKey` bridge already exists).
+3. **Item 2** - name the pattern, once a trail exists to name.
+4. **Item 3** - emphasis only, hard constraint unchanged: never reorder the strip.
+
+Not yet scheduled - this records the decision so the next build starts from it
+instead of re-litigating where audition-first belongs.
