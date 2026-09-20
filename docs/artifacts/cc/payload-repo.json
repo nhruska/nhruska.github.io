@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-19T13:13:13Z",
+  "generatedAt": "2026-09-20T13:36:48Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-09-18T13:40:23Z",
-    "sha": "4c9217a909f3c7e793f2c917712c770559023b4b",
+    "date": "2026-09-19T13:13:19Z",
+    "sha": "35bedced4b6a15169ce2b43aa3649a6645e554dc",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/4c9217a909f3c7e793f2c917712c770559023b4b"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/35bedced4b6a15169ce2b43aa3649a6645e554dc"
   },
   "commits": [
+    {
+      "date": "2026-09-19T13:13:19Z",
+      "sha": "35bedced4b6a15169ce2b43aa3649a6645e554dc",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/35bedced4b6a15169ce2b43aa3649a6645e554dc"
+    },
     {
       "date": "2026-09-18T13:40:23Z",
       "sha": "4c9217a909f3c7e793f2c917712c770559023b4b",
@@ -84,12 +90,6 @@
       "sha": "3075419130be03808433a5b42f170d1aed9b5c8a",
       "subject": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/3075419130be03808433a5b42f170d1aed9b5c8a"
-    },
-    {
-      "date": "2026-09-10T13:40:34Z",
-      "sha": "02b4691c770cb36cac9f2fe2fcca629209d45a8d",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/02b4691c770cb36cac9f2fe2fcca629209d45a8d"
     }
   ],
   "openPRs": [
@@ -106,14 +106,14 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/35371775208/job/105687192783"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/35457295824/job/105934740803"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/35371775197/job/105687193860"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/35457295819/job/105934740956"
         }
       ]
     },
@@ -349,9 +349,9 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-09-19T13:13:08Z",
+    "runStartedAt": "2026-09-20T13:36:43Z",
     "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/35445101178",
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/35514014728",
     "headBranch": "main"
   },
   "velocity": {
