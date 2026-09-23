@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-22T14:04:33Z",
+  "generatedAt": "2026-09-23T14:16:49Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-09-21T15:56:33Z",
-    "sha": "46f8028c5e3a6270a9e0eb0178b81343ec630c05",
+    "date": "2026-09-22T14:04:40Z",
+    "sha": "5cc7bc102d8ec47e4a1a4a23073ef7107bedb374",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/46f8028c5e3a6270a9e0eb0178b81343ec630c05"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/5cc7bc102d8ec47e4a1a4a23073ef7107bedb374"
   },
   "commits": [
+    {
+      "date": "2026-09-22T14:04:40Z",
+      "sha": "5cc7bc102d8ec47e4a1a4a23073ef7107bedb374",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/5cc7bc102d8ec47e4a1a4a23073ef7107bedb374"
+    },
     {
       "date": "2026-09-21T15:56:33Z",
       "sha": "46f8028c5e3a6270a9e0eb0178b81343ec630c05",
@@ -84,12 +90,6 @@
       "sha": "b73d67f8d52f649504e423edba0225b64c772966",
       "subject": "docs: propose Thought-Ware Development method v0.1 (#345)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/b73d67f8d52f649504e423edba0225b64c772966"
-    },
-    {
-      "date": "2026-09-13T08:57:28Z",
-      "sha": "4e781cb5862ba1296781e784a260b7ab9f598ea5",
-      "subject": "test(video): re-author the two video scenarios to the shipped PIP contract (#344)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/4e781cb5862ba1296781e784a260b7ab9f598ea5"
     }
   ],
   "openPRs": [
@@ -349,9 +349,9 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-09-22T14:04:27Z",
+    "runStartedAt": "2026-09-23T14:16:43Z",
     "durationSeconds": 4,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/35737760766",
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/35873000723",
     "headBranch": "main"
   },
   "velocity": {
