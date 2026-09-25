@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<!-- Math - timed arithmetic workouts. Sibling of the Music app: the theme,
+     tokens and UI primitives are Music's own files (../music/shared/*), linked,
+     never copied. Math-only rules live in math.css. No build step. -->
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0d0f12">
+<title>Math - timed workouts</title>
+<meta name="description" content="Timed math workouts for kids and grown-ups: add, subtract, times tables and division, with player profiles and a coach that drills your slowest facts.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Math">
+<script src="../music/shared/theme.js"></script>
+<script>
+/* Theme + the active player's accent before first paint (no flash). The
+   theme key is the site-wide one Music owns; the accent is the player's. */
+(function(){try{
+  var stored=localStorage.getItem('music.theme.v1');
+  var prefersLight=!!(window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches);
+  var eff=Theme.effectiveTheme(stored,prefersLight);
+  document.documentElement.setAttribute('data-theme',eff);
+  var p=JSON.parse(localStorage.getItem('math.profiles.v1')||'null'),a=null;
+  if(p&&p.list){for(var i=0;i<p.list.length;i++){if(p.list[i].id===p.active)a=p.list[i].color;}}
+  if(a)document.documentElement.style.setProperty('--accent',a);
+  var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',eff==='light'?'#eef1f4':'#0d0f12');
+}catch(e){}})();
+</script>
+<link rel="stylesheet" href="../music/shared/songbook.css">
+<link rel="stylesheet" href="math.css">
+</head>
+<body>
+<div class="app mApp" id="app">
+  <header class="appbar" id="appbar">
+    <div class="brand">
+      <span class="nm">Math</span>
+      <button class="chip mPlayerChip" id="playerBtn" type="button" aria-haspopup="dialog" aria-label="Switch player"><span class="mDot" aria-hidden="true"></span><span id="playerName">Player</span></button>
+    </div>
+    <p class="tabPurpose" id="purpose">Pick your facts, then race the clock</p>
+    <button class="ab-btn" id="settingsBtn" type="button" title="Settings" aria-label="Settings" aria-haspopup="dialog"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button>
+  </header>
+
+  <main class="view" id="view">
+    <!-- ===== Setup (Workout tab) ===== -->
+    <section class="screen on" id="scrSetup" aria-label="Set up a workout">
+      <div class="sub">Operation</div>
+      <div class="mOps" id="opChips" role="group" aria-label="Operations (pick one or more)"></div>
+
+      <div id="addSec">
+        <div class="sub">Add &amp; subtract</div>
+        <div class="modeSwitch mSeg" id="rangeSeg" role="radiogroup" aria-label="Number range"></div>
+      </div>
+
+      <div id="mulSec">
+        <div class="sub">Times tables</div>
+        <div class="mTables" id="tableChips" role="group" aria-label="Times tables (none picked means all)"></div>
+        <div class="mRow">
+          <div class="modeSwitch mSeg" id="maxSeg" role="radiogroup" aria-label="Up to"></div>
+          <button class="chip" id="orderChip" type="button" aria-pressed="false">In order</button>
+        </div>
+      </div>
+
+      <button class="chip mCoach" id="coachChip" type="button" aria-pressed="false"><span class="mCoachT">Coach</span><span class="mCoachS" id="coachSub">picks the facts you need most</span></button>
+
+      <div class="sub">Mode</div>
+      <div class="modeSwitch mSeg" id="modeSeg" role="radiogroup" aria-label="Mode"></div>
+      <div class="mRow" id="lenRow">
+        <span class="mRowLbl">Questions</span>
+        <div class="modeSwitch mSeg" id="lenSeg" role="radiogroup" aria-label="Questions"></div>
+      </div>
+    </section>
+
+    <!-- ===== Progress tab ===== -->
+    <section class="screen" id="scrProgress" aria-label="Progress">
+      <div class="modeSwitch mSeg" id="progOpSeg" role="radiogroup" aria-label="Operation"></div>
+      <div class="sub mGridTitle" id="gridTitle">Fact map</div>
+      <p class="mCaption" id="gridCaption"></p>
+      <div class="mGridWrap" id="gridWrap"></div>
+      <div class="mLegend" id="legend"></div>
+      <p class="mReadout" id="gridReadout" aria-live="polite">Tap a square to see that fact.</p>
+      <div class="sub" id="trendTitle">Race times</div>
+      <div class="mTrend" id="trend"></div>
+      <div class="sub">Recent workouts</div>
+      <div id="recent" class="mRecent"></div>
+    </section>
+  </main>
+
+  <div class="mStartBar" id="startBar">
+    <button class="btn red mStart" id="startBtn" type="button"><span class="mStartT">Start</span><span class="mStartS" id="startSub"></span></button>
+  </div>
+
+  <nav class="tabbar" id="tabbar" aria-label="Sections">
+    <button type="button" class="on" data-tab="setup" aria-current="page"><span class="icn" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg></span><span class="lbl">Workout</span></button>
+    <button type="button" data-tab="progress"><span class="icn" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><span class="lbl">Progress</span></button>
+  </nav>
+
+  <!-- ===== Workout (run) layer ===== -->
+  <section class="mLayer" id="runLayer" hidden aria-label="Workout">
+    <div class="mRunTop">
+      <button class="ab-btn" id="pauseBtn" type="button" aria-label="Pause"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
+      <div class="mBar" aria-hidden="true"><div class="mBarFill" id="barFill"></div></div>
+      <div class="mClock" id="clock" aria-label="Time">0.0s</div>
+    </div>
+    <div class="mRunMeta"><span id="runCount"></span><span class="mPenalty" id="penaltyFlash" aria-live="polite"></span></div>
+    <div class="mCard" id="card">
+      <div class="mProblem" id="problem" aria-live="polite"></div>
+      <div class="mAnswer" id="answer">?</div>
+      <div class="mHint" id="hint"></div>
+    </div>
+    <div class="mKeys" id="keypad" role="group" aria-label="Keypad">
+      <button class="btn mKey" type="button" data-k="1">1</button>
+      <button class="btn mKey" type="button" data-k="2">2</button>
+      <button class="btn mKey" type="button" data-k="3">3</button>
+      <button class="btn mKey" type="button" data-k="4">4</button>
+      <button class="btn mKey" type="button" data-k="5">5</button>
+      <button class="btn mKey" type="button" data-k="6">6</button>
+      <button class="btn mKey" type="button" data-k="7">7</button>
+      <button class="btn mKey" type="button" data-k="8">8</button>
+      <button class="btn mKey" type="button" data-k="9">9</button>
+      <button class="btn mKey mKeyFn" type="button" data-k="back" aria-label="Backspace"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 5H9l-6 7 6 7h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1z"/><path d="M17 9l-5 6M12 9l5 6"/></svg></button>
+      <button class="btn mKey" type="button" data-k="0">0</button>
+      <button class="btn mKey mKeyFn" type="button" data-k="clear" aria-label="Clear">C</button>
+    </div>
+  </section>
+
+  <!-- ===== Results layer ===== -->
+  <section class="mLayer" id="resLayer" hidden aria-label="Results">
+    <div class="mResBody">
+      <p class="mResMsg" id="resMsg"></p>
+      <div class="mResBig" id="resBig"></div>
+      <p class="mResBest" id="resBest"></p>
+      <div class="mTiles" id="resTiles"></div>
+      <div class="sub" id="resFocusTitle">Practice these</div>
+      <div class="mFacts" id="resFacts"></div>
+    </div>
+    <div class="mResBtns">
+      <button class="btn red" id="againBtn" type="button">Go again</button>
+      <button class="btn" id="drillBtn" type="button">Practice misses</button>
+      <button class="btn ghost" id="doneBtn" type="button">Done</button>
+    </div>
+  </section>
+</div>
+
+<!-- Pause sheet -->
+<div class="setOv" id="pauseOv" hidden>
+  <div class="setCard" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+    <div class="setHd"><h2 id="pauseTitle">Paused</h2></div>
+    <div class="setPanelBody"><p class="mSheetNote" id="pauseNote">The clock is stopped.</p></div>
+    <div class="setFoot"><div class="setBtns">
+      <button class="btn ghost" id="quitBtn" type="button">Quit</button>
+      <button class="btn red" id="resumeBtn" type="button">Resume</button>
+    </div></div>
+  </div>
+</div>
+
+<!-- Players sheet -->
+<div class="setOv" id="playersOv" hidden>
+  <div class="setCard" role="dialog" aria-modal="true" aria-labelledby="playersTitle">
+    <div class="setHd"><h2 id="playersTitle">Players</h2><button class="x" id="playersClose" type="button" aria-label="Close">&#x2715;</button></div>
+    <div class="setPanelBody" id="playersBody"></div>
+  </div>
+</div>
+
+<!-- Settings sheet -->
+<div class="setOv" id="setOv" hidden>
+  <div class="setCard" role="dialog" aria-modal="true" aria-labelledby="setTitle">
+    <div class="setHd"><h2 id="setTitle">Settings</h2><button class="x" id="setClose" type="button" aria-label="Close settings">&#x2715;</button></div>
+    <div class="setPanelBody">
+      <div class="sub">Appearance (shared with Music)</div>
+      <div class="themeSeg" id="themeSeg" role="radiogroup" aria-label="Theme">
+        <button class="thSeg" type="button" data-theme="auto">Auto</button>
+        <button class="thSeg" type="button" data-theme="light">Light</button>
+        <button class="thSeg" type="button" data-theme="dark">Dark</button>
+      </div>
+      <div class="sub">Feedback</div>
+      <div class="mRow">
+        <button class="chip" id="soundChip" type="button" aria-pressed="true">Sounds</button>
+        <button class="chip" id="hapticChip" type="button" aria-pressed="true">Vibrate</button>
+      </div>
+      <div class="sub">Data</div>
+      <button class="setAction" id="resetBtn" type="button">Reset this player's progress</button>
+      <a class="setAction" href="../" id="homeLink">All apps</a>
+    </div>
+    <div class="setFoot"><p class="setMeta" id="buildMeta"></p></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script src="version.js"></script>
+<script src="../music/shared/esc.js"></script>
+<script src="../music/shared/toast.js"></script>
+<script src="engine.js"></script>
+<script src="store.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
