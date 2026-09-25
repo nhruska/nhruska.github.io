@@ -275,6 +275,21 @@ test('best() returns the best session for a cfgKey+mode, null when none exist, n
 
 /* ================= resetProgress / restoreProgress ================= */
 
+test('restoreProfile is idempotent: a second restore of the same snapshot adds no duplicate (double-tap Undo)', function () {
+  // Review finding #3: a double-tapped Undo restored the player twice under one
+  // id; deleting either copy later wiped the survivor's facts + sessions.
+  var ms = MathStore.create(fakeStore());
+  ms.addProfile({ name: 'A' });
+  var b = ms.addProfile({ name: 'B' });
+  ms.saveFacts(b.id, { 'x:2:3': { n: 1, miss: 0, box: 1, ms: 900, last: 1 } });
+  var snap = ms.removeProfile(b.id);
+  assert.strictEqual(ms.restoreProfile(snap), true);
+  assert.strictEqual(ms.restoreProfile(snap), false, 'second restore must refuse');
+  var ids = ms.getProfiles().list.map(function (p) { return p.id; });
+  assert.deepStrictEqual(ids.filter(function (id) { return id === b.id; }).length, 1);
+  assert.ok(ms.getFacts(b.id)['x:2:3'], 'facts intact');
+});
+
 test('resetProgress snapshots + clears facts and sessions; restoreProgress puts them back', function () {
   var ms = MathStore.create(fakeStore());
   var facts = { 'x:1:2': { n: 2, miss: 0, box: 1, ms: 800, last: 1 } };

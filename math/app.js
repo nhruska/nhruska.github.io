@@ -131,7 +131,8 @@
       onShow: function (host, m, bar) { if (bar) host.appendChild(bar); requestAnimationFrame(function () { host.classList.add('on'); }); },
       onHide: function (host) { host.classList.remove('on'); setTimeout(function () { if (host.parentNode) host.parentNode.removeChild(host); }, 260); }
     });
-    b.addEventListener('click', function () { undoFn(); if (h) h.finish(); });
+    var used = false; // once: the toast stays tappable through its fade-out (review finding #3)
+    b.addEventListener('click', function () { if (used) return; used = true; b.disabled = true; undoFn(); if (h) h.finish(); });
   }
 
   /* ------------------------------------------------------------------
@@ -170,7 +171,11 @@
       $('pauseOv').hidden = true;
       if (!state.quitting && state.run && state.run.pausedAt != null) resumeRun();
     }
-    else if (name === 'players') { $('playersOv').hidden = true; if (!store.getActive()) ensurePlayer(); }
+    else if (name === 'players') {
+      $('playersOv').hidden = true;
+      if (!store.getActive()) ensurePlayer();
+      state.firstRun = false; state.formMode = null; // back/backdrop out of first run (review finding #7)
+    }
     else if (name === 'settings') { $('setOv').hidden = true; }
     if (!stack.length) { state.quitting = false; renderSetup(); }
   }
@@ -186,9 +191,23 @@
     for (var i = 0; i < P.length; i++) if (used.indexOf(P[i].a) < 0) return P[i].a;
     return P[0].a;
   }
+  // Storage can refuse writes (quota shared with Music, blocked storage). Keep
+  // the app usable for this visit and say progress won't be kept (finding #6).
+  function useMemoryStore() {
+    var snapshot = store.getProfiles();
+    ls = memStorage(); store = S.create(ls);
+    snapshot.list.forEach(function (p) { store.addProfile(p); });
+    toast('This device is not saving progress right now');
+  }
+  function addPlayer(fields) {
+    var p = store.addProfile(fields);
+    if (!store.getProfiles().list.some(function (x) { return x.id === p.id; })) { useMemoryStore(); p = store.addProfile(fields); }
+    store.setActive(p.id);
+    return p;
+  }
   function ensurePlayer() {
     if (active()) return;
-    store.addProfile({ name: 'Player 1', color: nextColor(), cfg: E.PRESETS.addsub });
+    addPlayer({ name: 'Player 1', color: nextColor(), cfg: E.PRESETS.addsub });
     applyTheme(); renderAll();
   }
 
@@ -271,12 +290,12 @@
     }
   });
   function savePlayerForm() {
+    if (!state.formMode) return; // a double-tapped Save must not add a second player (review finding #8)
     var name = ($('pfName') ? $('pfName').value : '').trim();
     if (state.formMode === 'edit') {
       var a = active(); if (a) store.updateProfile(a.id, { name: name || a.name, color: state.formColor });
     } else {
-      var p = store.addProfile({ name: name || ('Player ' + (store.getProfiles().list.length + 1)), color: state.formColor, cfg: E.PRESETS[state.formPreset] || E.DEFAULT_CFG });
-      store.setActive(p.id);
+      addPlayer({ name: name || ('Player ' + (store.getProfiles().list.length + 1)), color: state.formColor, cfg: E.PRESETS[state.formPreset] || E.DEFAULT_CFG });
     }
     state.firstRun = false; state.formMode = null;
     applyTheme(); renderAll();
@@ -381,6 +400,10 @@
   function saveStats() { if (state.pid && state.stats) store.saveFacts(state.pid, state.stats); }
   function startRun(c, facts) {
     var p = active(); if (!p) { ensurePlayer(); p = active(); }
+    if (!p) { toast('Could not start - add a player first'); return; }
+    // Start keeps keyboard focus under the run layer; an Enter typed after an
+    // answer would click it again and restart the round (review finding #2).
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     unlockAudio();
     var now = Date.now();
     state.pid = p.id;
@@ -485,6 +508,7 @@
     if ($('runLayer').hidden || e.altKey || e.ctrlKey || e.metaKey) return;
     var k = e.key;
     if (/^[0-9]$/.test(k)) { onKey(k); e.preventDefault(); }
+    else if (k === 'Enter' || k === ' ') { e.preventDefault(); } // answers auto-submit; never activate a covered button
     else if (k === 'Backspace') { onKey('back'); e.preventDefault(); }
     else if (k === 'Delete' || k === 'c' || k === 'C') { onKey('clear'); e.preventDefault(); }
     else if (k === 'Escape' && $('pauseOv').hidden) { pauseRun(); e.preventDefault(); }
@@ -494,6 +518,7 @@
     if (!state.run || state.run.done || state.run.pausedAt != null) return;
     state.run = E.pause(state.run, Date.now());
     stopLoop();
+    saveStats(); // a backgrounded app can be killed; keep what was learned (review finding #4)
     $('pauseNote').textContent = state.run.cfg.mode === 'practice' ? 'Take a break. Your place is saved.' : 'The clock is stopped.';
     $('pauseOv').hidden = false;
     pushLayer('pause');
@@ -507,6 +532,7 @@
   $('resumeBtn').addEventListener('click', function () { backTo(stack.lastIndexOf('pause')); });
   $('quitBtn').addEventListener('click', function () { state.quitting = true; backTo(stack.lastIndexOf('run')); });
   document.addEventListener('visibilitychange', function () { if (document.hidden) pauseRun(); });
+  window.addEventListener('pagehide', function () { if (state.run && !state.run.done) saveStats(); });
 
   /* ------------------------------------------------------------------
    * Results

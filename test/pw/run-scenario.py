@@ -29,6 +29,11 @@ in scenarios):
                                          INITIAL size
   tap {selector}                       - click first match
   tapText {text, scope?}               - click element whose exact trimmed text matches
+  press {key}                          - a REAL keyboard press on whatever has focus
+                                         (Playwright key name: 'Enter', '7', 'Backspace').
+                                         Synthetic KeyboardEvents from evalAssert never
+                                         activate a focused button, so keyboard-activation
+                                         bugs need this verb to be seen at all
   tapChord {name}                      - click the #buildGrid tile whose .chord-name == name
   waitFor {selector, state?}           - wait for attached+visible (default) / hidden
   assertVisible {selector}             - offsetParent-based + rendered
@@ -213,6 +218,8 @@ def run(scenario_path, base_url=None):
                             page.mouse.move(sx + (dx - sx) * k / 6, sy + (dy - sy) * k / 6)
                             page.wait_for_timeout(40)
                         page.mouse.up()
+                    elif act == 'press':
+                        page.keyboard.press(step['key'])
                     elif act == 'tapText':
                         scope = step.get('scope', 'body')
                         page.locator(scope).locator(

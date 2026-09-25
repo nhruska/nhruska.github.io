@@ -56,6 +56,13 @@ self.addEventListener('message', function (e) {
 // Same deadline as music/sw.js: generous for a healthy connection, short
 // enough that a dead one never strands the user on a spinner.
 var NET_DEADLINE_MS = 3500;
+// Look up ONLY this worker's own cache. The origin-wide caches.match() also
+// searches the sibling app's cache (Math and Music share the origin and both
+// cache music/shared/*), and could answer with that app's stale copy.
+function fromCache(req, opts) {
+  return caches.open(CACHE).then(function (c) { return c.match(req, opts); });
+}
+
 self.addEventListener('fetch', function (e) {
   var req = e.request;
   if (req.method !== 'GET') return;
@@ -66,14 +73,14 @@ self.addEventListener('fetch', function (e) {
     e.respondWith(
       // ignoreSearch: a future `?v=<VERSION>` cache-buster on a local asset is
       // not part of the resource identity - CORE precaches the bare paths.
-      caches.match(req, { ignoreSearch: true }).then(function (cached) {
+      fromCache(req, { ignoreSearch: true }).then(function (cached) {
         var netP = fetch(req).then(function (res) {
           if (res && res.status === 200) { var copy = res.clone(); caches.open(CACHE).then(function (c) { return c.put(req, copy); }).catch(function () {}); }
           return res;
         });
         var answered = netP.catch(function () {
           if (cached) return cached;
-          if (req.mode === 'navigate') return caches.match('./').then(function (shell) { return shell || caches.match('./index.html'); });
+          if (req.mode === 'navigate') return fromCache('./').then(function (shell) { return shell || fromCache('./index.html'); });
           return Response.error();
         });
         if (!cached) return answered;
@@ -86,7 +93,7 @@ self.addEventListener('fetch', function (e) {
     );
   } else {
     e.respondWith(
-      caches.match(req).then(function (cached) {
+      fromCache(req).then(function (cached) {
         if (cached) return cached;
         var netP = fetch(req).then(function (res) {
           if (res && (res.status === 200 || res.type === 'opaque')) { var copy = res.clone(); caches.open(CACHE).then(function (c) { return c.put(req, copy); }).catch(function () {}); }

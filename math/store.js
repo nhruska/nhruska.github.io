@@ -170,6 +170,9 @@
     function restoreProfile(snapshot) {
       if (!snapshot || !snapshot.profile) return false;
       var state = getProfiles();
+      // Idempotent: a second restore (double-tapped Undo) must not add a
+      // duplicate id - deleting either copy later would wipe the other's data.
+      for (var d = 0; d < state.list.length; d++) if (state.list[d].id === snapshot.profile.id) return false;
       var idx = Math.max(0, Math.min(snapshot.index, state.list.length));
       state.list.splice(idx, 0, snapshot.profile);
       if (snapshot.wasActive) state.active = snapshot.profile.id;

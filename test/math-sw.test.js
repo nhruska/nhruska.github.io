@@ -127,6 +127,21 @@ test('music/sw.js activate only ever deletes "music-" caches', function () {
   assert.strictEqual(guard, 'music-', 'expected activate to gate cache deletion on k.indexOf(\'music-\') === 0, got ' + JSON.stringify(guard) + ' - deleting outside its own cache family would evict the Math app\'s offline install');
 });
 
+// Review finding #1 (blocker): the ORIGIN-WIDE caches.match() searches every
+// cache on the origin, oldest first - so each app could answer a request for a
+// shared file (theme.js, songbook.css, esc.js, toast.js) with the OTHER app's
+// stale copy. Offline Math then booted on a pre-PALETTE theme.js and died.
+// Every lookup must go through the worker's own cache (caches.open(CACHE)).
+[['math/sw.js', function () { return mathSwSrc; }], ['music/sw.js', function () { return musicSwSrc; }]].forEach(function (pair) {
+  test(pair[0] + ' never looks up the origin-wide caches.match (only its own CACHE)', function () {
+    var src = pair[1]();
+    assert.ok(src, pair[0] + ' is missing');
+    var code = stripLineComments(src);
+    assert.ok(!/\bcaches\.match\s*\(/.test(code), pair[0] + ' calls caches.match(...) - a sibling app\'s cache can answer; use caches.open(CACHE).then(c => c.match(...))');
+    assert.ok(/caches\.open\(\s*CACHE\s*\)[\s\S]{0,80}\.match\(/.test(code), pair[0] + ' has no own-cache lookup (caches.open(CACHE) ... .match)');
+  });
+});
+
 /* ---------- manifest ---------- */
 test('math/manifest.webmanifest parses and scope is "./"', function () {
   assert.ok(fs.existsSync(MATH_MANIFEST_PATH), 'math/manifest.webmanifest is missing');

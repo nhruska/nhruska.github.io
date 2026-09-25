@@ -84,7 +84,7 @@ Run      = plain object (see createRun)
 Session  = { ts, mode, cfgKey, label, n, correct, misses, elapsedMs, penaltyMs, totalMs }
 ```
 
-Constants: `GLYPH {'+':'+','-':'−','x':'×','/':'÷'}`, `OPS ['+','-','x','/']`, `TABLES [2..12]`, `MAXES [10,11,12]`, `LENGTHS [10,20,30]`, `PENALTY_MS 3000`, `SPRINT_MS 60000`, `REVEAL_AFTER 2`, `NEW_CAP 3`, `DEFAULT_CFG {ops:['+','-'],addRange:10,tables:[],max:10,order:'random',coach:false,mode:'race',length:20}`, `PRESETS {addsub: DEFAULT_CFG, tables: {...DEFAULT_CFG, ops:['x']}}`.
+Constants: `GLYPH {'+':'+','-':'−','x':'×','/':'÷'}`, `OPS ['+','-','x','/']`, `TABLES [2..12]`, `MAXES [10,11,12]`, `LENGTHS [10,20,30]`, `PENALTY_MS 3000`, `SPRINT_MS 60000`, `REVEAL_AFTER 2`, `NEW_CAP 3`, `COACH_MIN_SEEN 5`, `DEFAULT_CFG {ops:['+','-'],addRange:10,tables:[],max:10,order:'random',coach:false,mode:'race',length:20}`, `PRESETS {addsub: DEFAULT_CFG, tables: {...DEFAULT_CFG, ops:['x']}}`.
 
 Functions (all pure; `rng` = `() => float in [0,1)`, `now` = epoch ms):
 
@@ -94,7 +94,7 @@ Functions (all pure; `rng` = `() => float in [0,1)`, `now` = epoch ms):
 | `makeFact(op, a, b) -> Fact` | builds key/text/answer per the table above |
 | `pool(op, cfg) -> Fact[]` | every candidate fact for ONE op. '+' To10: 1<=a,b, a+b<=10; To20: a,b in 1..9. '-' To10: 1<=b<a<=10; To20: a=x+y, b=y, x,y in 1..9. 'x': t in (coach or tables empty ? 2..max : tables), k in 1..max, fact makeFact('x', k, t). '/': makeFact('/', t*k, t). Distinct by (a,b) - '+' and 'x' keep both display orders as separate facts sharing one key. |
 | `rng(seed) -> rng` | deterministic mulberry32 |
-| `buildSet(cfg, stats, rng, count?, now?) -> Fact[]` | `now` feeds coach due-ness (omitted = every seen fact due; amended 2026-09-25, the engine takes no clock). count defaults to cfg.length (sprint callers pass 200). Ops balanced (counts differ by <=1, shuffled). Within an op: random = shuffle-bag without replacement, refilled when exhausted; ordered AND single table AND ops is ['x'] or ['/'] = k ascending 1..max, cycling. Coach = weighted draw by `coachWeight`, at most NEW_CAP unseen keys per set when that op has any seen fact. Never the same key twice in a row unless the op pool has one key. |
+| `buildSet(cfg, stats, rng, count?, now?) -> Fact[]` | `now` feeds coach due-ness (omitted = every seen fact due; amended 2026-09-25, the engine takes no clock). count defaults to cfg.length (sprint callers pass 200). Ops balanced (counts differ by <=1, shuffled). Within an op: random = shuffle-bag without replacement, refilled when exhausted; ordered AND single table AND ops is ['x'] or ['/'] = k ascending 1..max, cycling. Coach = weighted draw by `coachWeight`, at most NEW_CAP unseen keys per set once that op has COACH_MIN_SEEN (5) seen facts; below that unseen facts fill in (amended 2026-09-25 after review: with 1 seen fact the cap produced a 17-in-a-row repeat). Never the same key twice in a row unless the op pool has one key. |
 | `coachWeight(fact, stats, now) -> number` | unseen 3; seen: `[8,4,2,1,0.5][box]` x (due ? 1 : 0.25), due when days since last >= `[0,0,1,3,7][box]` |
 | `coachFocus(cfg, stats, now, n=3) -> Fact[]` | top-n SEEN facts by coachWeight across cfg.ops pools (distinct keys) - the "Coach is working on" line |
 | `fastMs(stats, op) -> number` | <5 seen facts of that op: 4000; else clamp(1.25 x median(ms of that op's seen facts), 1200, 4000) |
@@ -108,7 +108,7 @@ Functions (all pure; `rng` = `() => float in [0,1)`, `now` = epoch ms):
 | `pause(run, now)` / `resume(run, now)` | new run; pause sets pausedAt; resume adds (now - pausedAt) to pausedTotal and clears it |
 | `summarize(run, now) -> Summary` | `{mode, n: results.length, correct: count wrongs==0, misses: count wrongs>0, missed: Fact[] (distinct keys, first-seen order), slowest: up to 3 Results with wrongs==0 sorted by ms desc, elapsedMs, penaltyMs, totalMs: elapsed+penalty}` |
 | `toSession(cfg, summary, now) -> Session` | fills cfgKey/label/ts |
-| `cfgKey(cfg) -> string` | stable grouping key: mode, sorted ops, addRange only if +/- present (plus coach when there is no x or /), (coach ? 'coach' : sorted tables or 'all') + max only if x or / present, length only for race/practice. A coach set never shares a best with a hand-picked one. |
+| `cfgKey(cfg) -> string` | stable grouping key: mode, sorted ops, addRange only if +/- present (plus coach when there is no x or /), (coach ? 'coach' : sorted tables or 'all') + max only if x or / present, length only for race/practice, plus `ord` for an in-order single table (easier than random). A coach set never shares a best with a hand-picked one. |
 | `cfgLabel(cfg) -> string` | one group per op family, each next to its own range, joined by `, `: `+ − to 10`, `× 7 8 to 12`, `× ÷ coach to 10`, `+ − to 20, × ÷ 6 7 8 to 12`. ASCII-safe except the op glyphs; no em dash (amended 2026-09-25: the flat run-on read ambiguously in the Progress list) |
 | `isBetter(a, b) -> bool` | a better than b (b may be null -> true). race/practice: lower totalMs; sprint: more answered (`n`), tie -> fewer misses (amended 2026-09-25: every sprint answer ends correct and a miss already costs 3s, so answered is the honest score) |
 | `gridFor(op, cfg) -> {rows:int[], cols:int[], cells: (string|null)[][]}` | heatmap layout. '+': rows=cols=1..9, cell key for a+b (null when To10 and a+b>10). '-': rows b 1..9, cols answer x 1..9, key '-:(x+b):b' (null when To10 and x+b>10). 'x': rows tables 2..12, cols k 1..max. '/': rows divisor t 2..12, cols quotient k 1..max |
@@ -134,7 +134,7 @@ Profile = { id, name, color, cfg, created }   // name trimmed, <=20 chars, '' ->
 | `updateProfile(id, patch) -> Profile|null` | shallow merge of name/color/cfg |
 | `setActive(id) -> bool` / `getActive() -> Profile|null` | |
 | `removeProfile(id) -> snapshot|null` | snapshot `{profile, index, facts, sessions, wasActive}` for undo; deletes facts+sessions keys |
-| `restoreProfile(snapshot) -> bool` | re-inserts at index, restores keys, re-activates if wasActive |
+| `restoreProfile(snapshot) -> bool` | re-inserts at index, restores keys, re-activates if wasActive; refuses (false, nothing written) when the id is already present, so a double-tapped Undo cannot duplicate a player |
 | `getFacts(id) -> Stats` / `saveFacts(id, stats) -> bool` | |
 | `getSessions(id) -> Session[]` (oldest first) | |
 | `addSession(id, session, isBetter) -> {isBest, prevBest}` | computes prevBest BEFORE insert among sessions with same cfgKey+mode; practice never best; caps to MAX_SESSIONS dropping oldest |
@@ -147,6 +147,7 @@ Profile = { id, name, color, cfg, created }   // name trimmed, <=20 chars, '' ->
 
 - `math/version.js`: `(function(root){ root.MATH_VERSION = 'math-v<PR#>'; if (typeof module!=='undefined'&&module.exports) module.exports = root.MATH_VERSION; })(typeof self!=='undefined'?self:this);`
 - `math/sw.js`: `importScripts('version.js')`; `CACHE = self.MATH_VERSION`; network-first with a 3.5 s deadline + cache fallback (`ignoreSearch`) for same-origin GET; cache-first for cross-origin (fonts); install precaches CORE + `skipWaiting`; activate deletes only keys that start with `math-` and differ from CACHE, then `clients.claim()`; replies `{type:'VERSION', version: CACHE}` to a `GET_VERSION` message on `e.ports[0]`.
+- Lookups go through the worker's OWN cache only (`caches.open(CACHE).then(c => c.match(...))`), never the origin-wide `caches.match` - Math and Music both cache `music/shared/*` and either could answer with the other's stale copy (amended 2026-09-25 after review).
 - CORE: `./`, `index.html`, `app.js`, `engine.js`, `store.js`, `math.css`, `version.js`, `manifest.webmanifest`, `icon.svg`, `../music/shared/songbook.css`, `../music/shared/theme.js`, `../music/shared/esc.js`, `../music/shared/toast.js`.
 - Page registers `navigator.serviceWorker.register('sw.js', {scope: './'})`.
 

@@ -57,6 +57,7 @@
   var SPRINT_MS = 60000;
   var REVEAL_AFTER = 2;
   var NEW_CAP = 3;
+  var COACH_MIN_SEEN = 5;
   var DAY_MS = 86400000;
   var BOX_WEIGHT = [8, 4, 2, 1, 0.5];
   var BOX_DUE_DAYS = [0, 0, 1, 3, 7];
@@ -255,8 +256,13 @@
   function coachSupply(poolArr, statsObj, rngFn, n, now) {
     var out = [], lastKey = null;
     var poolKeys = uniq(poolArr.map(function (f) { return f.key; }));
-    var hasSeenAny = poolKeys.some(function (k) { return !!statsObj[k]; });
+    var seenCount = poolKeys.filter(function (k) { return !!statsObj[k]; }).length;
     var multiKey = distinctKeyCount(poolArr) > 1;
+    // One new thing at a time - but only once there is enough history to
+    // drill. Below COACH_MIN_SEEN seen facts the cap would leave the coach
+    // cycling one or two facts (a 17-in-a-row streak was measured), so unseen
+    // facts fill in, weighted normally.
+    var hasSeenAny = seenCount >= COACH_MIN_SEEN;
     var newCapRemaining = hasSeenAny ? NEW_CAP : Infinity;
 
     for (var i = 0; i < n; i++) {
@@ -268,6 +274,8 @@
       if (candidates.length === 0) candidates = poolArr.slice();
 
       var avoidRepeat = candidates.filter(function (f) { return f.key !== lastKey; });
+      // Contract: never the same key twice in a row unless the pool has one key.
+      if (multiKey && avoidRepeat.length === 0) avoidRepeat = poolArr.filter(function (f) { return f.key !== lastKey; });
       var pickFrom = (multiKey && avoidRepeat.length > 0) ? avoidRepeat : candidates;
 
       var weights = pickFrom.map(function (f) { return coachWeight(f, statsObj, now); });
@@ -556,6 +564,9 @@
     if (hasMulDiv) {
       parts.push(cfg.coach ? 'coach' : (cfg.tables.length ? cfg.tables.join(',') : 'all'));
       parts.push('m' + cfg.max);
+      // An in-order single table (1x7, 2x7, ...) is easier than random x7, so
+      // it keeps its own best. Mirrors the condition buildSet orders under.
+      if (!cfg.coach && cfg.order === 'ordered' && cfg.tables.length === 1 && ops.length === 1) parts.push('ord');
     }
     if (cfg.mode === 'race' || cfg.mode === 'practice') parts.push('l' + cfg.length);
     return parts.join('|');
@@ -653,7 +664,7 @@
   var api = {
     GLYPH: GLYPH, OPS: OPS, TABLES: TABLES, MAXES: MAXES, LENGTHS: LENGTHS,
     PENALTY_MS: PENALTY_MS, SPRINT_MS: SPRINT_MS, REVEAL_AFTER: REVEAL_AFTER,
-    NEW_CAP: NEW_CAP, DEFAULT_CFG: DEFAULT_CFG, PRESETS: PRESETS,
+    NEW_CAP: NEW_CAP, COACH_MIN_SEEN: COACH_MIN_SEEN, DEFAULT_CFG: DEFAULT_CFG, PRESETS: PRESETS,
 
     normalizeCfg: normalizeCfg, makeFact: makeFact, pool: pool, rng: rng,
     buildSet: buildSet, coachWeight: coachWeight, coachFocus: coachFocus,

@@ -333,12 +333,31 @@ test('coach: NEW_CAP respected - at most NEW_CAP unseen keys drawn once the op h
   var poolArr = E.pool('x', cfg);
   var distinctKeys = poolArr.map(function (f) { return f.key; }).filter(function (k, i, a) { return a.indexOf(k) === i; });
   var stats = {};
-  stats[distinctKeys[0]] = { n: 5, miss: 0, box: 2, ms: 1000, last: 0 }; // exactly one seen key
+  // Enough history to drill (>= COACH_MIN_SEEN seen keys): only then does the
+  // one-new-thing-at-a-time cap apply.
+  for (var s0 = 0; s0 < 6; s0++) stats[distinctKeys[s0]] = { n: 5, miss: 0, box: 2, ms: 1000, last: 0 };
   var now = 100 * 86400000;
   var set = E.buildSet(cfg, stats, E.rng(11), 40, now);
   var unseenKeys = {};
   set.forEach(function (f) { if (!stats[f.key]) unseenKeys[f.key] = true; });
   assert.ok(Object.keys(unseenKeys).length <= 3, 'unseen distinct keys drawn (' + Object.keys(unseenKeys).length + ') should be <= NEW_CAP (3)');
+});
+
+test('coach: thin history (1-2 seen facts) never repeats a fact back to back and still spreads out', function () {
+  // Review finding #5: with 1 seen key and NEW_CAP spent, the coach drew the same
+  // fact 17 times in a row. Below COACH_MIN_SEEN seen keys, unseen facts fill in.
+  var cfg = E.normalizeCfg({ ops: ['x'], tables: [], max: 12, coach: true });
+  var keys = E.pool('x', cfg).map(function (f) { return f.key; }).filter(function (k, i, a) { return a.indexOf(k) === i; });
+  [1, 2].forEach(function (seenCount) {
+    for (var seed = 1; seed <= 8; seed++) {
+      var stats = {};
+      for (var k = 0; k < seenCount; k++) stats[keys[k]] = { n: 1, miss: 1, box: 0, ms: 3000, last: 0 };
+      var set = E.buildSet(cfg, stats, E.rng(seed), 20, 100 * 86400000);
+      for (var i = 1; i < set.length; i++) assert.notStrictEqual(set[i].key, set[i - 1].key, 'back-to-back repeat at ' + i + ' (seen ' + seenCount + ', seed ' + seed + ')');
+      var distinct = set.map(function (f) { return f.key; }).filter(function (x, j, a) { return a.indexOf(x) === j; }).length;
+      assert.ok(distinct >= 6, 'only ' + distinct + ' distinct facts in a 20-question coach set (seen ' + seenCount + ', seed ' + seed + ')');
+    }
+  });
 });
 
 test('coach: an op with zero history draws unseen facts freely (falls back to plain-random-like coverage)', function () {
@@ -815,6 +834,17 @@ test('cfgKey: coach and hand-picked sets never share a best, add/sub included', 
   assert.notStrictEqual(E.cfgKey(base), E.cfgKey(coach));
 });
 
+test('cfgKey: an in-order single-table race never shares a best with the random one', function () {
+  // Review finding #9: 1x7, 2x7, ... in order is easier than random x7.
+  var rnd = { ops: ['x'], tables: [7], max: 12, mode: 'race', length: 20, order: 'random' };
+  var ord = { ops: ['x'], tables: [7], max: 12, mode: 'race', length: 20, order: 'ordered' };
+  assert.notStrictEqual(E.cfgKey(rnd), E.cfgKey(ord));
+  // order is irrelevant (and ignored) when it cannot apply: two tables
+  var rnd2 = { ops: ['x'], tables: [7, 8], max: 12, mode: 'race', length: 20, order: 'random' };
+  var ord2 = { ops: ['x'], tables: [7, 8], max: 12, mode: 'race', length: 20, order: 'ordered' };
+  assert.strictEqual(E.cfgKey(rnd2), E.cfgKey(ord2));
+});
+
 test('cfgKey: length is excluded for sprint mode', function () {
   var k1 = E.cfgKey({ ops: ['+'], mode: 'sprint', length: 10 });
   var k2 = E.cfgKey({ ops: ['+'], mode: 'sprint', length: 30 });
@@ -999,6 +1029,7 @@ test('constants match the documented literal values', function () {
   assert.strictEqual(E.SPRINT_MS, 60000);
   assert.strictEqual(E.REVEAL_AFTER, 2);
   assert.strictEqual(E.NEW_CAP, 3);
+  assert.strictEqual(E.COACH_MIN_SEEN, 5);
   assert.deepStrictEqual(E.OPS, ['+', '-', 'x', '/']);
   assert.deepStrictEqual(E.TABLES, [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
   assert.deepStrictEqual(E.MAXES, [10, 11, 12]);

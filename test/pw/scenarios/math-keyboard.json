@@ -1,0 +1,83 @@
+{
+  "name": "math-keyboard",
+  "description": "Math on a keyboard (review finding #2, PR #355): Start keeps focus under the workout, so an Enter typed after an answer used to click it again and restart the round, throwing the answers away. Enter/Space must do nothing mid-round, and digits typed on a real keyboard answer like the keypad. Uses x7 in order so every answer is known (1x7, 2x7, 3x7).",
+  "url": "/math/",
+  "seed": {
+    "math.profiles.v1": "{\"active\": \"pNik\", \"list\": [{\"id\": \"pNik\", \"name\": \"Nik\", \"color\": \"#38bdf8\", \"cfg\": {\"ops\": [\"x\"], \"addRange\": 10, \"tables\": [7], \"max\": 10, \"order\": \"ordered\", \"coach\": false, \"mode\": \"race\", \"length\": 10}, \"created\": 1}]}"
+  },
+  "viewport": {
+    "width": 1280,
+    "height": 800
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": "#startBtn"
+    },
+    {
+      "action": "assertText",
+      "selector": "#problem",
+      "contains": "1 × 7"
+    },
+    {
+      "action": "press",
+      "key": "7"
+    },
+    {
+      "action": "assertText",
+      "selector": "#runCount",
+      "contains": "2 of 10"
+    },
+    {
+      "action": "press",
+      "key": "Enter"
+    },
+    {
+      "action": "press",
+      "key": " "
+    },
+    {
+      "action": "wait",
+      "ms": 150
+    },
+    {
+      "action": "evalAssert",
+      "label": "Enter/Space mid-round leave the round alone (still 2 x 7, one run on the history stack)",
+      "js": "document.getElementById('problem').textContent==='2 \\u00d7 7'&&document.getElementById('runCount').textContent==='2 of 10'&&history.state&&history.state.mathDepth===1"
+    },
+    {
+      "action": "press",
+      "key": "1"
+    },
+    {
+      "action": "press",
+      "key": "4"
+    },
+    {
+      "action": "assertText",
+      "selector": "#runCount",
+      "contains": "3 of 10"
+    },
+    {
+      "action": "press",
+      "key": "2"
+    },
+    {
+      "action": "press",
+      "key": "Backspace"
+    },
+    {
+      "action": "evalAssert",
+      "label": "Backspace removes a typed digit",
+      "js": "document.getElementById('answer').textContent==='?'"
+    },
+    {
+      "action": "press",
+      "key": "Escape"
+    },
+    {
+      "action": "assertVisible",
+      "selector": "#pauseOv"
+    }
+  ]
+}
