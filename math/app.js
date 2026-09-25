@@ -39,7 +39,7 @@
   store.migrate();
 
   var state = {
-    tab: 'path', progOp: null, focusSkill: null, lastGains: null, lvlNext: null, lvlQueue: [], pendingLvl: null, afterLvl: null,
+    tab: 'path', progOp: null, focusSkill: null, lastGains: null, lvlNext: null, lvlQueue: [], pendingLvl: null, afterLvl: null, runDrill: false,
     run: null, stats: null, pid: null, raf: 0,
     badShow: null, flashT: 0, quitting: false,
     lastSummary: null, lastCfg: null, lastMissed: null,
@@ -125,6 +125,10 @@
       onHide: function (host) { host.classList.remove('on'); }
     });
   }
+  // Open Undo toasts. A round started while one is up would sit under it and
+  // later save over whatever the Undo restored, so startRun closes them (re-review N1).
+  var liveUndos = [];
+  function closeUndos() { liveUndos.splice(0).forEach(function (close) { close(); }); }
   function showUndo(msg, undoFn) {
     var el = document.createElement('div');
     el.className = 'toast withAct toastAction';
@@ -139,6 +143,7 @@
     });
     var used = false; // once: the toast stays tappable through its fade-out (review finding #3)
     b.addEventListener('click', function () { if (used) return; used = true; b.disabled = true; undoFn(); if (h) h.finish(); });
+    liveUndos.push(function () { used = true; b.disabled = true; if (h) h.finish(); });
   }
 
   /* ------------------------------------------------------------------
@@ -151,15 +156,20 @@
     stack.push(name);
     try { history.pushState({ mathDepth: stack.length }, ''); } catch (e) {}
   }
+  // One traversal at a time: two taps in the same instant would each go back,
+  // and the second can leave the app (re-review N6). popstate clears the flag.
+  var traversing = 0;
   function backTo(depth) {
     var n = stack.length - depth;
-    if (n <= 0) return;
-    try { history.go(-n); } catch (e) { unwindTo(depth); }
+    if (n <= 0 || traversing) return;
+    traversing = setTimeout(function () { traversing = 0; }, 1000);
+    try { history.go(-n); } catch (e) { clearTimeout(traversing); traversing = 0; unwindTo(depth); }
   }
   function unwindTo(depth) {
     while (stack.length > depth) closeLayer(stack.pop());
   }
   window.addEventListener('popstate', function (e) {
+    clearTimeout(traversing); traversing = 0;
     var d = e.state && typeof e.state.mathDepth === 'number' ? e.state.mathDepth : 0;
     if (d >= stack.length) return;
     // Back during the last answer's green hold: the round is already won, so
@@ -442,10 +452,12 @@
     // Start keeps keyboard focus under the run layer; an Enter typed after an
     // answer would click it again and restart the round (review finding #2).
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    closeUndos();
     unlockAudio();
     var now = Date.now();
     state.pid = p.id;
     state.stats = store.getFacts(p.id);
+    state.runDrill = !!facts; // only "Practice misses" passes its own facts - read before the set is built
     if (!facts) {
       var rng = E.rng(now >>> 0);
       facts = E.buildSet(c, state.stats, rng, c.mode === 'sprint' ? 200 : c.length, now);
@@ -559,7 +571,8 @@
     state.run = out.run;
     if (out.event === 'correct' || out.event === 'done') {
       var res = out.run.results[out.run.results.length - 1];
-      state.stats = E.recordAnswer(state.stats, res, now, r0.startedAt); // one streak step per fact per workout (review #4)
+      // One streak step per fact per workout (review #4), none in a drill (re-review N8).
+      state.stats = E.recordAnswer(state.stats, res, now, r0.startedAt, state.runDrill);
       feedback('ok');
       holdCorrect(shown, typed, now, out.event === 'done');
       return;
@@ -613,7 +626,8 @@
     saveStats();
     var sess = E.toSession(c, sum, now);
     var saved = store.addSession(state.pid, sess, E.isBetter) || { isBest: false, prevBest: null };
-    state.lastSummary = sum; state.lastCfg = c; state.lastMissed = sum.missed;
+    // After a drill, Go again returns to the workout the misses came from (re-review N9).
+    state.lastSummary = sum; state.lastCfg = state.runDrill && state.lastCfg ? state.lastCfg : c; state.lastMissed = sum.missed;
     // Skills: stars only ever rise; a newly mastered skill gets its moment.
     var upd = K.updateEarned(store.getEarned(state.pid), state.stats, now);
     store.saveEarned(state.pid, upd.earned);
@@ -945,7 +959,7 @@
     var rd = new FileReader();
     rd.onload = function () {
       var prevFacts = store.getFacts(p.id), prevEarned = store.getEarned(p.id);
-      var r = K.importProfile(String(rd.result || ''), prevFacts, prevEarned);
+      var r = K.importProfile(String(rd.result || ''), prevFacts, prevEarned, Date.now()); // now: a future `last` is clamped (re-review N10)
       input.value = '';
       if (!r.ok) { toast(r.error || 'That file is not a Math skills profile'); return; }
       // Stars the imported facts already earn are banked quietly, so a later
@@ -992,9 +1006,22 @@
     else renderSetup();
   }
 
+  // A round killed after it mastered a skill saved its stats (pause/pagehide)
+  // but never reached finishRun. Bank and celebrate that here, not in some
+  // later unrelated round (re-review N7a).
+  function reconcileEarned() {
+    var p = active(); if (!p) return;
+    var upd = K.updateEarned(store.getEarned(p.id), store.getFacts(p.id), Date.now());
+    if (!upd.gains.length) return;
+    store.saveEarned(p.id, upd.earned);
+    renderAll();
+    if (upd.mastered.length) showLevelUps(upd.mastered);
+  }
+
   applyTheme();
   setTab(state.tab); // the same path a tab tap takes, so boot can't disagree with it
   if (!store.getProfiles().list.length) { state.firstRun = true; openPlayers('add'); }
+  else reconcileEarned();
 
   if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
     window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js', { scope: './' }).catch(function () {}); });

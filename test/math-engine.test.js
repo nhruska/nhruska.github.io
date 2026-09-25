@@ -1118,6 +1118,17 @@ test('review#4: without runStart the streak rule is unchanged (back-compat)', fu
   assert.strictEqual(s['+:4:5'].ok, 2);
 });
 
+test('re-review N8: a drill (noStep) never moves the streak; a miss in it still resets', function () {
+  var f = fact2('+:4:5', 4, 5, 9);
+  var s = { '+:4:5': { n: 2, miss: 1, box: 0, ms: 900, last: 500, ok: 0 } };
+  s = E.recordAnswer(s, { fact: f, wrongs: 0, ms: 900 }, 2000, 1000, true);
+  assert.strictEqual(s['+:4:5'].ok, 0, 'answered right just after the answer was shown: no step');
+  assert.strictEqual(s['+:4:5'].n, 3, 'the answer is still counted');
+  var t = { '+:4:5': { n: 2, miss: 0, box: 2, ms: 900, last: 500, ok: 1 } };
+  t = E.recordAnswer(t, { fact: f, wrongs: 1, ms: 900 }, 2000, 1000, true);
+  assert.strictEqual(t['+:4:5'].ok, 0, 'a miss in a drill still resets');
+});
+
 test('review#14: a Custom coach set (no tables) keeps its v1 best key', function () {
   // v1 keyed every x/div coach set as 'coach'; v1.1 must not orphan those bests.
   assert.strictEqual(E.cfgKey({ ops: ['x'], tables: [], max: 10, coach: true, mode: 'race', length: 20 }), 'race|x|coach|m10|l20');

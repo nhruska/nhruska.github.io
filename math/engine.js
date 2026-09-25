@@ -394,7 +394,7 @@
     return v;
   }
 
-  function recordAnswer(stats, result, now, runStart) {
+  function recordAnswer(stats, result, now, runStart, noStep) {
     stats = stats || {};
     var fact = result.fact;
     var key = fact.key;
@@ -423,7 +423,9 @@
     // answered in THIS run keeps its streak, so "solid" means right on separate
     // occasions, never drilled twice right after the answer was shown.
     var sameRun = typeof runStart === 'number' && isFinite(runStart) && prev && typeof prev.last === 'number' && prev.last >= runStart;
-    var ok = result.wrongs > 0 ? 0 : (sameRun ? prevOk : prevOk + 1);
+    // `noStep` (a "Practice misses" drill, re-review N8): the answer was on the
+    // results screen seconds ago, so a right answer is recall, not mastery.
+    var ok = result.wrongs > 0 ? 0 : ((sameRun || noStep) ? prevOk : prevOk + 1);
     out[key] = { n: n, miss: miss, box: box, ms: ms, last: now, ok: ok };
     return out;
   }

@@ -1,9 +1,9 @@
 {
   "name": "math-hold-edges",
-  "description": "Green-hold edge cases from review round 2 on 2aa2dc0. #11: a right answer typed within the wrong-answer flash keeps its glow for the whole hold. #2: pressing Back during the last answer's 260ms hold still records the session and the facts.",
+  "description": "Green-hold and streak edge cases (review round 2 on 2aa2dc0, re-review on abdc648). #11: a right answer typed within the wrong-answer flash keeps its glow. #2 + N4: Back during the last answer's hold records the round and leaves results at history depth 1. N2: in a 30-question race over 25 facts some facts repeat, and none moves its streak twice. N8: a Practice misses drill does not move the drilled fact's streak.",
   "url": "/math/",
   "seed": {
-    "math.profiles.v1": "{\"active\": \"pAva\", \"list\": [{\"id\": \"pAva\", \"name\": \"Ava\", \"color\": \"#fb3b5c\", \"cfg\": {\"ops\": [\"+\"], \"addRange\": 10, \"tables\": [], \"max\": 10, \"order\": \"random\", \"coach\": false, \"mode\": \"race\", \"length\": 10}, \"created\": 1}]}"
+    "math.profiles.v1": "{\"active\": \"pAva\", \"list\": [{\"id\": \"pAva\", \"name\": \"Ava\", \"color\": \"#fb3b5c\", \"cfg\": {\"ops\": [\"+\"], \"addRange\": 10, \"tables\": [], \"max\": 10, \"order\": \"random\", \"coach\": false, \"mode\": \"race\", \"length\": 30}, \"created\": 1}]}"
   },
   "steps": [
     {
@@ -17,7 +17,7 @@
     {
       "action": "evalAssert",
       "label": "a right answer 240ms after a wrong one keeps its green glow for the whole hold (review #11)",
-      "js": "(async function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}var a=ans();type(a===9?8:a+1);await sleep(240);type(ans());await sleep(200);return document.getElementById('card').classList.contains('ok')&&document.getElementById('answer').classList.contains('good');})()"
+      "js": "(async function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}function lvl(){return document.getElementById('lvlLayer').hidden?null:document.getElementById('lvlName').textContent;}var a=ans();type(a===9?8:a+1);await sleep(240);type(ans());await sleep(200);return document.getElementById('card').classList.contains('ok')&&document.getElementById('answer').classList.contains('good');})()"
     },
     {
       "action": "wait",
@@ -25,8 +25,18 @@
     },
     {
       "action": "evalAssert",
-      "label": "Back during the LAST answer's green hold still records the round (review #2)",
-      "js": "(async function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}var n=0;while(document.getElementById('runCount').textContent!=='10 of 10'&&n<20){type(ans());n++;await sleep(330);}type(ans());await sleep(40);history.back();await sleep(700);var s=JSON.parse(localStorage.getItem('math.sessions.pAva.v1')||'[]');var f=JSON.parse(localStorage.getItem('math.facts.pAva.v1')||'{}');var seen=Object.keys(f).reduce(function(t,k){return t+f[k].n;},0);return s.length===1&&seen>=10;})()"
+      "label": "Back during the LAST answer's green hold records the round and shows results at the right history depth (review #2, re-review N4)",
+      "js": "(async function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}function lvl(){return document.getElementById('lvlLayer').hidden?null:document.getElementById('lvlName').textContent;}var n=0;while(document.getElementById('runCount').textContent!=='30 of 30'&&n<60){type(ans());n++;await sleep(330);}type(ans());await sleep(40);history.back();await sleep(700);var s=JSON.parse(localStorage.getItem('math.sessions.pAva.v1')||'[]');return s.length===1&&!document.getElementById('resLayer').hidden&&history.state&&history.state.mathDepth===1;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "a fact asked twice in one workout moves its streak once (review #4 app wiring, re-review N2)",
+      "js": "(function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}function lvl(){return document.getElementById('lvlLayer').hidden?null:document.getElementById('lvlName').textContent;}var f=JSON.parse(localStorage.getItem('math.facts.pAva.v1'));var ks=Object.keys(f);var twice=ks.filter(function(k){return f[k].n>=2&&f[k].miss===0;});var once=ks.filter(function(k){return f[k].miss===0;});return ks.length>=20&&twice.length>=1&&once.length>=20&&once.every(function(k){return f[k].ok===1;});})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "Practice misses: the drilled fact's streak does not move (re-review N8)",
+      "js": "(async function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}function lvl(){return document.getElementById('lvlLayer').hidden?null:document.getElementById('lvlName').textContent;}var f0=JSON.parse(localStorage.getItem('math.facts.pAva.v1'));var missed=Object.keys(f0).filter(function(k){return f0[k].miss>0;});document.getElementById('drillBtn').click();await sleep(300);var n=0;while(!document.getElementById('runLayer').hidden&&n<10){type(ans());n++;await sleep(330);}var f=JSON.parse(localStorage.getItem('math.facts.pAva.v1'));return missed.length===1&&n===2&&f[missed[0]].n===f0[missed[0]].n+2&&f[missed[0]].ok===0;})()"
     }
   ]
 }
