@@ -115,6 +115,47 @@ if (mathSwSrc) {
   });
 }
 
+/* ---------- index.html <script src> tags are all precached (Guard A) ---------- */
+// The reverse of the CORE-exists check above: every LOCAL <script src="...">
+// tag math/index.html actually loads must be listed in math/sw.js CORE, or an
+// offline install 404s on it the instant the network is gone. Compared by
+// RESOLVED ABSOLUTE PATH (not string form) so './engine.js', 'engine.js' and
+// '../music/shared/esc.js' all match their CORE counterpart regardless of
+// which relative form either file happens to spell it in.
+var MATH_INDEX_PATH = path.join(MATH_ROOT, 'index.html');
+var mathIndexSrc = fs.existsSync(MATH_INDEX_PATH) ? fs.readFileSync(MATH_INDEX_PATH, 'utf8') : null;
+
+function extractScriptSrcs(src) {
+  var re = /<script[^>]*\bsrc\s*=\s*["']([^"']+)["']/g, mm, out = [];
+  while ((mm = re.exec(stripLineComments(src)))) out.push(mm[1]);
+  return out;
+}
+
+if (mathIndexSrc && mathSwSrc) {
+  var localScriptSrcs = extractScriptSrcs(mathIndexSrc).filter(function (s) {
+    return !/^([a-z][a-z0-9+.-]*:)?\/\//i.test(s); // skip absolute/external URLs (http:, https:, //cdn...)
+  });
+  var coreResolvedSet = {};
+  extractCore(mathSwSrc).forEach(function (p) {
+    coreResolvedSet[path.normalize(path.join(MATH_ROOT, p))] = true;
+  });
+  test('math/index.html <script src> tags were actually extracted (extraction sanity check)', function () {
+    assert.ok(localScriptSrcs.length > 3, 'expected several local <script src> tags, got ' + localScriptSrcs.length + ' - extraction likely broken');
+  });
+  localScriptSrcs.forEach(function (src) {
+    test('math/index.html <script src="' + src + '"> is precached in math/sw.js CORE', function () {
+      var bare = src.split('?')[0]; // strip a cache-buster query (e.g. ?v=math-v42)
+      var resolved = path.normalize(path.join(MATH_ROOT, bare));
+      assert.ok(coreResolvedSet[resolved], '<script src="' + src + '"> resolves to ' + resolved + ', which is not listed in math/sw.js CORE - an offline install would 404 on it');
+    });
+  });
+} else {
+  test('math/index.html script tags are precached in CORE', function () {
+    if (!mathIndexSrc) { console.log('      SKIP - math/index.html not yet written by a sibling agent; will be strict once the math/ mission lands'); return; }
+    assert.fail('math/sw.js is missing');
+  });
+}
+
 /* ---------- cache-family isolation (both service workers) ---------- */
 test('math/sw.js activate only ever deletes "math-" caches', function () {
   assert.ok(mathSwSrc, 'math/sw.js is missing');
