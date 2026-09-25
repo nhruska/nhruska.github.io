@@ -1,11 +1,11 @@
 # CLAUDE.md - the Math app (`math/`)
 
 > Math-app-specific guidance. Repo-root [CLAUDE.md](../CLAUDE.md) owns the
-> app-wide agreement; [music/CLAUDE.md](../music/CLAUDE.md) is the reference
+> app-wide agreement, and [music/CLAUDE.md](../music/CLAUDE.md) is the reference
 > implementation this app mirrors (sibling PWA, same origin).
 
 A self-contained **static** slice of the GitHub Pages site, served from `main`.
-**No build step**; classic `<script>` tags; vanilla JS. Live app:
+**No build step**: classic `<script>` tags, vanilla JS. Live app:
 [nhruska.github.io/math/](https://nhruska.github.io/math/).
 
 ## Layout
@@ -22,12 +22,16 @@ the 12-skill path, stars, earned, portable export/import) + `store.js`
   via `importScripts('version.js')`. First Math-asset commit on a PR uses
   `math-v<PR#>`, each later pushed batch appends a counter (`-2`, `-3`), same as
   Music's S-SW-PER-COMMIT, so Settings' build line shows which push a phone has.
+  `scripts/check-cache-bump.sh` fails when `math/` changes (CLAUDE.md aside)
+  without a new `MATH_VERSION`.
 - **Network-first SW, `math-` caches only.** `sw.js` activate must never touch
   a cache outside its own `math-` family - the origin also hosts Music's
-  `music-` caches; either deleting the other's evicts its offline install
-  (test/math-sw.test.js guards both directions).
+  `music-` caches, and either deleting the other's evicts its offline install.
+  Lookups stay in its own cache too (`fromCache`, never `caches.match`).
+  test/math-sw.test.js guards both directions, plus every `<script src>` in
+  `index.html` being in CORE.
 - **`math.` storage prefix, additive-only.** Every `MathStore` reader is
-  defensive (try/catch -> safe default); a BREAKING shape change needs a
+  defensive (try/catch -> safe default). A BREAKING shape change needs a
   `MIGRATIONS[n]` step, same discipline as Music's `backup.js`.
 - **ALL CSS is external**, in `math.css`, using Music's `songbook.css` tokens
   only - no new hues, no inline `style=`.
