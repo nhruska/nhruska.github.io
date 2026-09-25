@@ -154,3 +154,67 @@ Profile = { id, name, color, cfg, created }   // name trimmed, <=20 chars, '' ->
 ### Theme palette
 
 `music/shared/theme.js` exports `PALETTE` (the exact 8 `{n,a,d,p}` swatches, Teal first) alongside `effectiveTheme` / `accentVars`; `music/play/index.html` uses `Theme.PALETTE`. Math reads the same array for player colours.
+
+## v1.1 - Skills path + competency (operator UAT 2026-09-25)
+
+Operator feedback on the preview: "needs haptic feedback and color highlights on my input when answering questions" and "implement skills and competency based approach like music app". Interview answers:
+
+| Question | Answer |
+|---|---|
+| Where skills live | **Skill path is home**: opens on the path, "Up next" one tap from a Race; today's setup becomes the Custom tab |
+| Gating | **All open, path suggests** (Music's rule: levels gate depth, never access) |
+| Mastery | **Accuracy only**: every fact in the skill right first try, no speed gate (speed shown, never required) |
+| Rewards | **Stars per skill + level-up moment + badge shelf** |
+
+Assumed answers (basis cited):
+
+| Decision | Assumed | Basis |
+|---|---|---|
+| "Right first try" robustness | a fact counts as solid at 2 first-try-correct answers in a row (`ok >= 2`); a miss resets it | a 1-digit guess is right 10% of the time; pedagogy-coach "only mastery earns silence" |
+| Stars | 1 = half the facts right first try, 2 = every fact right first try once, 3 (mastered) = every fact solid. Earned stars never go down; the bar shows today's level | kids: losing a star after one slip is demotivating; the Coach still drills the slip |
+| Competency model | Music's `skill-competency-profile/v1` shape (framework of competencies, level 0-100, target, evidence count), computed from per-fact stats instead of nudged by events | "like music app"; the per-fact tracker already is the evidence |
+| Bands | beginner (0-3 mastered) / intermediate (4-8) / advanced (9+), shown on the path; they grade depth, never access | Music competency-adaptive-depth D1 (3 bands) |
+| Skill workouts | the skill's facts, Coach-weighted toward misses, Race by default (Practice beside it) | timed default; coach already exists |
+| Export / import | Settings exports the portable profile (with the raw fact stats so a device move keeps progress) and imports one back (merge, never overwrite down) | Music's Skills panel export/import; closes most of M-MATH-BACKUP |
+| Input feedback | every key: light haptic tick + key flash; right answer: your digits turn green for ~0.25s with the clock paused; wrong: red digits + shake + buzz | the operator's words, and the clock pause keeps the feedback free |
+
+### Locked interface: MathSkills (`math/skills.js`)
+
+UMD like engine.js (`root.MathSkills`, `module.exports`); reads facts via `MathEngine.pool` (`root.MathEngine || require('./engine.js')`). Pure: no DOM, no storage, time only via a `now` param.
+
+```
+FRAMEWORK = { id: 'arithmetic-facts', name: 'Math facts', discipline: 'math', skills: SKILLS }
+Skill     = { id, name, short, desc, cfg }          // cfg = partial engine Config
+Progress  = { total, seen, right, solid, level, stars, mastered, medianMs }
+Earned    = { [skillId]: { stars: 0-3, masteredAt: epochMs|null } }
+```
+
+SKILLS (ordered path, ids are the portable contract - verbatim):
+
+| # | id | name | short | cfg |
+|---|---|---|---|---|
+| 1 | add-10 | Addition to 10 | +10 | ops ['+'], addRange 10 |
+| 2 | sub-10 | Subtraction from 10 | −10 | ops ['-'], addRange 10 |
+| 3 | add-20 | Addition to 20 | +20 | ops ['+'], addRange 20 |
+| 4 | sub-20 | Subtraction to 20 | −20 | ops ['-'], addRange 20 |
+| 5 | x-2-5-10 | Times 2, 5 and 10 | ×2 5 10 | ops ['x'], tables [2,5,10], max 10 |
+| 6 | x-3-4 | Times 3 and 4 | ×3 4 | ops ['x'], tables [3,4], max 10 |
+| 7 | x-6-7 | Times 6 and 7 | ×6 7 | ops ['x'], tables [6,7], max 10 |
+| 8 | x-8-9 | Times 8 and 9 | ×8 9 | ops ['x'], tables [8,9], max 10 |
+| 9 | div-2-5-10 | Divide by 2, 5 and 10 | ÷2 5 10 | ops ['/'], tables [2,5,10], max 10 |
+| 10 | div-3-9 | Divide by 3 to 9 | ÷3 to 9 | ops ['/'], tables [3,4,6,7,8,9], max 10 |
+| 11 | x-11-12 | Times 11 and 12 | ×11 12 | ops ['x'], tables [11,12], max 12 |
+| 12 | x-all-12 | All times tables to 12 | ×all | ops ['x'], tables [], max 12 |
+
+| Function | Contract |
+|---|---|
+| `skillById(id) -> Skill\|null` | |
+| `factKeys(skill) -> string[]` | distinct keys over `MathEngine.pool(op, normalizeCfg(skill.cfg))` for each op, sorted |
+| `progress(skill, stats) -> Progress` | total = factKeys length; seen = keys with n >= 1; right = keys with ok >= 1; solid = keys with ok >= 2; level = round(100 * sum(min(ok, 2)) / (2 * total)); stars = 3 if solid == total, else 2 if right == total, else 1 if 2 * right >= total, else 0; mastered = stars == 3; medianMs = median ms over seen keys with ms > 0, else null. `ok` read defensively (missing/garbage = 0) |
+| `path(stats, earned) -> {skills, upNext, masteredCount, band}` | skills = SKILLS in order as `{skill, progress, stars: max(earned stars, progress.stars), masteredAt}`; upNext = id of the first skill whose stars < 3, else null; masteredCount = count with stars 3; band = beginner (0-3) / intermediate (4-8) / advanced (9+) |
+| `updateEarned(earned, stats, now) -> {earned, gains, mastered}` | NEW earned object; stars only ever rise to progress.stars; masteredAt stamped (= now) the first time stars reach 3 and never cleared; gains = `[{id, from, to}]` for every rise; mastered = ids that reached 3 this call |
+| `skillCfg(skill, base) -> Config` | `normalizeCfg` of base mode/length + the skill's ops/addRange/tables/max, `coach: true`, `skill: id`, `label: name`, `order: 'random'` |
+| `exportProfile(name, stats, earned, now) -> doc` | `{schema: 'skill-competency-profile/v1', skill: 'arithmetic-facts', discipline: 'math', updated: ISO(now), provenance: [{source: 'app:math', at: ISO(now)}], player: name, competencies: [{id, name, desc, level, target: 100, stars, evidence_count: sum of n over the skill's keys, last_evidence: ISO of max last or null}], facts: stats, earned}` |
+| `importProfile(json, stats, earned) -> {ok, stats, earned, error}` | accepts a doc object or JSON string; rejects wrong schema/skill (`ok:false`, human-readable error, inputs unchanged). Merges facts per key keeping the entry with the larger `n` (tie: later `last`); earned keeps the max stars and the earliest masteredAt. Never mutates inputs |
+
+Engine amendments (same PR): FactStat gains `ok` (first-try-correct streak: `wrongs > 0 ? 0 : ok + 1`); `normalizeCfg` keeps `skill` (`/^[a-z0-9-]{1,32}$/`) and `label` (string, <= 40 chars); `pool` scopes x and / to the picked tables even when coach is on (Custom's Coach clears the picks to mean "all"); `cfgKey` leads with `sk:<id>` for a skill set and keeps the tables for a coach set; `cfgLabel` returns `label` when present.
