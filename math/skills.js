@@ -25,10 +25,11 @@
  *     vacuous "solid === total" true, so a degenerate empty skill never
  *     reads as instantly mastered.
  *  3. skillCfg() re-attaches `skill`/`label` onto the object returned by
- *     MathEngine.normalizeCfg explicitly, because the engine.js in THIS
- *     tree does not yet retain those two fields (a sibling PR adds that
- *     per the same locked contract's "Engine amendments" note) - this
- *     keeps skillCfg correct both before and after that lands.
+ *     MathEngine.normalizeCfg explicitly. engine.js's normalizeCfg now
+ *     retains both fields itself (its own v1.1 skill/label handling) -
+ *     this re-attach is defensive, so skillCfg's skill id/name survive
+ *     even if engine.js's own validation (e.g. its skill-id regex) were
+ *     ever to reject them.
  *  4. updateEarned() passes through, untouched, any `earned` map entries
  *     whose id is not one of the current 12 SKILLS (forward/backward
  *     compatibility - mirrors competency.js's unknown-id preservation in
@@ -39,6 +40,11 @@
  *     mastered) side as "no evidence": it defers to the other side's
  *     real timestamp when only one side has one, and takes the numeric
  *     minimum when both sides do.
+ *  6. importProfile()'s numeric-field validation never coerces strings
+ *     (a stars/n/ok/... value must already be `typeof === 'number'`) -
+ *     mirrors the codebase's general distrust of implicit coercion (see
+ *     engine.js's own explicit `typeof === 'number'` guards throughout)
+ *     rather than letting `Math.floor("3")` silently accept a string.
  * ===================================================================== */
 (function (root) {
   'use strict';
@@ -47,6 +53,15 @@
 
   var SCHEMA = 'skill-competency-profile/v1';
   var EXPORT_SOURCE = 'app:math';
+
+  // importProfile() hardening (review finding #7 on PR #355). Fact keys are
+  // the literal op char (+, -, x, /) from engine.js's makeFact(), never the
+  // display GLYPH - verified against every SKILLS.factKeys() output.
+  var FACT_KEY_RE = /^[-+x/]:\d+:\d+$/;
+  var FACT_NUMERIC_FIELDS = ['n', 'miss', 'box', 'ms', 'last', 'ok'];
+  var MAX_IMPORTED_FACT_KEYS = 5000; // so a 50k-key file can't bloat storage
+  var MAX_UNKNOWN_EARNED_IDS = 50; // forward-compat ids (interpretation 4), bounded
+  var MAX_PLAYER_LEN = 40; // mirrors engine.js normalizeCfg's label cap
 
   /* ---------------------------------------------------------------- *
    * SKILLS - the ordered path. ids are the portable contract, verbatim.
@@ -316,6 +331,45 @@
     return Math.min(a, b);
   }
 
+  // Whole-number stars, 0-3. A non-number (including a numeric string, per
+  // interpretation 6 above) or a non-finite value reads as 0 - never coerced.
+  function clampStars(v) {
+    if (typeof v !== 'number' || !isFinite(v)) return 0;
+    var n = Math.floor(v);
+    if (n < 0) return 0;
+    if (n > 3) return 3;
+    return n;
+  }
+
+  // A mastery timestamp is evidence, never invented: only a genuine positive
+  // finite epoch-ms number counts. Anything else (string, negative, 0,
+  // Infinity, missing) reads as "no evidence" (null), same as unmastered.
+  function normalizeMasteredAt(v) {
+    return (typeof v === 'number' && isFinite(v) && v > 0) ? v : null;
+  }
+
+  // A fact entry's optional numeric fields, when PRESENT, must already be a
+  // finite non-negative number - a string like n:"5" (which would otherwise
+  // silently concatenate into "51" on a future recordAnswer) drops the whole
+  // entry rather than being coerced.
+  function isValidFactEntry(entry) {
+    for (var i = 0; i < FACT_NUMERIC_FIELDS.length; i++) {
+      var v = entry[FACT_NUMERIC_FIELDS[i]];
+      if (v === undefined) continue;
+      if (typeof v !== 'number' || !isFinite(v) || v < 0) return false;
+    }
+    return true;
+  }
+
+  // player: parsed.player when it is a string, CR/LF collapsed to spaces,
+  // trimmed, capped at MAX_PLAYER_LEN - mirrors engine.js normalizeCfg's
+  // label sanitization. null when absent, non-string, or empty after trim.
+  function sanitizePlayer(v) {
+    if (typeof v !== 'string') return null;
+    var cleaned = v.replace(/[\r\n]/g, ' ').trim().slice(0, MAX_PLAYER_LEN);
+    return cleaned.length > 0 ? cleaned : null;
+  }
+
   function importProfile(json, stats, earned) {
     stats = isPlainObject(stats) ? stats : {};
     earned = isPlainObject(earned) ? earned : {};
@@ -323,26 +377,35 @@
     var parsed;
     if (typeof json === 'string') {
       try { parsed = JSON.parse(json); }
-      catch (e) { return { ok: false, stats: stats, earned: earned, error: 'not valid JSON' }; }
+      catch (e) { return { ok: false, stats: stats, earned: earned, error: 'not valid JSON', player: null }; }
     } else {
       parsed = json;
     }
 
     if (!isPlainObject(parsed)) {
-      return { ok: false, stats: stats, earned: earned, error: 'not a profile' };
+      return { ok: false, stats: stats, earned: earned, error: 'not a profile', player: null };
     }
     if (parsed.schema !== SCHEMA) {
-      return { ok: false, stats: stats, earned: earned, error: 'unrecognized profile format' };
+      return { ok: false, stats: stats, earned: earned, error: 'unrecognized profile format', player: null };
     }
     if (parsed.skill !== FRAMEWORK.id) {
-      return { ok: false, stats: stats, earned: earned, error: 'unknown skill: ' + String(parsed.skill) + ' (expected ' + FRAMEWORK.id + ')' };
+      return { ok: false, stats: stats, earned: earned, error: 'unknown skill: ' + String(parsed.skill) + ' (expected ' + FRAMEWORK.id + ')', player: null };
     }
 
     var mergedStats = clone(stats);
     var importedFacts = isPlainObject(parsed.facts) ? parsed.facts : {};
+    var acceptedFactKeys = 0;
     Object.keys(importedFacts).forEach(function (k) {
+      // Shape-invalid keys never count toward the cap - only real fact-key-
+      // shaped entries can consume it.
+      if (!FACT_KEY_RE.test(k)) return;
+      if (acceptedFactKeys >= MAX_IMPORTED_FACT_KEYS) return;
+      acceptedFactKeys++;
+
       var incoming = importedFacts[k];
       if (!isPlainObject(incoming)) return;
+      if (!isValidFactEntry(incoming)) return;
+
       var existing = mergedStats[k];
       if (!existing) { mergedStats[k] = clone(incoming); return; }
       var existN = numOr(existing.n, 0);
@@ -359,19 +422,29 @@
 
     var mergedEarned = clone(earned);
     var importedEarned = isPlainObject(parsed.earned) ? parsed.earned : {};
+    var acceptedUnknownEarned = 0;
     Object.keys(importedEarned).forEach(function (id) {
       var incoming = importedEarned[id];
       if (!isPlainObject(incoming)) return;
-      var incStars = numOr(incoming.stars, 0);
-      var incMasteredAt = (incoming.masteredAt != null && typeof incoming.masteredAt === 'number' && !isNaN(incoming.masteredAt)) ? incoming.masteredAt : null;
+
+      // Known skill ids are always processed (bounded by the fixed 12-skill
+      // path); an unknown id is kept for forward compat (interpretation 4)
+      // but capped so a hostile/corrupt file can't grow earned unbounded.
+      if (!skillById(id)) {
+        if (acceptedUnknownEarned >= MAX_UNKNOWN_EARNED_IDS) return;
+        acceptedUnknownEarned++;
+      }
+
+      var incStars = clampStars(incoming.stars);
+      var incMasteredAt = normalizeMasteredAt(incoming.masteredAt);
 
       var existing = mergedEarned[id];
       if (!existing) {
         mergedEarned[id] = { stars: incStars, masteredAt: incMasteredAt };
         return;
       }
-      var existStars = numOr(existing.stars, 0);
-      var existMasteredAt = (existing.masteredAt != null && typeof existing.masteredAt === 'number' && !isNaN(existing.masteredAt)) ? existing.masteredAt : null;
+      var existStars = clampStars(existing.stars);
+      var existMasteredAt = normalizeMasteredAt(existing.masteredAt);
 
       mergedEarned[id] = {
         stars: Math.max(existStars, incStars),
@@ -379,7 +452,7 @@
       };
     });
 
-    return { ok: true, stats: mergedStats, earned: mergedEarned, error: null };
+    return { ok: true, stats: mergedStats, earned: mergedEarned, error: null, player: sanitizePlayer(parsed.player) };
   }
 
   /* ---------------------------------------------------------------- *

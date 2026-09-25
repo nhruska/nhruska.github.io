@@ -462,6 +462,133 @@ test('importProfile merge: earned masteredAt falls back to whichever side actual
   assert.strictEqual(r.earned['add-10'].masteredAt, 7000);
 });
 
+/* -------------------------------------------------------------------
+ * importProfile hardening (review finding #7 on PR #355)
+ * ------------------------------------------------------------------- */
+
+test('importProfile: earned stars are clamped to 0-3 (floored, non-numeric -> 0), visible in path()/masteredCount', function () {
+  var earnedIn = {};
+  earnedIn['add-10'] = { stars: 99, masteredAt: null };
+  earnedIn['sub-10'] = { stars: -1, masteredAt: null };
+  earnedIn['add-20'] = { stars: 2.7, masteredAt: null };
+  earnedIn['sub-20'] = { stars: '3', masteredAt: null };
+  var doc = { schema: 'skill-competency-profile/v1', skill: 'arithmetic-facts', facts: {}, earned: earnedIn };
+
+  var r = MS.importProfile(doc, {}, {});
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.earned['add-10'].stars, 3, 'stars 99 must clamp to 3, not overflow');
+  assert.strictEqual(r.earned['sub-10'].stars, 0, 'negative stars must clamp to 0');
+  assert.strictEqual(r.earned['add-20'].stars, 2, 'fractional stars must floor');
+  assert.strictEqual(r.earned['sub-20'].stars, 0, 'a non-numeric stars value must become 0, never coerced');
+
+  var p = MS.path({}, r.earned);
+  var addTen = p.skills.filter(function (e) { return e.skill.id === 'add-10'; })[0];
+  assert.strictEqual(addTen.stars, 3, 'the clamped 3 must be visible through path()');
+  assert.strictEqual(p.masteredCount, 1, 'masteredCount must reflect the clamped stars - stars:99 must not show 3 stars while masteredCount stays 0');
+});
+
+test('importProfile: earned masteredAt only accepts a positive finite number, else null - never invents a time', function () {
+  var earnedIn = {};
+  earnedIn['add-10'] = { stars: 3, masteredAt: -5 };
+  earnedIn['sub-10'] = { stars: 3, masteredAt: 'x' };
+  earnedIn['add-20'] = { stars: 3, masteredAt: Infinity };
+  var doc = { schema: 'skill-competency-profile/v1', skill: 'arithmetic-facts', facts: {}, earned: earnedIn };
+
+  var r = MS.importProfile(doc, {}, {});
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.earned['add-10'].stars, 3, 'stars still clamp/keep correctly even when masteredAt is rejected');
+  assert.strictEqual(r.earned['add-10'].masteredAt, null, 'a negative masteredAt must become null, never kept as-is');
+  assert.strictEqual(r.earned['sub-10'].masteredAt, null, 'a non-numeric masteredAt must become null');
+  assert.strictEqual(r.earned['add-20'].masteredAt, null, 'Infinity is not finite - must become null');
+});
+
+test('importProfile: an unknown earned id is kept for forward compatibility but capped at a small bound', function () {
+  var earnedIn = {};
+  for (var i = 0; i < 60; i++) earnedIn['future-skill-' + i] = { stars: 1, masteredAt: null };
+  var doc = { schema: 'skill-competency-profile/v1', skill: 'arithmetic-facts', facts: {}, earned: earnedIn };
+
+  var r = MS.importProfile(doc, {}, {});
+  assert.strictEqual(r.ok, true);
+  var unknownCount = Object.keys(r.earned).filter(function (id) { return MS.skillById(id) === null; }).length;
+  assert.ok(unknownCount > 0, 'at least some unknown ids should be kept under the cap');
+  assert.ok(unknownCount <= 50, 'unknown earned ids must be capped, got ' + unknownCount);
+});
+
+test('importProfile: a fact entry with a string numeric field (n: "5") is dropped entirely, never concatenated', function () {
+  var incoming = { 'x:2:3': { n: '5', ok: 1 } };
+  var doc = { schema: 'skill-competency-profile/v1', skill: 'arithmetic-facts', facts: incoming, earned: {} };
+  var r = MS.importProfile(doc, {}, {});
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.stats['x:2:3'], undefined, 'an entry with a string numeric field must never be merged');
+
+  // The same must hold when an existing entry is already present: the bad
+  // incoming entry is dropped, the existing one is kept unchanged.
+  var local = { 'x:2:3': { n: 1, ok: 1 } };
+  var r2 = MS.importProfile(doc, local, {});
+  assert.deepStrictEqual(r2.stats['x:2:3'], local['x:2:3'], 'a dropped incoming entry must never overwrite an existing one');
+});
+
+test('importProfile: a fact key that fails the shape check is dropped, and never counts toward the cap', function () {
+  var incoming = {};
+  incoming['not-a-real-key'] = { n: 1, ok: 1 };
+  incoming['x:2:3'] = { n: 1, ok: 1 };
+  var doc = { schema: 'skill-competency-profile/v1', skill: 'arithmetic-facts', facts: incoming, earned: {} };
+  var r = MS.importProfile(doc, {}, {});
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.stats['not-a-real-key'], undefined, 'a junk key must never be imported');
+  assert.deepStrictEqual(r.stats['x:2:3'], { n: 1, ok: 1 }, 'a real-shaped key alongside a junk one must still import');
+});
+
+test('importProfile: caps the number of imported fact keys at a sane bound (5000)', function () {
+  var incoming = {};
+  for (var i = 0; i < 6000; i++) incoming['+:' + i + ':0'] = { n: 1 };
+  var doc = { schema: 'skill-competency-profile/v1', skill: 'arithmetic-facts', facts: incoming, earned: {} };
+  var r = MS.importProfile(doc, {}, {});
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(Object.keys(r.stats).length, 5000, 'a 6000-key file must be capped at the 5000-key bound');
+});
+
+test('importProfile: player is returned sanitized (CR/LF collapsed, trimmed, capped at 40 chars), or null when absent/non-string', function () {
+  var docWithName = MS.exportProfile('Kid E\r\nRow2', {}, {}, 1000);
+  var r1 = MS.importProfile(docWithName, {}, {});
+  assert.strictEqual(r1.ok, true);
+  assert.strictEqual(r1.player, 'Kid E  Row2', 'player must have CR/LF replaced with spaces and be trimmed');
+
+  var longName = new Array(60).join('x'); // 59 x's
+  var docLong = MS.exportProfile(longName, {}, {}, 1000);
+  var r2 = MS.importProfile(docLong, {}, {});
+  assert.strictEqual(r2.player.length, 40, 'player must be capped at 40 chars');
+
+  var docNonString = { schema: 'skill-competency-profile/v1', skill: 'arithmetic-facts', facts: {}, earned: {}, player: 42 };
+  var r3 = MS.importProfile(docNonString, {}, {});
+  assert.strictEqual(r3.player, null, 'a non-string player must be null');
+
+  var docBlank = { schema: 'skill-competency-profile/v1', skill: 'arithmetic-facts', facts: {}, earned: {}, player: '   ' };
+  var r4 = MS.importProfile(docBlank, {}, {});
+  assert.strictEqual(r4.player, null, 'an empty/whitespace-only player must be null');
+
+  var rBad = MS.importProfile('{not valid json', {}, {});
+  assert.strictEqual(rBad.player, null, 'player must be null on every ok:false path');
+});
+
+test('importProfile: a real exportProfile output still imports losslessly after the hardening (regression guard)', function () {
+  var sk = MS.skillById('x-6-7');
+  var keys = MS.factKeys(sk);
+  var stats = {};
+  stats[keys[0]] = { n: 4, ok: 2, ms: 1200, last: 8000, box: 3 };
+  stats[keys[1]] = { n: 1, ok: 0, ms: 3000, last: 9000, box: 0 };
+  var earned = {};
+  earned[sk.id] = { stars: 3, masteredAt: 7000 };
+
+  var doc = MS.exportProfile('Kid F', stats, earned, 10000);
+  var r = MS.importProfile(doc, {}, {});
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.error, null);
+  assert.deepStrictEqual(r.stats, stats);
+  assert.deepStrictEqual(r.earned, earned);
+  assert.strictEqual(r.player, 'Kid F');
+});
+
 test('importProfile rejects wrong schema, ok:false, inputs untouched', function () {
   var stats = { k: { n: 1 } };
   var earned = { 'add-10': { stars: 1, masteredAt: null } };
