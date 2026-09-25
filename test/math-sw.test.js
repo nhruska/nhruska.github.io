@@ -5,7 +5,7 @@
  * Asserts, from the REAL source (regex-extracted; these are classic
  * <script>-tag / importScripts files, no module boundary to require()):
  *
- *   (a) math/version.js exports a 'math-v<digits>' MATH_VERSION.
+ *   (a) math/version.js exports a 'math-v<PR#>[-<n>]' MATH_VERSION.
  *   (b) every CORE-listed relative path in math/sw.js resolves to a real
  *       file/dir on disk (resolved relative to math/, ignoring './').
  *   (c) math/sw.js's activate handler only ever deletes 'math-' caches, and
@@ -78,11 +78,11 @@ var mathVersionSrc = fs.existsSync(MATH_VERSION_PATH) ? fs.readFileSync(MATH_VER
 var musicSwSrc = fs.readFileSync(MUSIC_SW_PATH, 'utf8');
 
 /* ---------- version ---------- */
-test('math/version.js exports a math-v<digits> MATH_VERSION', function () {
+test('math/version.js exports a math-v<PR#>[-<n>] MATH_VERSION (per-commit counter, like Music)', function () {
   assert.ok(mathVersionSrc, 'math/version.js is missing');
   var m = /MATH_VERSION\s*=\s*'([^']+)'/.exec(stripLineComments(mathVersionSrc));
   assert.ok(m, 'could not find "root.MATH_VERSION = \'...\'" in math/version.js');
-  assert.ok(/^math-v\d+$/.test(m[1]), 'MATH_VERSION should look like math-v<digits>, got ' + m[1]);
+  assert.ok(/^math-v\d+(-\d+)?$/.test(m[1]), 'MATH_VERSION should look like math-v<PR#> or math-v<PR#>-<n>, got ' + m[1]);
 });
 
 /* ---------- CORE precache (math/sw.js) ---------- */

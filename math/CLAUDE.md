@@ -17,9 +17,10 @@ persistence only) + `math.css` + `version.js` + `sw.js` + `manifest.webmanifest`
 
 ## Conventions that bite if ignored
 
-- **`math-v<PR#>` in `version.js` is the ONE version** - `sw.js` reads it via
-  `importScripts('version.js')`. Bump = a new PR number (version-is-the-
-  PR-number, per `music/CLAUDE.md`), never a manual literal edit.
+- **`math-v<PR#>[-<n>]` in `version.js` is the ONE version** - `sw.js` reads it
+  via `importScripts('version.js')`. First Math-asset commit on a PR uses
+  `math-v<PR#>`, each later pushed batch appends a counter (`-2`, `-3`), same as
+  Music's S-SW-PER-COMMIT, so Settings' build line shows which push a phone has.
 - **Network-first SW, `math-` caches only.** `sw.js` activate must never touch
   a cache outside its own `math-` family - the origin also hosts Music's
   `music-` caches; either deleting the other's evicts its offline install
