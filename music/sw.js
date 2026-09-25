@@ -17,7 +17,7 @@
  * cache-bump history lives in git log + engineering-wiki/change-history.md.
  * ===================================================================== */
 'use strict';
-var CACHE = 'music-v353-2';
+var CACHE = 'music-v355';
 // Everything precached for offline use. Every shared/*.js that play/index.html
 // or play/triad-inversions.html script-tags MUST appear here, or an offline
 // install 404s on it (test/sw-verify.test.js guards this). The list order is
@@ -78,7 +78,10 @@ self.addEventListener('install', function (e) {
 self.addEventListener('activate', function (e) {
   e.waitUntil(
     caches.keys().then(function (keys) {
-      return Promise.all(keys.map(function (k) { if (k !== CACHE) return caches.delete(k); }));
+      // Only ever touch OUR OWN caches (the 'music-' family) - the origin also
+      // hosts the Math app's 'math-' caches (math/sw.js), and wiping those on
+      // Music's activate would silently evict Math's offline install.
+      return Promise.all(keys.map(function (k) { if (k.indexOf('music-') === 0 && k !== CACHE) return caches.delete(k); }));
     }).then(function () { return self.clients.claim(); })
   );
 });

@@ -33,6 +33,10 @@ Theme is a single `<html data-theme="light">` / `<html data-theme="dark">` attri
 
 A page OUTSIDE `music/` (an artifact pack under `docs/artifacts/`) cannot load `theme.js` by relative path across that boundary and does not need the app's Settings-driven accent picker - it only needs to **agree on light/dark**, so it may inline just the `stored`/`prefersLight`/`eff` resolution (skip the `window.Theme` branch) and hardcode its OWN copy of the token values below rather than `@import`ing `songbook.css` (that file is Music-app-specific: chord grids, diagram tokens, a Google Fonts `@import`). Copying values is fine; inventing DIFFERENT values is the violation this page exists to prevent.
 
+### Third consumption mode: a sibling app under the site root [STABLE]
+
+A sibling app at the site root (e.g. `math/`, added `docs/plans/goal-math-app-v1-20260925.md`) is neither "inside `music/`" nor "a standalone artifact page outside the repo's reach" - it lives alongside `music/` and CAN reach `music/shared/` by a plain relative path (`../music/shared/theme.js`). That app **links the real files directly and never copies values**: `<script src="../music/shared/theme.js">` for `Theme.effectiveTheme`/`Theme.accentVars`/`Theme.PALETTE`, and its own CSS reuses the token values from `songbook.css` (or `@import`s it, if it wants the whole ruleset) rather than re-declaring the hex list. A fix to a shared token or to `PALETTE` then reaches every sibling app for free, with nothing to keep in sync by hand - the failure mode the "copy the boot script" guidance above exists to bound for pages that genuinely cannot reach the source.
+
 ## The token values (copy these, don't invent new ones) [STABLE]
 
 Dark (default, `songbook.css:14-18`):
@@ -53,7 +57,7 @@ Light (`songbook.css:111-115`, only the flipping subset):
 --accent-dim:#bfe6df; --accent-deep:#e7f6f2; --accent-ink:#0f766e;
 ```
 
-`--accent` itself is user-pickable (`music.accent.v1`, 8-swatch palette in `index.html`'s `PALETTE`) and stays fixed across themes; only `--accent-dim`/`--accent-deep`/`--accent-ink` re-derive per theme. A consumer that isn't offering an accent picker should just keep the default teal (`#5eead4`) and not build its own picker.
+`--accent` itself is user-pickable (`music.accent.v1`, the 8-swatch `Theme.PALETTE` in `music/shared/theme.js` - moved out of `play/index.html`'s inline script so a sibling app can read the same array, docs/plans/goal-math-app-v1-20260925.md) and stays fixed across themes; only `--accent-dim`/`--accent-deep`/`--accent-ink` re-derive per theme. A consumer that isn't offering an accent picker should just keep the default teal (`#5eead4`) and not build its own picker.
 
 ## Fonts (part of the same visual identity) [STABLE]
 

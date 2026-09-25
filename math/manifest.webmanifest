@@ -1,0 +1,15 @@
+{
+  "name": "Math Workout",
+  "short_name": "Math",
+  "description": "Timed math workouts for kids and grown-ups: add, subtract, times tables and division, with player profiles and a coach that drills your slowest facts.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d0f12",
+  "theme_color": "#0d0f12",
+  "categories": ["education", "kids"],
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

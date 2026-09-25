@@ -59,4 +59,23 @@ test('light ink darkens (mix toward a near-black teal), so it reads on light sur
   assert.ok(/#0a1f1b/.test(ink), 'ink mixes toward the dark anchor for legibility, got ' + ink);
 });
 
+/* ---------- PALETTE ---------- */
+test('PALETTE has exactly 8 swatches', function () {
+  assert.ok(Array.isArray(Theme.PALETTE), 'Theme.PALETTE must be an array');
+  assert.strictEqual(Theme.PALETTE.length, 8);
+});
+test('Teal is first (the fresh-install default)', function () {
+  assert.strictEqual(Theme.PALETTE[0].n, 'Teal');
+  assert.strictEqual(Theme.PALETTE[0].a, '#5eead4');
+});
+test('every swatch has n/a/d/p hex values', function () {
+  var hex = /^#[0-9a-f]{6}$/i;
+  Theme.PALETTE.forEach(function (t) {
+    assert.ok(typeof t.n === 'string' && t.n.length > 0, 'swatch missing a name: ' + JSON.stringify(t));
+    ['a', 'd', 'p'].forEach(function (k) {
+      assert.ok(hex.test(t[k]), t.n + '.' + k + ' should be a hex color, got ' + t[k]);
+    });
+  });
+});
+
 run();
