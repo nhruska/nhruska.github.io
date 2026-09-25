@@ -45,6 +45,24 @@
  *     mirrors the codebase's general distrust of implicit coercion (see
  *     engine.js's own explicit `typeof === 'number'` guards throughout)
  *     rather than letting `Math.floor("3")` silently accept a string.
+ *  7. importProfile() re-hardened (review finding N10 on PR #355,
+ *     re-review). Accepted fact keys are validated against the real key
+ *     UNIVERSE (every key MathEngine.pool() can produce across the widest
+ *     per-op config), never a shape-only regex - 'x:13:2' and '+:0:5'
+ *     both matched the old op:int:int regex but neither is a fact any
+ *     skill can ever produce. A fact entry's `n` is now REQUIRED (a
+ *     finite integer >= 1): an empty `{}` entry used to survive the old
+ *     check (no field was present to fail) and would read as n: undefined
+ *     on the next recordAnswer(), silently becoming NaN. The 5000-key cap
+ *     now increments only AFTER an entry passes every validity check
+ *     (real key + object + valid n + valid optional fields), so a batch
+ *     of invalid entries can never consume the cap ahead of a real fact -
+ *     mirrors buildSet's interpretation 1, importProfile() also gained an
+ *     optional trailing `now` (epoch ms): when supplied, an imported
+ *     `last` in now's future is clamped to now (a corrupt or hostile
+ *     import can never win a same-n merge tie by outdating real evidence
+ *     with a fabricated future timestamp); when `now` is omitted, `last`
+ *     is left exactly as imported, same as before this hardening.
  * ===================================================================== */
 (function (root) {
   'use strict';
@@ -54,14 +72,37 @@
   var SCHEMA = 'skill-competency-profile/v1';
   var EXPORT_SOURCE = 'app:math';
 
-  // importProfile() hardening (review finding #7 on PR #355). Fact keys are
-  // the literal op char (+, -, x, /) from engine.js's makeFact(), never the
-  // display GLYPH - verified against every SKILLS.factKeys() output.
-  var FACT_KEY_RE = /^[-+x/]:\d+:\d+$/;
-  var FACT_NUMERIC_FIELDS = ['n', 'miss', 'box', 'ms', 'last', 'ok'];
-  var MAX_IMPORTED_FACT_KEYS = 5000; // so a 50k-key file can't bloat storage
+  // importProfile() hardening (review finding #7 on PR #355, re-hardened
+  // for review finding N10 - see interpretation 7 above). Fact keys are
+  // the literal op char (+, -, x, /) from engine.js's makeFact(), never
+  // the display GLYPH - verified against every SKILLS.factKeys() output.
+  // FACT_OPTIONAL_NUMERIC_FIELDS excludes `n`: `n` is REQUIRED (see
+  // isValidFactEntry below); these five are validated only when present.
+  var FACT_OPTIONAL_NUMERIC_FIELDS = ['miss', 'box', 'ms', 'last', 'ok'];
+  var MAX_IMPORTED_FACT_KEYS = 5000; // guard only (interpretation 7) - the
+  // real key universe below tops out at a few hundred keys, so valid
+  // entries alone can never reach this bound; kept in case it ever grows.
   var MAX_UNKNOWN_EARNED_IDS = 50; // forward-compat ids (interpretation 4), bounded
   var MAX_PLAYER_LEN = 40; // mirrors engine.js normalizeCfg's label cap
+
+  // The accepted fact-key universe: every key MathEngine.pool() can
+  // produce, across the widest possible config for each op - never a
+  // shape-only regex (interpretation 7 / review finding N10: 'x:13:2' and
+  // '+:0:5' both matched the old op:int:int regex but neither is a fact
+  // any skill can ever produce). Built once at module load.
+  // Object.create(null) so a hostile import key like "constructor" or
+  // "toString" can never read a truthy value off Object.prototype instead
+  // of a genuine membership miss.
+  var FACT_KEY_UNIVERSE = (function () {
+    var set = Object.create(null);
+    ['+', '-'].forEach(function (op) {
+      ME.pool(op, { addRange: 20 }).forEach(function (f) { set[f.key] = true; });
+    });
+    ['x', '/'].forEach(function (op) {
+      ME.pool(op, { tables: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], max: 12 }).forEach(function (f) { set[f.key] = true; });
+    });
+    return set;
+  })();
 
   /* ---------------------------------------------------------------- *
    * SKILLS - the ordered path. ids are the portable contract, verbatim.
@@ -348,17 +389,40 @@
     return (typeof v === 'number' && isFinite(v) && v > 0) ? v : null;
   }
 
-  // A fact entry's optional numeric fields, when PRESENT, must already be a
-  // finite non-negative number - a string like n:"5" (which would otherwise
-  // silently concatenate into "51" on a future recordAnswer) drops the whole
-  // entry rather than being coerced.
+  // A fact entry's `n` (answer count) is REQUIRED - a finite integer >= 1,
+  // never optional (interpretation 7 / review finding N10): an entry with
+  // no n, or n: 0 / a fractional n, is dropped outright rather than
+  // surviving as an effectively-empty stat that reads as n: undefined and
+  // becomes NaN on the next recordAnswer(). Its other optional numeric
+  // fields, when PRESENT, must already be a finite non-negative number - a
+  // string like n:"5" (which would otherwise silently concatenate into
+  // "51" on a future recordAnswer) drops the whole entry rather than being
+  // coerced.
   function isValidFactEntry(entry) {
-    for (var i = 0; i < FACT_NUMERIC_FIELDS.length; i++) {
-      var v = entry[FACT_NUMERIC_FIELDS[i]];
+    var n = entry.n;
+    if (typeof n !== 'number' || !isFinite(n) || n < 1 || Math.floor(n) !== n) return false;
+    for (var i = 0; i < FACT_OPTIONAL_NUMERIC_FIELDS.length; i++) {
+      var v = entry[FACT_OPTIONAL_NUMERIC_FIELDS[i]];
       if (v === undefined) continue;
       if (typeof v !== 'number' || !isFinite(v) || v < 0) return false;
     }
     return true;
+  }
+
+  // Clamp an imported entry's `last` to <= now (interpretation 7 / review
+  // finding N10): a `last` in now's future can never be genuine evidence,
+  // and left alone could let a corrupt/hostile import win a same-n merge
+  // tie by outdating real data with a fabricated future timestamp. Fires
+  // only when `now` is a finite number and the entry's `last` is actually
+  // in its future; otherwise the entry is returned unchanged (same
+  // reference - no clone needed on the no-op path).
+  function clampImportedLast(entry, now) {
+    if (typeof now !== 'number' || !isFinite(now)) return entry;
+    if (typeof entry.last !== 'number' || entry.last <= now) return entry;
+    var clamped = {};
+    Object.keys(entry).forEach(function (k) { clamped[k] = entry[k]; });
+    clamped.last = now;
+    return clamped;
   }
 
   // player: parsed.player when it is a string, CR/LF collapsed to spaces,
@@ -370,7 +434,7 @@
     return cleaned.length > 0 ? cleaned : null;
   }
 
-  function importProfile(json, stats, earned) {
+  function importProfile(json, stats, earned, now) {
     stats = isPlainObject(stats) ? stats : {};
     earned = isPlainObject(earned) ? earned : {};
 
@@ -396,15 +460,22 @@
     var importedFacts = isPlainObject(parsed.facts) ? parsed.facts : {};
     var acceptedFactKeys = 0;
     Object.keys(importedFacts).forEach(function (k) {
-      // Shape-invalid keys never count toward the cap - only real fact-key-
-      // shaped entries can consume it.
-      if (!FACT_KEY_RE.test(k)) return;
-      if (acceptedFactKeys >= MAX_IMPORTED_FACT_KEYS) return;
-      acceptedFactKeys++;
+      // Only a key MathEngine.pool() can actually produce is a candidate -
+      // never a shape-only match (interpretation 7 / review finding N10).
+      if (!FACT_KEY_UNIVERSE[k]) return;
 
       var incoming = importedFacts[k];
       if (!isPlainObject(incoming)) return;
       if (!isValidFactEntry(incoming)) return;
+
+      // Cap only valid entries (interpretation 7 / review finding N10):
+      // validate FIRST, count SECOND, so a batch of key-shaped-but-unreal
+      // or malformed entries can never crowd out a real fact that arrives
+      // after them.
+      if (acceptedFactKeys >= MAX_IMPORTED_FACT_KEYS) return;
+      acceptedFactKeys++;
+
+      incoming = clampImportedLast(incoming, now);
 
       var existing = mergedStats[k];
       if (!existing) { mergedStats[k] = clone(incoming); return; }
