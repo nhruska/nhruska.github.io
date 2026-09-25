@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-24T14:15:17Z",
+  "generatedAt": "2026-09-25T14:38:39Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-09-23T14:16:57Z",
-    "sha": "297a3c97812993ea01359e28364f9c31d8616886",
+    "date": "2026-09-24T14:15:29Z",
+    "sha": "7258fe1c3903675a8d6a0075b210fa3f99d1f88e",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/297a3c97812993ea01359e28364f9c31d8616886"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/7258fe1c3903675a8d6a0075b210fa3f99d1f88e"
   },
   "commits": [
+    {
+      "date": "2026-09-24T14:15:29Z",
+      "sha": "7258fe1c3903675a8d6a0075b210fa3f99d1f88e",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/7258fe1c3903675a8d6a0075b210fa3f99d1f88e"
+    },
     {
       "date": "2026-09-23T14:16:57Z",
       "sha": "297a3c97812993ea01359e28364f9c31d8616886",
@@ -84,15 +90,33 @@
       "sha": "4168e46ea376d9ae584a77c740851b71bf09be21",
       "subject": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/4168e46ea376d9ae584a77c740851b71bf09be21"
-    },
-    {
-      "date": "2026-09-13T13:49:55Z",
-      "sha": "f2dc5a0e9ae8e66741b4983fa5d0e98a39f10283",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/f2dc5a0e9ae8e66741b4983fa5d0e98a39f10283"
     }
   ],
   "openPRs": [
+    {
+      "number": 355,
+      "title": "Math app v1: timed workouts + skills path at /math/, landing lists 2 apps",
+      "branch": "claude/math-workout-app-launch-isdkyd",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/355",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36135813786/job/108073493899"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36135813916/job/108073494409"
+        }
+      ]
+    },
     {
       "number": 352,
       "title": "Round 19: a new song raises the theater (scrimmed), and the dock stops eating tuner strings",
@@ -349,14 +373,14 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-09-24T14:15:12Z",
+    "runStartedAt": "2026-09-25T14:38:34Z",
     "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36011432150",
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36148846688",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 1,
+    "merged_count": 0,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
     "typical_merge_hours": 1.79,
