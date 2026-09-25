@@ -1,4 +1,4 @@
-# CLAUDE.md — the Math app (`math/`)
+# CLAUDE.md - the Math app (`math/`)
 
 > Math-app-specific guidance. Repo-root [CLAUDE.md](../CLAUDE.md) owns the
 > app-wide agreement; [music/CLAUDE.md](../music/CLAUDE.md) is the reference
