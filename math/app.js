@@ -111,6 +111,8 @@
   var BUZZ = { tick: 8, ok: 22, bad: [40, 50, 40], done: [30, 60, 90], level: [60, 40, 60, 40, 160] };
   function buzz(kind) {
     if (!BUZZ[kind] || !prefs().haptics || !navigator.vibrate) return;
+    // Browsers block (and log) vibrate before the first tap - e.g. a level-up shown at launch.
+    if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
     try { navigator.vibrate(BUZZ[kind]); } catch (e) {}
   }
 

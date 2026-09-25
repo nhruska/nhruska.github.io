@@ -7,6 +7,6 @@
  * ===================================================================== */
 (function (root) {
   'use strict';
-  root.MATH_VERSION = 'math-v355-5';
+  root.MATH_VERSION = 'math-v355-6';
   if (typeof module !== 'undefined' && module.exports) module.exports = root.MATH_VERSION;
 })(typeof self !== 'undefined' ? self : this);
