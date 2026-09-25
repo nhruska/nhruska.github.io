@@ -54,7 +54,9 @@ welcomeDone seed - tour scenarios), "persona" + "dismissNotables" (guidance-leve
 fixture), and "seed" - a {localStorage key: string value} map applied BEFORE any
 page script runs, for persona fixtures that need app STATE (a heavy setlist, an
 in-flight song draft). Values are stored verbatim - JSON-encode structured values
-yourself in the scenario file.
+yourself in the scenario file. Seeds are init scripts, so they are RE-APPLIED on
+every navigation (goto, reload): a fixture step that edits a seeded key and then
+navigates loses its edit. Write such keys from the step itself, not "seed".
 """
 import glob
 import json

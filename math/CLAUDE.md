@@ -41,6 +41,10 @@ the 12-skill path, stars, earned, portable export/import) + `store.js`
 
 ## Tests + preview
 
+A scenario that looks for a specific fact must match BOTH operand orders: the
+engine shows `+:4:5` as "4 + 5" or "5 + 4" (and `x` likewise), so a check on one
+spelling fails on a correct run about half the time the fact comes up.
+
 `node test/run-all.js` (discovers `test/math-*.test.js` automatically) +
 `test/pw/scenarios/math-*.json` declarative flows
 (`python3 test/pw/run-scenario.py test/pw/scenarios/<name>.json`).
