@@ -539,13 +539,16 @@ test('importProfile: a fact key that fails the shape check is dropped, and never
   assert.deepStrictEqual(r.stats['x:2:3'], { n: 1, ok: 1 }, 'a real-shaped key alongside a junk one must still import');
 });
 
-test('importProfile: caps the number of imported fact keys at a sane bound (5000)', function () {
+test('importProfile: a large batch of key-shaped-but-unreal facts is rejected wholesale, not merely capped', function () {
+  // Same shape a naive regex-only check would have accepted (op:int:int),
+  // but ':0' is never a real second operand for '+' (operands run 1-9) -
+  // none of these 6000 keys can ever be produced by MathEngine.pool().
   var incoming = {};
   for (var i = 0; i < 6000; i++) incoming['+:' + i + ':0'] = { n: 1 };
   var doc = { schema: 'skill-competency-profile/v1', skill: 'arithmetic-facts', facts: incoming, earned: {} };
   var r = MS.importProfile(doc, {}, {});
   assert.strictEqual(r.ok, true);
-  assert.strictEqual(Object.keys(r.stats).length, 5000, 'a 6000-key file must be capped at the 5000-key bound');
+  assert.strictEqual(Object.keys(r.stats).length, 0, 'not one of these unreal keys should import, cap or no cap');
 });
 
 test('importProfile: player is returned sanitized (CR/LF collapsed, trimmed, capped at 40 chars), or null when absent/non-string', function () {
@@ -624,6 +627,104 @@ test('importProfile rejects a non-object payload (number/array/null)', function 
     var r = MS.importProfile(junk, {}, {});
     assert.strictEqual(r.ok, false, 'should reject ' + JSON.stringify(junk));
   });
+});
+
+/* -------------------------------------------------------------------
+ * importProfile hardening, round 2 (review finding N10 on PR #355,
+ * re-review): a real fact-key universe (not a shape regex), a REQUIRED n
+ * on every fact entry, validate-before-count on the 5000-key cap, and an
+ * optional trailing `now` that bounds an imported `last`.
+ * ------------------------------------------------------------------- */
+
+test('importProfile: an empty fact entry ({}) is dropped - no n means it would become NaN on the next answer', function () {
+  var incoming = { 'x:2:3': {} };
+  var doc = { schema: 'skill-competency-profile/v1', skill: 'arithmetic-facts', facts: incoming, earned: {} };
+  var r = MS.importProfile(doc, {}, {});
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.stats['x:2:3'], undefined, 'an entry with no n must never be merged');
+});
+
+test('importProfile: n must be a finite integer >= 1 - n: 0 and a fractional n are dropped', function () {
+  var incoming = {
+    'x:2:4': { n: 0, ok: 1 },
+    'x:2:5': { n: 1.5, ok: 1 }
+  };
+  var doc = { schema: 'skill-competency-profile/v1', skill: 'arithmetic-facts', facts: incoming, earned: {} };
+  var r = MS.importProfile(doc, {}, {});
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.stats['x:2:4'], undefined, 'n: 0 is not a valid answer count');
+  assert.strictEqual(r.stats['x:2:5'], undefined, 'n must be a whole number');
+});
+
+test('importProfile: a well-shaped key that is not a real fact is dropped, even though it matches the old op:int:int regex', function () {
+  var incoming = {
+    'x:13:2': { n: 1, ok: 1 },  // 13 is outside every table/max (1-12)
+    '+:0:5': { n: 1, ok: 1 }    // '+' operands run 1-9, never 0
+  };
+  var doc = { schema: 'skill-competency-profile/v1', skill: 'arithmetic-facts', facts: incoming, earned: {} };
+  var r = MS.importProfile(doc, {}, {});
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.stats['x:13:2'], undefined, '13 is outside the 1-12 universe on every op');
+  assert.strictEqual(r.stats['+:0:5'], undefined, '0 is never a real + operand');
+});
+
+test('importProfile: every real SKILLS.factKeys() key across all 12 skills is accepted by the fact-key universe', function () {
+  var incoming = {};
+  MS.SKILLS.forEach(function (sk) {
+    MS.factKeys(sk).forEach(function (k) { incoming[k] = { n: 1 }; });
+  });
+  var doc = { schema: 'skill-competency-profile/v1', skill: 'arithmetic-facts', facts: incoming, earned: {} };
+  var r = MS.importProfile(doc, {}, {});
+  assert.strictEqual(r.ok, true);
+  var missing = Object.keys(incoming).filter(function (k) { return r.stats[k] === undefined; });
+  assert.deepStrictEqual(missing, [], 'every real SKILLS fact key must import, none should be treated as unreal');
+});
+
+test('importProfile: invalid entries never count toward the 5000-key cap - a real fact after 5000 of them is still kept', function () {
+  var incoming = {};
+  for (var i = 0; i < 5000; i++) incoming['+:' + i + ':999'] = { n: 1 }; // unreal - 999 is never an operand
+  incoming['x:2:3'] = { n: 1, ok: 1 }; // one real fact, inserted last
+  var doc = { schema: 'skill-competency-profile/v1', skill: 'arithmetic-facts', facts: incoming, earned: {} };
+  var r = MS.importProfile(doc, {}, {});
+  assert.strictEqual(r.ok, true);
+  assert.deepStrictEqual(r.stats['x:2:3'], { n: 1, ok: 1 }, 'the trailing real fact must not be crowded out by 5000 invalid entries ahead of it');
+  assert.strictEqual(Object.keys(r.stats).length, 1, 'none of the 5000 invalid entries should have counted toward anything');
+});
+
+test('importProfile: a future last is clamped to now when now is given, and left untouched when now is omitted', function () {
+  var incoming = { 'x:2:3': { n: 1, ok: 1, last: 999999 } };
+  var doc = { schema: 'skill-competency-profile/v1', skill: 'arithmetic-facts', facts: incoming, earned: {} };
+
+  var rClamped = MS.importProfile(doc, {}, {}, 500000);
+  assert.strictEqual(rClamped.ok, true);
+  assert.strictEqual(rClamped.stats['x:2:3'].last, 500000, 'a last in the future of now must clamp to now');
+  assert.strictEqual(rClamped.stats['x:2:3'].n, 1, 'clamping last must not disturb the rest of the entry');
+
+  var rUnclamped = MS.importProfile(doc, {}, {});
+  assert.strictEqual(rUnclamped.stats['x:2:3'].last, 999999, 'without now, last must be left exactly as imported');
+});
+
+test('importProfile: a last that is already <= now is left untouched', function () {
+  var incoming = { 'x:2:3': { n: 1, ok: 1, last: 100 } };
+  var doc = { schema: 'skill-competency-profile/v1', skill: 'arithmetic-facts', facts: incoming, earned: {} };
+  var r = MS.importProfile(doc, {}, {}, 500000);
+  assert.strictEqual(r.stats['x:2:3'].last, 100);
+});
+
+test('importProfile: a real exportProfile output still imports losslessly when now is passed and no last is in the future', function () {
+  var sk = MS.skillById('x-11-12');
+  var keys = MS.factKeys(sk);
+  var stats = {};
+  stats[keys[0]] = { n: 4, ok: 2, ms: 1200, last: 8000, box: 3 };
+  stats[keys[1]] = { n: 1, ok: 0, ms: 3000, last: 9000, box: 0 };
+  var earned = {};
+  earned[sk.id] = { stars: 3, masteredAt: 7000 };
+
+  var doc = MS.exportProfile('Kid G', stats, earned, 10000);
+  var r = MS.importProfile(doc, {}, {}, 10000);
+  assert.strictEqual(r.ok, true);
+  assert.deepStrictEqual(r.stats, stats, 'a now no earlier than every last must clamp nothing');
+  assert.deepStrictEqual(r.earned, earned);
 });
 
 /* ===================================================================
