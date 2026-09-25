@@ -809,6 +809,12 @@ test('cfgKey: x/div-only cfg excludes addRange (irrelevant field)', function () 
   assert.strictEqual(k1, k2, 'addRange does not affect an x/div-only key');
 });
 
+test('cfgKey: coach and hand-picked sets never share a best, add/sub included', function () {
+  var base = { ops: ['+', '-'], addRange: 10, mode: 'race', length: 20 };
+  var coach = { ops: ['+', '-'], addRange: 10, mode: 'race', length: 20, coach: true };
+  assert.notStrictEqual(E.cfgKey(base), E.cfgKey(coach));
+});
+
 test('cfgKey: length is excluded for sprint mode', function () {
   var k1 = E.cfgKey({ ops: ['+'], mode: 'sprint', length: 10 });
   var k2 = E.cfgKey({ ops: ['+'], mode: 'sprint', length: 30 });
@@ -839,11 +845,20 @@ test('cfgLabel: addsub example matches the spec verbatim', function () {
 });
 
 test('cfgLabel: tables example matches the spec verbatim', function () {
-  assert.strictEqual(E.cfgLabel({ ops: ['x'], tables: [7, 8], max: 12 }), '× 7, 8 to 12');
+  assert.strictEqual(E.cfgLabel({ ops: ['x'], tables: [7, 8], max: 12 }), '× 7 8 to 12');
 });
 
-test('cfgLabel: coach + all-tables example matches the spec verbatim', function () {
-  assert.strictEqual(E.cfgLabel({ ops: ['x', '/'], tables: [], max: 10, coach: true }), '× ÷ all to 10 coach');
+test('cfgLabel: coach replaces the table list (coach picks from all tables)', function () {
+  assert.strictEqual(E.cfgLabel({ ops: ['x', '/'], tables: [], max: 10, coach: true }), '× ÷ coach to 10');
+  assert.strictEqual(E.cfgLabel({ ops: ['x'], tables: [7], max: 12, coach: true }), '× coach to 12');
+});
+
+test('cfgLabel: mixed keeps each op group next to its own range (no ambiguous run-on)', function () {
+  assert.strictEqual(E.cfgLabel({ ops: ['+', '-', 'x', '/'], addRange: 20, tables: [6, 7, 8], max: 12 }), '+ − to 20, × ÷ 6 7 8 to 12');
+});
+
+test('cfgLabel: add/sub-only coach marks coach after the range', function () {
+  assert.strictEqual(E.cfgLabel({ ops: ['+'], addRange: 10, coach: true }), '+ to 10 coach');
 });
 
 test('cfgLabel: never contains an em dash or en dash character', function () {
@@ -878,13 +893,16 @@ test('isBetter: race/practice - lower totalMs wins', function () {
   assert.strictEqual(E.isBetter({ mode: 'practice', totalMs: 100 }, { mode: 'practice', totalMs: 200 }), true);
 });
 
-test('isBetter: sprint - more correct wins', function () {
-  assert.strictEqual(E.isBetter({ mode: 'sprint', correct: 10, misses: 5 }, { mode: 'sprint', correct: 8, misses: 0 }), true);
+test('isBetter: sprint - more answered (n) wins, even with more misses', function () {
+  // Every sprint answer is eventually correct (retry-same-fact); a miss already
+  // cost 3s of the 60, so the score is how many were answered.
+  assert.strictEqual(E.isBetter({ mode: 'sprint', n: 12, correct: 8, misses: 4 }, { mode: 'sprint', n: 10, correct: 10, misses: 0 }), true);
+  assert.strictEqual(E.isBetter({ mode: 'sprint', n: 9, correct: 9, misses: 0 }, { mode: 'sprint', n: 10, correct: 6, misses: 4 }), false);
 });
 
-test('isBetter: sprint - tie on correct breaks on fewer misses', function () {
-  assert.strictEqual(E.isBetter({ mode: 'sprint', correct: 10, misses: 1 }, { mode: 'sprint', correct: 10, misses: 3 }), true);
-  assert.strictEqual(E.isBetter({ mode: 'sprint', correct: 10, misses: 3 }, { mode: 'sprint', correct: 10, misses: 1 }), false);
+test('isBetter: sprint - tie on answered breaks on fewer misses', function () {
+  assert.strictEqual(E.isBetter({ mode: 'sprint', n: 10, correct: 9, misses: 1 }, { mode: 'sprint', n: 10, correct: 7, misses: 3 }), true);
+  assert.strictEqual(E.isBetter({ mode: 'sprint', n: 10, correct: 7, misses: 3 }, { mode: 'sprint', n: 10, correct: 9, misses: 1 }), false);
 });
 
 /* ===================================================================

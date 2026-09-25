@@ -34,19 +34,12 @@
  *     never-seen keys once THAT op has at least one seen key; an op
  *     with zero history draws unseen facts freely (so a brand-new
  *     table isn't starved down to 3 facts).
- *  4. cfgKey's coach token is gated by "x or / present" verbatim
- *     (matches the locked text), so two otherwise-identical add/sub
- *     sessions that differ only by coach:true/false share one cfgKey
- *     (no analogous "tables" slot to swap coach into for pure add/sub).
- *     cfgLabel is NOT gated the same way - example 3 in the spec
- *     ("x / all to 10 coach") shows the tables/all clause AND "coach"
- *     both present - so cfgLabel always shows the tables-or-all clause
- *     when x/ present, and independently appends " coach" at the very
- *     end whenever cfg.coach is true, regardless of op mix.
+ *  4. Coach replaces the table list in both cfgKey and cfgLabel (coach
+ *     draws from every table); for add/sub-only configs, which have no
+ *     table slot, coach is appended after the range so a coach set never
+ *     shares a best time with a hand-picked one.
  *  5. "sorted ops" (cfgKey, cfgLabel) sorts by the CANONICAL OPS array
- *     order (+, -, x, /), not string/char-code order - required to
- *     reproduce the spec's own example "x / all to 10 coach" (x before
- *     /, which is NOT alphabetical/char-code order).
+ *     order (+, -, x, /), not string/char-code order (x before /).
  * ===================================================================== */
 (function (root) {
   'use strict';
@@ -559,7 +552,7 @@
     var hasAddSub = ops.indexOf('+') !== -1 || ops.indexOf('-') !== -1;
     var hasMulDiv = ops.indexOf('x') !== -1 || ops.indexOf('/') !== -1;
     var parts = [cfg.mode, ops.join('')];
-    if (hasAddSub) parts.push('r' + cfg.addRange);
+    if (hasAddSub) parts.push('r' + cfg.addRange + (cfg.coach && !hasMulDiv ? '|coach' : ''));
     if (hasMulDiv) {
       parts.push(cfg.coach ? 'coach' : (cfg.tables.length ? cfg.tables.join(',') : 'all'));
       parts.push('m' + cfg.max);
@@ -571,24 +564,31 @@
   function cfgLabel(cfg) {
     cfg = normalizeCfg(cfg);
     var ops = sortOps(cfg.ops);
-    var glyphs = ops.map(function (o) { return GLYPH[o]; });
     var hasAddSub = ops.indexOf('+') !== -1 || ops.indexOf('-') !== -1;
     var hasMulDiv = ops.indexOf('x') !== -1 || ops.indexOf('/') !== -1;
-    var parts = [glyphs.join(' ')];
-    if (hasAddSub) parts.push('to ' + cfg.addRange);
-    if (hasMulDiv) {
-      parts.push(cfg.tables.length ? cfg.tables.slice().sort(function (a, b) { return a - b; }).join(', ') : 'all');
-      parts.push('to ' + cfg.max);
+    // Each op group sits next to its OWN range ('+ \u2212 to 20, \u00d7 \u00f7 6 7 8 to 12');
+    // a flat run-on ('... to 20 6, 7, 8 to 12') was ambiguous in the Progress list.
+    // Coach picks from every table, so it replaces the table list.
+    var groups = [];
+    if (hasAddSub) {
+      groups.push(ops.filter(function (o) { return o === '+' || o === '-'; }).map(function (o) { return GLYPH[o]; }).join(' ') +
+        ' to ' + cfg.addRange + (cfg.coach && !hasMulDiv ? ' coach' : ''));
     }
-    if (cfg.coach) parts.push('coach');
-    return parts.join(' ');
+    if (hasMulDiv) {
+      var which = cfg.coach ? 'coach' : (cfg.tables.length ? cfg.tables.slice().sort(function (a, b) { return a - b; }).join(' ') : 'all');
+      groups.push(ops.filter(function (o) { return o === 'x' || o === '/'; }).map(function (o) { return GLYPH[o]; }).join(' ') +
+        ' ' + which + ' to ' + cfg.max);
+    }
+    return groups.join(', ');
   }
 
   function isBetter(a, b) {
     if (b == null) return true;
     if (a == null) return false;
     if (a.mode === 'sprint') {
-      if (a.correct !== b.correct) return a.correct > b.correct;
+      // Sprint score = questions answered in 60s. Every answer is eventually
+      // right (retry-same-fact) and a miss already cost 3s, so n is the score.
+      if (a.n !== b.n) return a.n > b.n;
       return a.misses < b.misses;
     }
     return a.totalMs < b.totalMs;

@@ -26,8 +26,17 @@
     },
     {
       "action": "evalAssert",
-      "label": "second miss reveals the answer ghosted",
-      "js": "(function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}var a=ans(),w=String(a).length===1?(a===9?8:a+1):a+1;type(w);var el=document.getElementById('answer');return el.classList.contains('ghost')&&el.textContent===String(a)&&/Type it/.test(document.getElementById('hint').textContent);})()"
+      "label": "second miss: the wrong digits flash red and the hint gives the answer",
+      "js": "(function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}var a=ans(),w=String(a).length===1?(a===9?8:a+1):a+1;type(w);var el=document.getElementById('answer');return el.classList.contains('bad')&&el.textContent===String(w)&&document.getElementById('hint').textContent==='It\\'s '+a+'. Type it to keep going.';})()"
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "evalAssert",
+      "label": "after the flash the answer shows ghosted (reveal after 2 misses)",
+      "js": "(function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}var a=ans(),el=document.getElementById('answer');return el.classList.contains('ghost')&&el.textContent===String(a);})()"
     },
     {
       "action": "wait",
@@ -75,8 +84,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "fact map colours the facts just practised",
-      "js": "document.querySelectorAll('#grid .mCell.weak').length>=1&&document.querySelectorAll('#grid .mCell.new').length>=1"
+      "label": "fact map colours the facts just practised (the missed fact is weak on its own op map)",
+      "js": "(function(){var weak=0,seen=0;['+','-'].forEach(function(o){document.querySelector('#progOpSeg [data-seg=\"'+o+'\"]').click();weak+=document.querySelectorAll('#grid .mCell.weak').length;seen+=document.querySelectorAll('#grid .mCell.learning, #grid .mCell.weak, #grid .mCell.strong').length;});return weak>=1&&seen>=2&&document.querySelectorAll('#grid .mCell.new').length>=1;})()"
     },
     {
       "action": "evalAssert",

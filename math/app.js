@@ -387,7 +387,7 @@
     state.stats = store.getFacts(p.id);
     if (!facts) {
       var rng = E.rng(now >>> 0);
-      facts = c.mode === 'sprint' ? E.buildSet(c, state.stats, rng, 200) : E.buildSet(c, state.stats, rng);
+      facts = E.buildSet(c, state.stats, rng, c.mode === 'sprint' ? 200 : c.length, now);
     }
     state.run = E.createRun(c, facts, now);
     state.badShow = null; state.quitting = false;
