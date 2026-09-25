@@ -40,7 +40,7 @@
 .mStartT{font-size:1.15rem;font-weight:800;letter-spacing:.02em;}
 .mStartS{font-size:.74rem;font-weight:600;}
 .mStartS:empty{display:none;}
-.mApp.onProgress .mStartBar{display:none;}
+.mApp.noStart .mStartBar{display:none;}
 
 /* ---- full-screen layers (workout, results) ---- */
 .mLayer{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;background:var(--bg);
@@ -157,3 +157,49 @@
 .mDanger{margin-top:12px;width:100%;}
 .setPanelBody .mRow{margin-top:0;}
 .setPanelBody .setAction:last-child{margin-bottom:14px;}
+
+/* ---- skill path (home, v1.1) ---- */
+.mBand{font-size:.8rem;color:var(--txt-soft);margin:2px 2px 10px;}
+.mNext{background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-card);padding:14px 14px 12px;}
+.mNextTag{font-size:.66rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-ink);margin-bottom:8px;}
+.mNextHead{display:flex;align-items:center;gap:12px;}
+.mNextTxt{min-width:0;}
+.mNextName{font-size:1.2rem;font-weight:800;letter-spacing:-.01em;line-height:1.2;}
+.mNextDesc{font-size:.8rem;color:var(--txt-soft);margin-top:2px;}
+.mNext .mStars{margin:10px 0 6px;}
+.mMeter{height:10px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden;}
+.mMeterFill{height:100%;width:var(--w,0%);background:var(--accent);border-radius:inherit;transition:width .3s ease;}
+.mNextStat{font-size:.78rem;color:var(--txt-dim);margin:6px 0 12px;}
+.mNextBtns{display:flex;gap:8px;}
+.mNextBtns .btn.red{flex:2 1 0;min-height:52px;font-size:1.05rem;font-weight:800;}
+.mNextBtns .btn:not(.red){flex:1 1 0;min-height:52px;}
+.mPath{display:flex;flex-direction:column;}
+.mSkill{gap:12px;min-height:52px;}
+.mSkill.on{background:var(--accent-deep);border-color:var(--accent-dim);}
+.mSkName{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* stars: filled = the accent (earned), empty = a quiet outline tone. Never a
+   status hue - gold would read as a warning (Element Consistency Law). */
+.mStars{display:inline-flex;gap:1px;flex:0 0 auto;font-size:.95rem;line-height:1;color:var(--line-strong);}
+.mStars .on{color:var(--accent-ink);}
+.mStars.big{font-size:1.6rem;gap:3px;}
+/* badges: a skill's short label on a tile; earned = accent fill */
+.mBadge{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;min-width:3.4rem;height:2.6rem;padding:0 8px;
+  border-radius:12px;border:1.5px dashed var(--line-strong);background:var(--surface-2);color:var(--txt-dim);
+  font-family:'Space Mono',monospace;font-weight:700;font-size:.8rem;white-space:nowrap;}
+.mBadge.sm{min-width:3rem;height:2.1rem;font-size:.72rem;border-radius:10px;}
+.mBadge.earned{border-style:solid;border-color:var(--accent-ink);background:var(--accent);color:var(--on-accent);}
+.mBadge.xl{min-width:8rem;height:5.5rem;font-size:1.7rem;border-radius:22px;margin:14px auto 10px;}
+.mBadges{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-bottom:6px;}
+.mBadgeCell{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:var(--r-card);background:var(--surface);border:1px solid var(--line);text-align:center;}
+.mBadgeCell.earned{border-color:var(--accent-dim);}
+.mBadgeName{font-size:.68rem;color:var(--txt-soft);line-height:1.25;}
+.mBadgeWhen{font-size:.64rem;font-weight:700;color:var(--accent-ink);}
+.mResStars{margin-top:10px;font-size:.88rem;color:var(--txt-soft);line-height:1.8;}
+/* level-up moment */
+.mLvl{z-index:25;}
+.mLvlBody{flex:1 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
+.mLvl .mBadge.xl{animation:mPop .5s cubic-bezier(.2,1.4,.4,1);}
+.mLvlName{font-size:1.5rem;font-weight:800;margin-bottom:8px;}
+.mLvlNext{margin-top:14px;font-size:.92rem;color:var(--txt-soft);}
+@keyframes mPop{0%{transform:scale(.4);opacity:0;}100%{transform:scale(1);opacity:1;}}
+@media (prefers-reduced-motion:reduce){.mLvl .mBadge.xl{animation:none;}}

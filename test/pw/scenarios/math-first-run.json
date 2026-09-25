@@ -1,6 +1,6 @@
 {
   "name": "math-first-run",
-  "description": "Math app first run (goal-math-app-v1): a fresh device opens straight onto 'Who's playing?'; naming a player lands on the kid (K-2) default - add/subtract, tables hidden - with Start on screen and the player's colour as the accent.",
+  "description": "Math app first run (goal-math-app-v1 + v1.1): a fresh device opens on 'Who's playing?'; naming a player lands on the SKILL PATH with Addition to 10 up next and Race on screen, all 12 skills open; Custom keeps the kid add/subtract default; the player's colour is the accent.",
   "url": "/math/",
   "firstRun": true,
   "steps": [
@@ -47,7 +47,29 @@
     },
     {
       "action": "evalAssert",
-      "label": "kid default: add/sub on, tables section hidden",
+      "label": "home is the skill path: Addition to 10 is up next, 0 stars",
+      "js": "document.getElementById('scrPath').classList.contains('on')&&document.querySelector('#nextCard .mNextName').textContent==='Addition to 10'&&/Up next/i.test(document.querySelector('#nextCard .mNextTag').textContent)&&document.querySelectorAll('#nextCard .mStars .on').length===0"
+    },
+    {
+      "action": "assertInViewport",
+      "selector": "#nextCard [data-go=\"race\"]"
+    },
+    {
+      "action": "evalAssert",
+      "label": "all 12 skills are listed and open (no locks)",
+      "js": "document.querySelectorAll('#pathList .mSkill').length===12&&!document.querySelector('#pathList [disabled]')"
+    },
+    {
+      "action": "screenshot",
+      "name": "math-first-run-path"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"setup\"]"
+    },
+    {
+      "action": "evalAssert",
+      "label": "Custom keeps the kid default: add/sub on, tables hidden",
       "js": "!document.getElementById('addSec').hidden&&document.getElementById('mulSec').hidden&&document.querySelectorAll('#opChips .chip.on').length===2"
     },
     {

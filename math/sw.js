@@ -21,7 +21,7 @@ var CACHE = self.MATH_VERSION;
 // the music/shared/ primitives math/index.html script-tags, must appear here
 // or an offline install 404s on it.
 var CORE = [
-  './', './index.html', './app.js', './engine.js', './store.js', './math.css',
+  './', './index.html', './app.js', './engine.js', './skills.js', './store.js', './math.css',
   './version.js', './manifest.webmanifest', './icon.svg',
   '../music/shared/songbook.css', '../music/shared/theme.js',
   '../music/shared/esc.js', '../music/shared/toast.js'

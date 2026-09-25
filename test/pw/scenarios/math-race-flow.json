@@ -8,6 +8,10 @@
   "steps": [
     {
       "action": "tap",
+      "selector": ".tabbar [data-tab=\"setup\"]"
+    },
+    {
+      "action": "tap",
       "selector": "#startBtn"
     },
     {

@@ -45,8 +45,16 @@
   </header>
 
   <main class="view" id="view">
-    <!-- ===== Setup (Workout tab) ===== -->
-    <section class="screen on" id="scrSetup" aria-label="Set up a workout">
+    <!-- ===== Skill path (home) ===== -->
+    <section class="screen on" id="scrPath" aria-label="Skill path">
+      <p class="mBand" id="bandLine"></p>
+      <div class="mNext" id="nextCard"></div>
+      <div class="sub">All skills</div>
+      <div class="mPath" id="pathList"></div>
+    </section>
+
+    <!-- ===== Custom setup ===== -->
+    <section class="screen" id="scrSetup" aria-label="Set up a custom workout">
       <div class="sub">Operation</div>
       <div class="mOps" id="opChips" role="group" aria-label="Operations (pick one or more)"></div>
 
@@ -76,6 +84,9 @@
 
     <!-- ===== Progress tab ===== -->
     <section class="screen" id="scrProgress" aria-label="Progress">
+      <div class="sub mGridTitle"><span>Badges</span><span id="badgeCount"></span></div>
+      <div class="mBadges" id="badges"></div>
+      <div class="sub">Facts</div>
       <div class="modeSwitch mSeg" id="progOpSeg" role="radiogroup" aria-label="Operation"></div>
       <div class="sub mGridTitle" id="gridTitle">Fact map</div>
       <p class="mCaption" id="gridCaption"></p>
@@ -94,7 +105,8 @@
   </div>
 
   <nav class="tabbar" id="tabbar" aria-label="Sections">
-    <button type="button" class="on" data-tab="setup" aria-current="page"><span class="icn" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg></span><span class="lbl">Workout</span></button>
+    <button type="button" class="on" data-tab="path" aria-current="page"><span class="icn" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg></span><span class="lbl">Skills</span></button>
+    <button type="button" data-tab="setup"><span class="icn" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></span><span class="lbl">Custom</span></button>
     <button type="button" data-tab="progress"><span class="icn" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></span><span class="lbl">Progress</span></button>
   </nav>
 
@@ -133,6 +145,7 @@
       <p class="mResMsg" id="resMsg"></p>
       <div class="mResBig" id="resBig"></div>
       <p class="mResBest" id="resBest"></p>
+      <p class="mResStars" id="resStars"></p>
       <div class="mTiles" id="resTiles"></div>
       <div class="sub" id="resFocusTitle">Practice these</div>
       <div class="mFacts" id="resFacts"></div>
@@ -141,6 +154,21 @@
       <button class="btn red" id="againBtn" type="button">Go again</button>
       <button class="btn" id="drillBtn" type="button">Practice misses</button>
       <button class="btn ghost" id="doneBtn" type="button">Done</button>
+    </div>
+  </section>
+
+  <!-- ===== Level-up moment (over results) ===== -->
+  <section class="mLayer mLvl" id="lvlLayer" hidden aria-label="Skill mastered" aria-live="polite">
+    <div class="mLvlBody">
+      <p class="mResMsg">Skill mastered!</p>
+      <div class="mBadge xl earned" id="lvlBadge" aria-hidden="true"></div>
+      <h2 class="mLvlName" id="lvlName"></h2>
+      <div class="mStars big" aria-label="3 of 3 stars"><span class="on">&#9733;</span><span class="on">&#9733;</span><span class="on">&#9733;</span></div>
+      <p class="mLvlNext" id="lvlNext"></p>
+    </div>
+    <div class="mResBtns">
+      <button class="btn red" id="lvlGo" type="button">Start next skill</button>
+      <button class="btn ghost" id="lvlDone" type="button">See results</button>
     </div>
   </section>
 </div>
@@ -182,6 +210,9 @@
         <button class="chip" id="hapticChip" type="button" aria-pressed="true">Vibrate</button>
       </div>
       <div class="sub">Data</div>
+      <button class="setAction" id="exportBtn" type="button">Export skills profile</button>
+      <button class="setAction" id="importBtn" type="button">Import skills profile</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
       <button class="setAction" id="resetBtn" type="button">Reset this player's progress</button>
       <a class="setAction" href="../" id="homeLink">All apps</a>
     </div>
@@ -195,6 +226,7 @@
 <script src="../music/shared/esc.js"></script>
 <script src="../music/shared/toast.js"></script>
 <script src="engine.js"></script>
+<script src="skills.js"></script>
 <script src="store.js"></script>
 <script src="app.js"></script>
 </body>

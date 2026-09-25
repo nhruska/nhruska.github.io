@@ -7,6 +7,10 @@
   },
   "steps": [
     {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"setup\"]"
+    },
+    {
       "action": "evalAssert",
       "label": "tables preset: tables shown, add/sub hidden, max 12 selected",
       "js": "!document.getElementById('mulSec').hidden&&document.getElementById('addSec').hidden&&document.querySelector('#maxSeg .on').textContent==='to 12'"

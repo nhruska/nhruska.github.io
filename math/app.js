@@ -13,7 +13,7 @@
  * ===================================================================== */
 (function () {
   'use strict';
-  var E = window.MathEngine, S = window.MathStore, T = window.Theme;
+  var E = window.MathEngine, S = window.MathStore, T = window.Theme, K = window.MathSkills;
   var esc = window.Esc ? window.Esc.esc : function (s) { return String(s); };
   var THEME_KEY = 'music.theme.v1';
   var OP_NAME = { '+': 'Add', '-': 'Subtract', 'x': 'Multiply', '/': 'Divide' };
@@ -39,7 +39,7 @@
   store.migrate();
 
   var state = {
-    tab: 'setup', progOp: null,
+    tab: 'path', progOp: null, focusSkill: null, lastGains: null, lvlNext: null,
     run: null, stats: null, pid: null, raf: 0,
     badShow: null, flashT: 0, quitting: false,
     lastSummary: null, lastCfg: null, lastMissed: null,
@@ -175,7 +175,7 @@
       stopLoop(); clearTimeout(state.okT); state.okHold = null; $('card').classList.remove('ok', 'bad');
       if (state.run && !state.run.done) saveStats(); state.run = null; $('runLayer').hidden = true;
     }
-    else if (name === 'results') { $('resLayer').hidden = true; }
+    else if (name === 'results') { $('resLayer').hidden = true; $('lvlLayer').hidden = true; }
     else if (name === 'pause') {
       $('pauseOv').hidden = true;
       if (!state.quitting && state.run && state.run.pausedAt != null) resumeRun();
@@ -216,7 +216,7 @@
   }
   function ensurePlayer() {
     if (active()) return;
-    addPlayer({ name: 'Player 1', color: nextColor(), cfg: E.PRESETS.addsub });
+    addPlayer({ name: 'Player 1', color: nextColor(), cfg: E.PRESETS.addsub, start: 'add-10' });
     applyTheme(); renderAll();
   }
 
@@ -277,7 +277,7 @@
     if (e.target === $('playersOv')) { backTo(stack.lastIndexOf('players')); return; }
     var t = e.target.closest('button'); if (!t) return;
     if (t.hasAttribute('data-pid')) {
-      store.setActive(t.getAttribute('data-pid')); applyTheme(); renderAll();
+      store.setActive(t.getAttribute('data-pid')); state.focusSkill = null; applyTheme(); renderAll();
       backTo(stack.lastIndexOf('players'));
       return;
     }
@@ -304,7 +304,8 @@
     if (state.formMode === 'edit') {
       var a = active(); if (a) store.updateProfile(a.id, { name: name || a.name, color: state.formColor });
     } else {
-      addPlayer({ name: name || ('Player ' + (store.getProfiles().list.length + 1)), color: state.formColor, cfg: E.PRESETS[state.formPreset] || E.DEFAULT_CFG });
+      addPlayer({ name: name || ('Player ' + (store.getProfiles().list.length + 1)), color: state.formColor, cfg: E.PRESETS[state.formPreset] || E.DEFAULT_CFG,
+        start: state.formPreset === 'tables' ? 'x-2-5-10' : 'add-10' });
     }
     state.firstRun = false; state.formMode = null;
     applyTheme(); renderAll();
@@ -393,7 +394,8 @@
       saveCfg(c); return;
     }
     if (t.id === 'orderChip') { c.order = c.order === 'ordered' ? 'random' : 'ordered'; saveCfg(c); return; }
-    if (t.closest('#coachChip')) { c.coach = !c.coach; saveCfg(c); return; }
+    // Coach in Custom draws from every table to max (tables are its scope, v1.1).
+    if (t.closest('#coachChip')) { c.coach = !c.coach; if (c.coach) c.tables = []; saveCfg(c); return; }
     var seg = t.getAttribute('data-seg'); if (seg == null) return;
     var box = t.parentNode.id;
     if (box === 'rangeSeg') c.addRange = +seg;
@@ -584,13 +586,41 @@
     var sess = E.toSession(c, sum, now);
     var saved = store.addSession(state.pid, sess, E.isBetter) || { isBest: false, prevBest: null };
     state.lastSummary = sum; state.lastCfg = c; state.lastMissed = sum.missed;
+    // Skills: stars only ever rise; a newly mastered skill gets its moment.
+    var upd = K.updateEarned(store.getEarned(state.pid), state.stats, now);
+    store.saveEarned(state.pid, upd.earned);
+    state.lastGains = upd;
     feedback('done');
     renderResults(sum, sess, saved, c);
     $('runLayer').hidden = true;
     $('resLayer').hidden = false;
     if (stack[stack.length - 1] === 'run') stack[stack.length - 1] = 'results';
     state.run = null;
+    if (upd.mastered.length) showLevelUp(upd.mastered[0]);
   }
+  function starsHtml(n, big) {
+    var h = '<span class="mStars' + (big ? ' big' : '') + '" role="img" aria-label="' + n + ' of 3 stars">';
+    for (var i = 0; i < 3; i++) h += '<span' + (i < n ? ' class="on"' : '') + '>&#9733;</span>';
+    return h + '</span>';
+  }
+  function showLevelUp(id) {
+    var sk = K.skillById(id); if (!sk) return;
+    var p = active(), pth = K.path(store.getFacts(p.id), store.getEarned(p.id)), next = nextSkillFor(p, pth);
+    state.lvlNext = next && next !== id ? next : null;
+    $('lvlBadge').textContent = sk.short;
+    $('lvlName').textContent = sk.name;
+    var nk = state.lvlNext ? K.skillById(state.lvlNext) : null;
+    $('lvlNext').textContent = nk ? 'Up next: ' + nk.name : 'Every skill on the path is mastered!';
+    $('lvlGo').hidden = !nk;
+    $('lvlGo').textContent = nk ? 'Start ' + nk.name : '';
+    $('lvlLayer').hidden = false;
+    buzz('level');
+  }
+  $('lvlDone').addEventListener('click', function () { $('lvlLayer').hidden = true; });
+  $('lvlGo').addEventListener('click', function () {
+    $('lvlLayer').hidden = true;
+    if (state.lvlNext) { state.focusSkill = state.lvlNext; startSkill(state.lvlNext, 'race'); }
+  });
   function renderResults(sum, sess, saved, c) {
     var msg;
     if (c.mode !== 'practice' && saved.isBest && saved.prevBest) msg = 'New best!';
@@ -618,8 +648,17 @@
     $('resFocusTitle').hidden = !facts;
     $('resFocusTitle').textContent = sum.missed.length ? 'Practice these' : 'Your slowest';
     $('drillBtn').hidden = !sum.missed.length;
+    var g = state.lastGains, line = '';
+    if (g && g.gains.length) {
+      line = g.gains.map(function (x) { var sk = K.skillById(x.id); return sk ? starsHtml(x.to) + ' ' + esc(sk.name) : ''; }).filter(Boolean).join('<br>');
+    }
+    $('resStars').innerHTML = line;
+    $('resStars').hidden = !line;
   }
-  $('againBtn').addEventListener('click', function () { startRun(cfg()); });
+  $('againBtn').addEventListener('click', function () {
+    var lc = state.lastCfg;
+    startRun(lc && lc.skill && lc.mode !== 'practice' ? E.normalizeCfg(lc) : cfg());
+  });
   $('drillBtn').addEventListener('click', function () {
     var missed = state.lastMissed || []; if (!missed.length) return;
     var rng = E.rng(Date.now() >>> 0), again = missed.slice();
@@ -632,6 +671,61 @@
     startRun(c, facts);
   });
   $('doneBtn').addEventListener('click', function () { backTo(stack.lastIndexOf('results')); });
+
+  /* ------------------------------------------------------------------
+   * Skill path (home). All skills open; the path only suggests (v1.1).
+   * Stars shown = max(earned, today's progress); earned never goes down.
+   * ------------------------------------------------------------------ */
+  var BAND_LABEL = { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' };
+  function nextSkillFor(p, pth) {
+    var start = p && p.start ? K.FRAMEWORK.skills.map(function (sk) { return sk.id; }).indexOf(p.start) : -1;
+    for (var i = Math.max(0, start); i < pth.skills.length; i++) if (pth.skills[i].stars < 3) return pth.skills[i].skill.id;
+    return pth.upNext;
+  }
+  function startSkill(id, mode) {
+    var sk = K.skillById(id), p = active(); if (!sk || !p) return;
+    var pth = K.path(store.getFacts(p.id), store.getEarned(p.id));
+    // Levels gate depth, not access: a beginner's race is 10 questions, 20 after.
+    var len = pth.band === 'beginner' ? 10 : 20;
+    startRun(K.skillCfg(sk, { mode: mode, length: len }));
+  }
+  function renderPath() {
+    var p = active(); if (!p) return;
+    var pth = K.path(store.getFacts(p.id), store.getEarned(p.id));
+    var nextId = nextSkillFor(p, pth);
+    var focusId = state.focusSkill || nextId || K.FRAMEWORK.skills[K.FRAMEWORK.skills.length - 1].id;
+    var row = null;
+    pth.skills.forEach(function (r) { if (r.skill.id === focusId) row = r; });
+    $('bandLine').textContent = p.name + ': ' + BAND_LABEL[pth.band] + ', ' + pth.masteredCount + ' of ' + pth.skills.length + ' skills mastered';
+    var tag = !nextId ? 'Every skill mastered' : (focusId === nextId ? 'Up next' : 'Practising');
+    var pr = row.progress;
+    var h = '<div class="mNextTag">' + esc(tag) + '</div>' +
+      '<div class="mNextHead"><span class="mBadge' + (row.stars === 3 ? ' earned' : '') + '" aria-hidden="true">' + esc(row.skill.short) + '</span>' +
+      '<div class="mNextTxt"><h2 class="mNextName">' + esc(row.skill.name) + '</h2><p class="mNextDesc">' + esc(row.skill.desc) + '</p></div></div>' +
+      starsHtml(row.stars, true) +
+      '<div class="mMeter" role="progressbar" aria-label="Skill level" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pr.level + '"><div class="mMeterFill" data-w="' + pr.level + '"></div></div>' +
+      '<p class="mNextStat">' + pr.right + ' of ' + pr.total + ' facts right first try' + (pr.medianMs ? ', about ' + (pr.medianMs / 1000).toFixed(1) + 's each' : '') + '</p>' +
+      '<div class="mNextBtns"><button type="button" class="btn red" data-go="race">Race</button><button type="button" class="btn" data-go="practice">Practice</button></div>';
+    $('nextCard').innerHTML = h;
+    $('nextCard').setAttribute('data-skill', row.skill.id);
+    var list = '';
+    pth.skills.forEach(function (r) {
+      var on = r.skill.id === focusId, cls = 'setAction mSkill' + (on ? ' on' : '') + (r.stars === 3 ? ' done' : '');
+      list += '<button type="button" class="' + cls + '" data-skill="' + esc(r.skill.id) + '"' + (on ? ' aria-current="true"' : '') + '>' +
+        '<span class="mBadge sm' + (r.stars === 3 ? ' earned' : '') + '" aria-hidden="true">' + esc(r.skill.short) + '</span>' +
+        '<span class="mSkName">' + esc(r.skill.name) + (r.skill.id === nextId ? '<span class="mTag">NEXT</span>' : '') + '</span>' +
+        starsHtml(r.stars) + '</button>';
+    });
+    $('pathList').innerHTML = list;
+    Array.prototype.forEach.call(document.querySelectorAll('#nextCard .mMeterFill'), function (el) { el.style.setProperty('--w', el.getAttribute('data-w') + '%'); });
+    if (state.tab === 'path') $('purpose').textContent = 'Pick up where you left off';
+    renderPlayerChip();
+  }
+  $('scrPath').addEventListener('click', function (e) {
+    var t = e.target.closest('button'); if (!t) return;
+    if (t.hasAttribute('data-go')) { startSkill($('nextCard').getAttribute('data-skill'), t.getAttribute('data-go')); return; }
+    if (t.hasAttribute('data-skill')) { state.focusSkill = t.getAttribute('data-skill'); renderPath(); $('view').scrollTop = 0; }
+  });
 
   /* ------------------------------------------------------------------
    * Progress
@@ -680,6 +774,20 @@
 
     renderTrend(p, c);
     renderRecent(p);
+    renderBadges(p);
+  }
+  function renderBadges(p) {
+    var pth = K.path(store.getFacts(p.id), store.getEarned(p.id)), earned = store.getEarned(p.id), html = '';
+    pth.skills.forEach(function (r) {
+      var e = earned[r.skill.id], got = r.stars === 3, when = '';
+      if (got && e && e.masteredAt) when = new Date(e.masteredAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      html += '<div class="mBadgeCell' + (got ? ' earned' : '') + '" role="img" aria-label="' + esc(r.skill.name + (got ? ', badge earned' : ', ' + r.stars + ' of 3 stars')) + '">' +
+        '<span class="mBadge' + (got ? ' earned' : '') + '">' + esc(r.skill.short) + '</span>' +
+        '<span class="mBadgeName">' + esc(r.skill.name) + '</span>' +
+        (got ? '<span class="mBadgeWhen">' + esc(when || 'Mastered') + '</span>' : starsHtml(r.stars)) + '</div>';
+    });
+    $('badges').innerHTML = html;
+    $('badgeCount').textContent = pth.masteredCount + ' of ' + pth.skills.length;
   }
   $('gridWrap').addEventListener('click', function (e) {
     var cell = e.target.closest('[data-key]'); if (!cell) return;
@@ -765,6 +873,8 @@
     }
     if (t.id === 'soundChip') { store.setPrefs({ sound: !prefs().sound }); renderSettings(); unlockAudio(); return; }
     if (t.id === 'hapticChip') { store.setPrefs({ haptics: !prefs().haptics }); renderSettings(); return; }
+    if (t.id === 'exportBtn') { exportSkills(); return; }
+    if (t.id === 'importBtn') { $('importFile').click(); return; }
     if (t.id === 'resetBtn') {
       var a = active(); if (!a) return;
       var snap = store.resetProgress(a.id);
@@ -773,20 +883,51 @@
     }
   });
 
+  // Portable profile (Music's skill-competency-profile/v1 shape) carrying the
+  // raw fact stats, so moving to another device keeps a player's progress.
+  function exportSkills() {
+    var p = active(); if (!p) return;
+    var doc = K.exportProfile(p.name, store.getFacts(p.id), store.getEarned(p.id), Date.now());
+    try {
+      var blob = new Blob([JSON.stringify(doc, null, 2)], { type: 'application/json' });
+      var a = document.createElement('a'), d = new Date();
+      a.href = URL.createObjectURL(blob);
+      a.download = 'math-skills-' + p.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase() + '-' + d.toISOString().slice(0, 10) + '.json';
+      document.body.appendChild(a); a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); if (a.parentNode) a.parentNode.removeChild(a); }, 1000);
+      toast('Skills profile saved');
+    } catch (e) { toast('Could not export on this browser'); }
+  }
+  $('importFile').addEventListener('change', function () {
+    var f = this.files && this.files[0], input = this; if (!f) return;
+    var p = active(); if (!p) return;
+    var rd = new FileReader();
+    rd.onload = function () {
+      var r = K.importProfile(String(rd.result || ''), store.getFacts(p.id), store.getEarned(p.id));
+      if (!r.ok) { toast(r.error || 'That file is not a Math skills profile'); input.value = ''; return; }
+      store.saveFacts(p.id, r.stats); store.saveEarned(p.id, r.earned);
+      input.value = ''; renderAll(); toast('Imported into ' + p.name);
+    };
+    rd.onerror = function () { toast('Could not read that file'); input.value = ''; };
+    rd.readAsText(f);
+  });
+
   /* ------------------------------------------------------------------
    * Tabs + boot
    * ------------------------------------------------------------------ */
   function setTab(tab) {
     state.tab = tab;
+    $('scrPath').classList.toggle('on', tab === 'path');
     $('scrSetup').classList.toggle('on', tab === 'setup');
     $('scrProgress').classList.toggle('on', tab === 'progress');
-    $('app').classList.toggle('onProgress', tab === 'progress');
+    $('app').classList.toggle('noStart', tab !== 'setup'); // the Start bar belongs to Custom only
     Array.prototype.forEach.call($('tabbar').querySelectorAll('button'), function (b) {
       var on = b.getAttribute('data-tab') === tab;
       b.classList.toggle('on', on);
       if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
     });
     if (tab === 'progress') { $('purpose').textContent = 'How each fact is going'; renderProgress(); }
+    else if (tab === 'path') renderPath();
     else renderSetup();
     $('view').scrollTop = 0;
   }
@@ -794,11 +935,13 @@
 
   function renderAll() {
     renderPlayerChip();
-    if (state.tab === 'progress') renderProgress(); else renderSetup();
+    if (state.tab === 'progress') renderProgress();
+    else if (state.tab === 'path') renderPath();
+    else renderSetup();
   }
 
   applyTheme();
-  renderAll();
+  setTab(state.tab); // the same path a tab tap takes, so boot can't disagree with it
   if (!store.getProfiles().list.length) { state.firstRun = true; openPlayers('add'); }
 
   if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {

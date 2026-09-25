@@ -11,8 +11,9 @@ A self-contained **static** slice of the GitHub Pages site, served from `main`.
 ## Layout
 
 `index.html` (UI shell) + `app.js` (controller) + `engine.js` (pure
-`window.MathEngine`, no DOM/storage) + `store.js` (`window.MathStore`,
-persistence only) + `math.css` + `version.js` + `sw.js` + `manifest.webmanifest`
+`window.MathEngine`, no DOM/storage) + `skills.js` (pure `window.MathSkills`:
+the 12-skill path, stars, earned, portable export/import) + `store.js`
+(`window.MathStore`, persistence only) + `math.css` + `version.js` + `sw.js` + `manifest.webmanifest`
 + `icon.svg`. Seam contracts: [goal-math-app-v1-20260925.md](../docs/plans/goal-math-app-v1-20260925.md).
 
 ## Conventions that bite if ignored
