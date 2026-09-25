@@ -1083,6 +1083,48 @@ test('constants match the documented literal values', function () {
 });
 
 /* ===================================================================
+ * Review round 2 (SHA 2aa2dc0): mastery spacing + v1 coach bests
+ * =================================================================== */
+
+function fact2(key, a, b, answer) { return { key: key, a: a, b: b, op: '+', answer: answer, text: a + ' + ' + b }; }
+
+test('review#4: a fact right first try twice in ONE run only moves ok by one (runStart given)', function () {
+  var f = fact2('+:4:5', 4, 5, 9), runStart = 1000;
+  var s = E.recordAnswer({}, { fact: f, wrongs: 0, ms: 900 }, 2000, runStart);
+  s = E.recordAnswer(s, { fact: f, wrongs: 0, ms: 900 }, 3000, runStart);
+  assert.strictEqual(s['+:4:5'].ok, 1, 'drilled twice in one sitting must not be solid');
+  assert.strictEqual(s['+:4:5'].n, 2, 'both answers still counted');
+});
+
+test('review#4: the same fact right first try in two SEPARATE runs reaches ok 2', function () {
+  var f = fact2('+:4:5', 4, 5, 9);
+  var s = E.recordAnswer({}, { fact: f, wrongs: 0, ms: 900 }, 2000, 1000);
+  s = E.recordAnswer(s, { fact: f, wrongs: 0, ms: 900 }, 9000, 8000);
+  assert.strictEqual(s['+:4:5'].ok, 2);
+});
+
+test('review#4: a miss inside the run still resets ok to 0', function () {
+  var f = fact2('+:4:5', 4, 5, 9);
+  var s = { '+:4:5': { n: 3, miss: 0, box: 2, ms: 900, last: 500, ok: 1 } };
+  s = E.recordAnswer(s, { fact: f, wrongs: 0, ms: 900 }, 2000, 1000);
+  s = E.recordAnswer(s, { fact: f, wrongs: 1, ms: 900 }, 3000, 1000);
+  assert.strictEqual(s['+:4:5'].ok, 0);
+});
+
+test('review#4: without runStart the streak rule is unchanged (back-compat)', function () {
+  var f = fact2('+:4:5', 4, 5, 9);
+  var s = E.recordAnswer({}, { fact: f, wrongs: 0, ms: 900 }, 2000);
+  s = E.recordAnswer(s, { fact: f, wrongs: 0, ms: 900 }, 3000);
+  assert.strictEqual(s['+:4:5'].ok, 2);
+});
+
+test('review#14: a Custom coach set (no tables) keeps its v1 best key', function () {
+  // v1 keyed every x/div coach set as 'coach'; v1.1 must not orphan those bests.
+  assert.strictEqual(E.cfgKey({ ops: ['x'], tables: [], max: 10, coach: true, mode: 'race', length: 20 }), 'race|x|coach|m10|l20');
+  assert.strictEqual(E.cfgKey({ ops: ['x', '/'], tables: [], max: 12, coach: true, mode: 'sprint' }), 'sprint|x/|coach|m12');
+});
+
+/* ===================================================================
  * PRESETS / DEFAULT_CFG shape
  * =================================================================== */
 

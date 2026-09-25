@@ -76,8 +76,13 @@
     },
     {
       "action": "evalAssert",
+      "label": "the hold is really free: over 5 answers the race clock moves less than half the wall time (review #8)",
+      "js": "(async function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}function rd(){return parseFloat(document.getElementById('clock').textContent);}var c0=rd(),t0=performance.now();for(var i=0;i<5;i++){type(ans());await sleep(330);}var dc=(rd()-c0)*1000,dt=performance.now()-t0;window.__holdRatio=dc/dt;return dc/dt<0.5;})()"
+    },
+    {
+      "action": "evalAssert",
       "label": "answer every remaining fact correctly (waiting out each green hold)",
-      "js": "(async function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}var n=0;while(!document.getElementById('runLayer').hidden&&n<40){type(ans());n++;await sleep(330);}return document.getElementById('runLayer').hidden&&n===9;})()"
+      "js": "(async function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}var n=0;while(!document.getElementById('runLayer').hidden&&n<40){type(ans());n++;await sleep(330);}return document.getElementById('runLayer').hidden&&n===4;})()"
     },
     {
       "action": "assertVisible",

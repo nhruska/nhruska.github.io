@@ -1,0 +1,32 @@
+{
+  "name": "math-hold-edges",
+  "description": "Green-hold edge cases from review round 2 on 2aa2dc0. #11: a right answer typed within the wrong-answer flash keeps its glow for the whole hold. #2: pressing Back during the last answer's 260ms hold still records the session and the facts.",
+  "url": "/math/",
+  "seed": {
+    "math.profiles.v1": "{\"active\": \"pAva\", \"list\": [{\"id\": \"pAva\", \"name\": \"Ava\", \"color\": \"#fb3b5c\", \"cfg\": {\"ops\": [\"+\"], \"addRange\": 10, \"tables\": [], \"max\": 10, \"order\": \"random\", \"coach\": false, \"mode\": \"race\", \"length\": 10}, \"created\": 1}]}"
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"setup\"]"
+    },
+    {
+      "action": "tap",
+      "selector": "#startBtn"
+    },
+    {
+      "action": "evalAssert",
+      "label": "a right answer 240ms after a wrong one keeps its green glow for the whole hold (review #11)",
+      "js": "(async function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}var a=ans();type(a===9?8:a+1);await sleep(240);type(ans());await sleep(200);return document.getElementById('card').classList.contains('ok')&&document.getElementById('answer').classList.contains('good');})()"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "Back during the LAST answer's green hold still records the round (review #2)",
+      "js": "(async function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}var n=0;while(document.getElementById('runCount').textContent!=='10 of 10'&&n<20){type(ans());n++;await sleep(330);}type(ans());await sleep(40);history.back();await sleep(700);var s=JSON.parse(localStorage.getItem('math.sessions.pAva.v1')||'[]');var f=JSON.parse(localStorage.getItem('math.facts.pAva.v1')||'{}');var seen=Object.keys(f).reduce(function(t,k){return t+f[k].n;},0);return s.length===1&&seen>=10;})()"
+    }
+  ]
+}

@@ -39,7 +39,7 @@
   store.migrate();
 
   var state = {
-    tab: 'path', progOp: null, focusSkill: null, lastGains: null, lvlNext: null,
+    tab: 'path', progOp: null, focusSkill: null, lastGains: null, lvlNext: null, lvlQueue: [], pendingLvl: null, afterLvl: null,
     run: null, stats: null, pid: null, raf: 0,
     badShow: null, flashT: 0, quitting: false,
     lastSummary: null, lastCfg: null, lastMissed: null,
@@ -47,7 +47,7 @@
   };
 
   /* ------------------------------------------------------------------
-   * Theme + accent (the active player's colour is the app accent)
+   * Theme + accent (the active player's color is the app accent)
    * ------------------------------------------------------------------ */
   var mql = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
   function storedTheme() {
@@ -162,6 +162,13 @@
   window.addEventListener('popstate', function (e) {
     var d = e.state && typeof e.state.mathDepth === 'number' ? e.state.mathDepth : 0;
     if (d >= stack.length) return;
+    // Back during the last answer's green hold: the round is already won, so
+    // finish it (session + stats saved) and show results (review #2).
+    if (stack[stack.length - 1] === 'run' && d === stack.length - 1 && state.okHold && state.okHold.done) {
+      try { history.pushState({ mathDepth: stack.length }, ''); } catch (err) {}
+      endOkHold();
+      return;
+    }
     // Back out of a live workout: pause it instead of discarding the round.
     if (!state.quitting && stack[stack.length - 1] === 'run' && d === stack.length - 1 && state.run && !state.run.done) {
       try { history.pushState({ mathDepth: stack.length }, ''); } catch (err) {}
@@ -173,9 +180,21 @@
   function closeLayer(name) {
     if (name === 'run') {
       stopLoop(); clearTimeout(state.okT); state.okHold = null; $('card').classList.remove('ok', 'bad');
-      if (state.run && !state.run.done) saveStats(); state.run = null; $('runLayer').hidden = true;
+      if (state.run) {
+        saveStats();
+        // A quit round still counts toward stars; celebrate what it mastered (review #13).
+        var upd = K.updateEarned(store.getEarned(state.pid), state.stats, Date.now());
+        store.saveEarned(state.pid, upd.earned);
+        if (upd.mastered.length) state.pendingLvl = upd.mastered;
+      }
+      state.run = null; $('runLayer').hidden = true;
     }
-    else if (name === 'results') { $('resLayer').hidden = true; $('lvlLayer').hidden = true; }
+    else if (name === 'results') { $('resLayer').hidden = true; }
+    else if (name === 'levelup') {
+      $('lvlLayer').hidden = true; state.lvlQueue = [];
+      // After the unwind finishes: a layer pushed from inside unwindTo would be closed by it at once.
+      if (state.afterLvl) { var go = state.afterLvl; state.afterLvl = null; setTimeout(go, 0); }
+    }
     else if (name === 'pause') {
       $('pauseOv').hidden = true;
       if (!state.quitting && state.run && state.run.pausedAt != null) resumeRun();
@@ -186,14 +205,22 @@
       state.firstRun = false; state.formMode = null; // back/backdrop out of first run (review finding #7)
     }
     else if (name === 'settings') { $('setOv').hidden = true; }
-    if (!stack.length) { state.quitting = false; renderSetup(); }
+    if (!stack.length) {
+      state.quitting = false;
+      renderAll(); // the Skills home shows what the round just earned (review #1)
+      if (state.pendingLvl) { var ids = state.pendingLvl; state.pendingLvl = null; setTimeout(function () { showLevelUps(ids); }, 0); }
+    }
   }
 
   /* ------------------------------------------------------------------
    * Players
    * ------------------------------------------------------------------ */
   function active() { return store.getActive(); }
-  function cfg() { var p = active(); return E.normalizeCfg(p && p.cfg ? p.cfg : E.DEFAULT_CFG); }
+  function cfg() {
+    var p = active(), c = E.normalizeCfg(p && p.cfg ? p.cfg : E.DEFAULT_CFG);
+    if (c.coach && !c.skill) c.tables = []; // Custom's Coach means every table; v1 profiles kept stale picks (review #14)
+    return c;
+  }
   function saveCfg(c) { var p = active(); if (p) store.updateProfile(p.id, { cfg: E.normalizeCfg(c) }); renderSetup(); }
   function nextColor() {
     var used = store.getProfiles().list.map(function (p) { return p.color; }), P = T.PALETTE;
@@ -244,7 +271,7 @@
       $('playersTitle').textContent = state.firstRun ? 'Who\'s playing?' : (editing ? 'Edit player' : 'New player');
       html += '<div class="mForm">';
       html += '<div class="sub">Name</div><input class="mInput" id="pfName" type="text" maxlength="20" autocomplete="off" placeholder="Name" value="' + esc(editing ? editing.name : '') + '">';
-      html += '<div class="sub">Colour</div><div class="mSwatches" role="radiogroup" aria-label="Colour">';
+      html += '<div class="sub">Color</div><div class="mSwatches" role="radiogroup" aria-label="Color">';
       T.PALETTE.forEach(function (sw) {
         var on = sw.a === state.formColor;
         html += '<button type="button" class="sw' + (on ? ' on' : '') + '" data-color="' + sw.a + '" role="radio" aria-checked="' + on + '" aria-label="' + esc(sw.n) + '"></button>';
@@ -259,7 +286,7 @@
       html += '</div>';
       body.innerHTML = html;
     }
-    // colour dots/swatches are data, set as custom properties (no style= in markup)
+    // color dots/swatches are data, set as custom properties (no style= in markup)
     Array.prototype.forEach.call(body.querySelectorAll('[data-dot]'), function (el) { el.style.setProperty('--dot', el.getAttribute('data-dot')); });
     Array.prototype.forEach.call(body.querySelectorAll('.sw[data-color]'), function (el) { el.style.setProperty('--sc', el.getAttribute('data-color')); });
   }
@@ -509,6 +536,7 @@
   function holdCorrect(fact, typed, now, done) {
     state.okHold = { text: fact ? fact.text : '', typed: typed, done: done, at: now };
     if (!done) { state.run = E.pause(state.run, now); stopLoop(); }
+    clearTimeout(state.flashT); // a wrong answer's pending flash would strip the glow mid-hold (review #11)
     var card = $('card'); card.classList.remove('bad'); card.classList.add('ok');
     renderRun();
     clearTimeout(state.okT);
@@ -531,7 +559,7 @@
     state.run = out.run;
     if (out.event === 'correct' || out.event === 'done') {
       var res = out.run.results[out.run.results.length - 1];
-      state.stats = E.recordAnswer(state.stats, res, now);
+      state.stats = E.recordAnswer(state.stats, res, now, r0.startedAt); // one streak step per fact per workout (review #4)
       feedback('ok');
       holdCorrect(shown, typed, now, out.event === 'done');
       return;
@@ -596,7 +624,7 @@
     $('resLayer').hidden = false;
     if (stack[stack.length - 1] === 'run') stack[stack.length - 1] = 'results';
     state.run = null;
-    if (upd.mastered.length) showLevelUp(upd.mastered[0]);
+    if (upd.mastered.length) showLevelUps(upd.mastered);
   }
   function starsHtml(n, big) {
     var h = '<span class="mStars' + (big ? ' big' : '') + '" role="img" aria-label="' + n + ' of 3 stars">';
@@ -616,10 +644,22 @@
     $('lvlLayer').hidden = false;
     buzz('level');
   }
-  $('lvlDone').addEventListener('click', function () { $('lvlLayer').hidden = true; });
+  // Every skill a round mastered gets its own moment, on its own layer, so
+  // Back closes the celebration and leaves results underneath (review #12, #13).
+  function showLevelUps(ids) {
+    if (!ids || !ids.length) return;
+    state.lvlQueue = ids.slice(1);
+    showLevelUp(ids[0]);
+    if (stack[stack.length - 1] !== 'levelup') pushLayer('levelup');
+  }
+  $('lvlDone').addEventListener('click', function () {
+    if (state.lvlQueue && state.lvlQueue.length) { showLevelUp(state.lvlQueue.shift()); return; }
+    backTo(stack.lastIndexOf('levelup'));
+  });
   $('lvlGo').addEventListener('click', function () {
-    $('lvlLayer').hidden = true;
-    if (state.lvlNext) { state.focusSkill = state.lvlNext; startSkill(state.lvlNext, 'race'); }
+    var next = state.lvlNext; if (!next) return;
+    state.afterLvl = function () { state.focusSkill = next; startSkill(next, 'race'); };
+    backTo(stack.lastIndexOf('levelup'));
   });
   function renderResults(sum, sess, saved, c) {
     var msg;
@@ -657,7 +697,8 @@
   }
   $('againBtn').addEventListener('click', function () {
     var lc = state.lastCfg;
-    startRun(lc && lc.skill && lc.mode !== 'practice' ? E.normalizeCfg(lc) : cfg());
+    if (lc && lc.skill) startSkill(lc.skill, lc.mode); // a skill's Race or Practice, never Custom (review #3)
+    else startRun(cfg());
   });
   $('drillBtn').addEventListener('click', function () {
     var missed = state.lastMissed || []; if (!missed.length) return;
@@ -697,7 +738,7 @@
     var row = null;
     pth.skills.forEach(function (r) { if (r.skill.id === focusId) row = r; });
     $('bandLine').textContent = p.name + ': ' + BAND_LABEL[pth.band] + ', ' + pth.masteredCount + ' of ' + pth.skills.length + ' skills mastered';
-    var tag = !nextId ? 'Every skill mastered' : (focusId === nextId ? 'Up next' : 'Practising');
+    var tag = !nextId ? 'Every skill mastered' : (focusId === nextId ? 'Up next' : 'Practicing');
     var pr = row.progress;
     var h = '<div class="mNextTag">' + esc(tag) + '</div>' +
       '<div class="mNextHead"><span class="mBadge' + (row.stars === 3 ? ' earned' : '') + '" aria-hidden="true">' + esc(row.skill.short) + '</span>' +
@@ -903,10 +944,21 @@
     var p = active(); if (!p) return;
     var rd = new FileReader();
     rd.onload = function () {
-      var r = K.importProfile(String(rd.result || ''), store.getFacts(p.id), store.getEarned(p.id));
-      if (!r.ok) { toast(r.error || 'That file is not a Math skills profile'); input.value = ''; return; }
-      store.saveFacts(p.id, r.stats); store.saveEarned(p.id, r.earned);
-      input.value = ''; renderAll(); toast('Imported into ' + p.name);
+      var prevFacts = store.getFacts(p.id), prevEarned = store.getEarned(p.id);
+      var r = K.importProfile(String(rd.result || ''), prevFacts, prevEarned);
+      input.value = '';
+      if (!r.ok) { toast(r.error || 'That file is not a Math skills profile'); return; }
+      // Stars the imported facts already earn are banked quietly, so a later
+      // round never celebrates a skill it did not play.
+      var earned = K.updateEarned(r.earned, r.stats, Date.now()).earned;
+      function restore() { store.saveFacts(p.id, prevFacts); store.saveEarned(p.id, prevEarned); renderAll(); }
+      if (!store.saveFacts(p.id, r.stats) || !store.saveEarned(p.id, earned)) {
+        restore(); toast('Could not save the import on this device'); return; // review #6
+      }
+      renderAll();
+      // Undo, and say whose skills they were: a sibling's file is an easy mis-tap (review #5).
+      var whose = r.player && r.player !== p.name ? r.player + '\'s skills' : 'Skills';
+      showUndo(whose + ' imported into ' + p.name, function () { restore(); toast('Import undone'); });
     };
     rd.onerror = function () { toast('Could not read that file'); input.value = ''; };
     rd.readAsText(f);

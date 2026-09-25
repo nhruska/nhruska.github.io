@@ -34,8 +34,10 @@
  *     never-seen keys once THAT op has at least one seen key; an op
  *     with zero history draws unseen facts freely (so a brand-new
  *     table isn't starved down to 3 facts).
- *  4. Coach replaces the table list in both cfgKey and cfgLabel (coach
- *     draws from every table); for add/sub-only configs, which have no
+ *  4. A coach set with no tables replaces the table list with 'coach' in
+ *     both cfgKey and cfgLabel (it draws from every table, and keeps v1's
+ *     key so old bests survive); a skill's coach set is scoped to its own
+ *     tables and keys as '<tables>|coach'. For add/sub-only configs, which have no
  *     table slot, coach is appended after the range so a coach set never
  *     shares a best time with a hand-picked one.
  *  5. "sorted ops" (cfgKey, cfgLabel) sorts by the CANONICAL OPS array
@@ -392,7 +394,7 @@
     return v;
   }
 
-  function recordAnswer(stats, result, now) {
+  function recordAnswer(stats, result, now, runStart) {
     stats = stats || {};
     var fact = result.fact;
     var key = fact.key;
@@ -417,7 +419,11 @@
     // ok = first-try-correct answers in a row (accuracy-only skill mastery, v1.1);
     // additive field - a stat written before v1.1 just starts its streak here.
     var prevOk = (prev && typeof prev.ok === 'number' && prev.ok >= 0) ? Math.floor(prev.ok) : 0;
-    var ok = result.wrongs > 0 ? 0 : prevOk + 1;
+    // One step per fact per workout (review #4): with `runStart`, a fact already
+    // answered in THIS run keeps its streak, so "solid" means right on separate
+    // occasions, never drilled twice right after the answer was shown.
+    var sameRun = typeof runStart === 'number' && isFinite(runStart) && prev && typeof prev.last === 'number' && prev.last >= runStart;
+    var ok = result.wrongs > 0 ? 0 : (sameRun ? prevOk : prevOk + 1);
     out[key] = { n: n, miss: miss, box: box, ms: ms, last: now, ok: ok };
     return out;
   }
@@ -573,7 +579,9 @@
     if (cfg.skill) parts.unshift('sk:' + cfg.skill);
     if (hasAddSub) parts.push('r' + cfg.addRange + (cfg.coach && !hasMulDiv ? '|coach' : ''));
     if (hasMulDiv) {
-      parts.push((cfg.tables.length ? cfg.tables.join(',') : 'all') + (cfg.coach ? '|coach' : ''));
+      // A Custom coach set (no tables) keeps v1's 'coach' key so its bests survive;
+      // a skill's coach set is scoped to its tables and keys by them.
+      parts.push(cfg.coach && !cfg.tables.length ? 'coach' : (cfg.tables.length ? cfg.tables.join(',') : 'all') + (cfg.coach ? '|coach' : ''));
       parts.push('m' + cfg.max);
       // An in-order single table (1x7, 2x7, ...) is easier than random x7, so
       // it keeps its own best. Mirrors the condition buildSet orders under.
@@ -591,7 +599,7 @@
     var hasMulDiv = ops.indexOf('x') !== -1 || ops.indexOf('/') !== -1;
     // Each op group sits next to its OWN range ('+ \u2212 to 20, \u00d7 \u00f7 6 7 8 to 12');
     // a flat run-on ('... to 20 6, 7, 8 to 12') was ambiguous in the Progress list.
-    // Coach picks from every table, so it replaces the table list.
+    // A coach set with no tables picks from every table, so 'coach' replaces the list.
     var groups = [];
     if (hasAddSub) {
       groups.push(ops.filter(function (o) { return o === '+' || o === '-'; }).map(function (o) { return GLYPH[o]; }).join(' ') +
