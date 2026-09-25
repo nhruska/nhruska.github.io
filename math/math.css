@@ -59,20 +59,25 @@
 .mAnswer{font-family:'Space Mono',monospace;font-weight:700;font-size:clamp(2.2rem,11vw,3.6rem);line-height:1.1;color:var(--txt-dim);min-height:1.1em;}
 .mAnswer.typed{color:var(--accent-ink);}
 .mAnswer.bad{color:var(--bad);}
+.mAnswer.good{color:var(--good);}
 .mAnswer.ghost{color:var(--txt-dim);text-decoration:underline dashed;text-underline-offset:8px;}
 .mHint{font-size:.85rem;color:var(--txt-soft);min-height:1.3em;text-align:center;padding:0 10px;}
-.mCard.ok{border-color:var(--good);}
+.mCard.ok{border-color:var(--good);box-shadow:0 0 0 3px color-mix(in srgb,var(--good) 30%,transparent);}
 .mCard.bad{border-color:var(--bad);animation:mShake .32s ease;}
 @keyframes mShake{0%,100%{transform:none;}20%{transform:translateX(-7px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(3px);}}
 .mKeys{flex:0 0 auto;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
 .mKey{font-family:'Space Mono',monospace;font-size:1.75rem;font-weight:700;min-height:clamp(54px,8.6dvh,70px);padding:0;
   display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;touch-action:manipulation;}
 .mKey:active{background:var(--accent-deep);border-color:var(--accent-dim);}
+/* Every press is SEEN: a short accent flash on the key (JS adds .hit for ~170ms,
+   keyboard presses included), paired with a haptic tick. */
+.mKey.hit{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);transform:scale(.96);}
 .mKeyFn{color:var(--txt-soft);font-size:1.3rem;}
 @media (prefers-reduced-motion:reduce){.mCard.bad{animation:none;}.mBarFill{transition:none;}}
 /* --bad is a fixed status hue tuned for the dark canvas; as TEXT on the light
    canvas it falls under 4.5:1, so darken it toward the ink there. */
 :root[data-theme="light"] .mPenalty,:root[data-theme="light"] .mAnswer.bad{color:color-mix(in srgb,var(--bad) 55%,var(--txt));}
+:root[data-theme="light"] .mAnswer.good{color:color-mix(in srgb,var(--good) 45%,var(--txt));}
 
 /* Phone landscape: problem on the left, keypad on the right, both on screen. */
 @media (orientation:landscape) and (max-height:560px){

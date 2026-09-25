@@ -21,8 +21,36 @@
     },
     {
       "action": "evalAssert",
-      "label": "wrong answer: +3s penalty, same fact kept, try-again hint",
-      "js": "(function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}var t0=document.getElementById('problem').textContent,a=ans(),w=String(a).length===1?(a===9?8:a+1):a+1;type(w);var clock=parseFloat(document.getElementById('clock').textContent);return document.getElementById('problem').textContent===t0&&clock>=3&&document.getElementById('penaltyFlash').textContent==='+3s'&&/Try again/.test(document.getElementById('hint').textContent);})()"
+      "label": "stub navigator.vibrate to record haptic calls",
+      "js": "(function(){window.__buzz=[];navigator.vibrate=function(p){window.__buzz.push(JSON.stringify(p));return true;};return true;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "right answer: my digits show GREEN on the solved problem, card glows, key flashes, haptic tick + ok pulse",
+      "js": "(function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}var t0=document.getElementById('problem').textContent,a=String(ans());type(a);var el=document.getElementById('answer');window.__clk=document.getElementById('clock').textContent;return document.getElementById('problem').textContent===t0&&el.textContent===a&&el.classList.contains('good')&&document.getElementById('card').classList.contains('ok')&&document.querySelectorAll('#keypad .mKey.hit').length>=1&&window.__buzz.indexOf('8')>=0&&window.__buzz.indexOf('22')>=0;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 180
+    },
+    {
+      "action": "evalAssert",
+      "label": "the confirmation is free: the clock is frozen during the green hold",
+      "js": "document.getElementById('clock').textContent===window.__clk"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "evalAssert",
+      "label": "after the hold the next problem shows with an empty slot",
+      "js": "document.getElementById('answer').textContent==='?'&&document.getElementById('runCount').textContent==='2 of 10'&&!document.getElementById('card').classList.contains('ok')"
+    },
+    {
+      "action": "evalAssert",
+      "label": "wrong answer: +3s penalty, same fact kept, try-again hint + double buzz",
+      "js": "(function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}var t0=document.getElementById('problem').textContent,a=ans(),w=String(a).length===1?(a===9?8:a+1):a+1;type(w);var clock=parseFloat(document.getElementById('clock').textContent);return document.getElementById('problem').textContent===t0&&clock>=3&&window.__buzz.indexOf('[40,50,40]')>=0&&document.getElementById('penaltyFlash').textContent==='+3s'&&/Try again/.test(document.getElementById('hint').textContent);})()"
     },
     {
       "action": "evalAssert",
@@ -44,8 +72,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "answer every remaining fact correctly",
-      "js": "(function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}var n=0;while(!document.getElementById('runLayer').hidden&&n<40){type(ans());n++;}return document.getElementById('runLayer').hidden&&n===10;})()"
+      "label": "answer every remaining fact correctly (waiting out each green hold)",
+      "js": "(async function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}var n=0;while(!document.getElementById('runLayer').hidden&&n<40){type(ans());n++;await sleep(330);}return document.getElementById('runLayer').hidden&&n===9;})()"
     },
     {
       "action": "assertVisible",

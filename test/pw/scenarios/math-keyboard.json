@@ -24,6 +24,10 @@
       "key": "7"
     },
     {
+      "action": "wait",
+      "ms": 400
+    },
+    {
       "action": "assertText",
       "selector": "#runCount",
       "contains": "2 of 10"
@@ -38,7 +42,7 @@
     },
     {
       "action": "wait",
-      "ms": 150
+      "ms": 100
     },
     {
       "action": "evalAssert",
@@ -52,6 +56,10 @@
     {
       "action": "press",
       "key": "4"
+    },
+    {
+      "action": "wait",
+      "ms": 400
     },
     {
       "action": "assertText",

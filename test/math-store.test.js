@@ -290,6 +290,49 @@ test('restoreProfile is idempotent: a second restore of the same snapshot adds n
   assert.ok(ms.getFacts(b.id)['x:2:3'], 'facts intact');
 });
 
+test('v1.1 earned stars/badges: saved per player, part of delete+undo and reset+undo', function () {
+  var ms = MathStore.create(fakeStore());
+  var a = ms.addProfile({ name: 'A' });
+  var b = ms.addProfile({ name: 'B' });
+  assert.deepStrictEqual(ms.getEarned(a.id), {}, 'no earned yet');
+  var earned = { 'add-10': { stars: 3, masteredAt: 1000 }, 'sub-10': { stars: 1, masteredAt: null } };
+  assert.strictEqual(ms.saveEarned(a.id, earned), true);
+  assert.deepStrictEqual(ms.getEarned(a.id), earned);
+  assert.deepStrictEqual(ms.getEarned(b.id), {}, 'per player');
+  assert.strictEqual(MathStore.KEYS.earned(a.id), 'math.skills.' + a.id + '.v1');
+  // reset + undo
+  var snap = ms.resetProgress(a.id);
+  assert.deepStrictEqual(ms.getEarned(a.id), {}, 'reset clears badges too');
+  ms.restoreProgress(a.id, snap);
+  assert.deepStrictEqual(ms.getEarned(a.id), earned, 'undo brings them back');
+  // delete + undo
+  var del = ms.removeProfile(a.id);
+  assert.deepStrictEqual(ms.getEarned(a.id), {}, 'deleting a player removes their badges key');
+  ms.restoreProfile(del);
+  assert.deepStrictEqual(ms.getEarned(a.id), earned);
+});
+
+test('v1.1 profile start skill: kept by addProfile and survives later updates', function () {
+  var ms = MathStore.create(fakeStore());
+  var p = ms.addProfile({ name: 'Nik', start: 'x-2-5-10' });
+  assert.strictEqual(p.start, 'x-2-5-10');
+  var u = ms.updateProfile(p.id, { name: 'Nikolaus' });
+  assert.strictEqual(u.start, 'x-2-5-10', 'an unrelated update must not drop start');
+  assert.strictEqual(ms.getActive().start, 'x-2-5-10');
+  assert.strictEqual(ms.updateProfile(p.id, { start: 'add-10' }).start, 'add-10');
+  assert.strictEqual(ms.addProfile({ name: 'X', start: 'bad id!' }).start, undefined, 'junk start ignored');
+});
+
+test('v1.1 getEarned is defensive: corrupt / wrong-shape values read as {}', function () {
+  var fs = fakeStore();
+  var ms = MathStore.create(fs);
+  var a = ms.addProfile({ name: 'A' });
+  fs.setItem('math.skills.' + a.id + '.v1', '{not json');
+  assert.deepStrictEqual(ms.getEarned(a.id), {});
+  fs.setItem('math.skills.' + a.id + '.v1', '[1,2]');
+  assert.deepStrictEqual(ms.getEarned(a.id), {});
+});
+
 test('resetProgress snapshots + clears facts and sessions; restoreProgress puts them back', function () {
   var ms = MathStore.create(fakeStore());
   var facts = { 'x:1:2': { n: 2, miss: 0, box: 1, ms: 800, last: 1 } };

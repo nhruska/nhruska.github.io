@@ -186,9 +186,13 @@ test('pool "x": empty tables ([]) uses all tables 2..max', function () {
   assert.strictEqual(facts.length, 9 * 10); // tables 2..10 (9) x k 1..10
 });
 
-test('pool "x": coach mode uses all tables 2..max even when specific tables are picked', function () {
-  var facts = E.pool('x', E.normalizeCfg({ tables: [7], max: 10, coach: true }));
-  assert.strictEqual(facts.length, 9 * 10);
+test('pool "x": coach keeps the picked tables as its scope (v1.1: coach = weighting, tables = scope)', function () {
+  // v1.1 amendment: a skill set (e.g. x-2-5-10) is Coach-weighted INSIDE its own
+  // tables. Custom's Coach chip clears the picks to mean "all tables".
+  var picked = E.pool('x', E.normalizeCfg({ tables: [7], max: 10, coach: true }));
+  picked.forEach(function (f) { assert.ok(f.a === 7 || f.b === 7, 'fact outside x7: ' + f.text); });
+  var all = E.pool('x', E.normalizeCfg({ tables: [], max: 10, coach: true }));
+  assert.ok(all.some(function (f) { return f.b === 2; }) && all.some(function (f) { return f.b === 10; }), 'no picks = all tables 2..max');
 });
 
 test('pool "/": divisor from picked tables, whole-number quotient 1..max', function () {
@@ -376,6 +380,19 @@ test('coach: an op with zero history draws unseen facts freely (falls back to pl
  * coachWeight
  * =================================================================== */
 
+test('v1.1 recordAnswer: ok counts first-try-correct in a row, a miss resets it (accuracy-only mastery)', function () {
+  var f = E.makeFact('+', 3, 4), st = {};
+  st = E.recordAnswer(st, { fact: f, ms: 9000, wrongs: 0 }, 1);
+  assert.strictEqual(st[f.key].ok, 1, 'slow but right still counts - accuracy only');
+  st = E.recordAnswer(st, { fact: f, ms: 9000, wrongs: 0 }, 2);
+  assert.strictEqual(st[f.key].ok, 2);
+  st = E.recordAnswer(st, { fact: f, ms: 900, wrongs: 1 }, 3);
+  assert.strictEqual(st[f.key].ok, 0, 'a miss resets the streak');
+  var legacy = {}; legacy[f.key] = { n: 4, miss: 0, box: 2, ms: 1000, last: 0 }; // pre-v1.1 stat, no ok
+  var up = E.recordAnswer(legacy, { fact: f, ms: 900, wrongs: 0 }, 5);
+  assert.strictEqual(up[f.key].ok, 1, 'a stat without ok starts the streak at 1');
+});
+
 test('coachWeight: unseen fact returns 3', function () {
   var f = E.makeFact('+', 1, 2);
   assert.strictEqual(E.coachWeight(f, {}, 1000), 3);
@@ -469,7 +486,7 @@ test('fastMs: only counts facts for the given op', function () {
 test('recordAnswer: first answer creates a fresh stat, ms = the raw ms (no EWMA yet)', function () {
   var fact = E.makeFact('+', 3, 5);
   var out = E.recordAnswer({}, { fact: fact, ms: 900, wrongs: 0 }, 5000);
-  assert.deepStrictEqual(out[fact.key], { n: 1, miss: 0, box: 1, ms: 900, last: 5000 });
+  assert.deepStrictEqual(out[fact.key], { n: 1, miss: 0, box: 1, ms: 900, last: 5000, ok: 1 });
 });
 
 test('recordAnswer: does not mutate the input stats object', function () {
@@ -843,6 +860,31 @@ test('cfgKey: an in-order single-table race never shares a best with the random 
   var rnd2 = { ops: ['x'], tables: [7, 8], max: 12, mode: 'race', length: 20, order: 'random' };
   var ord2 = { ops: ['x'], tables: [7, 8], max: 12, mode: 'race', length: 20, order: 'ordered' };
   assert.strictEqual(E.cfgKey(rnd2), E.cfgKey(ord2));
+});
+
+test('v1.1 normalizeCfg keeps a valid skill id + label, drops junk', function () {
+  var c = E.normalizeCfg({ ops: ['+'], skill: 'add-10', label: 'Addition to 10' });
+  assert.strictEqual(c.skill, 'add-10');
+  assert.strictEqual(c.label, 'Addition to 10');
+  var bad = E.normalizeCfg({ ops: ['+'], skill: 'Add 10!<script>', label: 42 });
+  assert.strictEqual(bad.skill, undefined);
+  assert.strictEqual(bad.label, undefined);
+  var long = E.normalizeCfg({ ops: ['+'], label: new Array(60).join('x') });
+  assert.ok(long.label.length <= 40);
+});
+
+test('v1.1 cfgKey: a skill set keys by its skill id; coach sets keep their tables', function () {
+  var a = E.cfgKey({ ops: ['x'], tables: [2, 5, 10], max: 10, coach: true, skill: 'x-2-5-10', mode: 'race', length: 10 });
+  var b = E.cfgKey({ ops: ['x'], tables: [3, 4], max: 10, coach: true, skill: 'x-3-4', mode: 'race', length: 10 });
+  assert.ok(/sk:x-2-5-10/.test(a), a);
+  assert.notStrictEqual(a, b);
+  var c1 = E.cfgKey({ ops: ['x'], tables: [6, 7], max: 10, coach: true, mode: 'race', length: 10 });
+  var c2 = E.cfgKey({ ops: ['x'], tables: [8, 9], max: 10, coach: true, mode: 'race', length: 10 });
+  assert.notStrictEqual(c1, c2, 'two coach sets over different tables must not share a best');
+});
+
+test('v1.1 cfgLabel: an explicit label wins (skill names in history)', function () {
+  assert.strictEqual(E.cfgLabel({ ops: ['+'], addRange: 10, label: 'Addition to 10' }), 'Addition to 10');
 });
 
 test('cfgKey: length is excluded for sprint mode', function () {

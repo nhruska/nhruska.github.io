@@ -166,7 +166,11 @@
     var mode = (cfg.mode === 'sprint' || cfg.mode === 'practice') ? cfg.mode : 'race';
     var length = LENGTHS.indexOf(cfg.length) !== -1 ? cfg.length : DEFAULT_CFG.length;
 
-    return { ops: ops, addRange: addRange, tables: tables, max: max, order: order, coach: coach, mode: mode, length: length };
+    var out = { ops: ops, addRange: addRange, tables: tables, max: max, order: order, coach: coach, mode: mode, length: length };
+    // v1.1: a skill workout carries its skill id (bests key) and display label.
+    if (typeof cfg.skill === 'string' && /^[a-z0-9-]{1,32}$/.test(cfg.skill)) out.skill = cfg.skill;
+    if (typeof cfg.label === 'string' && cfg.label.replace(/[\r\n]/g, '').trim()) out.label = cfg.label.replace(/[\r\n]/g, ' ').trim().slice(0, 40);
+    return out;
   }
 
   function makeFact(op, a, b) {
@@ -197,12 +201,14 @@
         for (i = 2; i <= 10; i++) for (j = 1; j < i; j++) facts.push(makeFact('-', i, j));
       }
     } else if (op === 'x') {
-      var tabsX = (cfg.coach || cfg.tables.length === 0) ? rangeTo(2, cfg.max) : cfg.tables;
+      // Tables are the SCOPE, coach is only the weighting (v1.1): a skill set is
+      // coach-weighted inside its own tables. No picks = every table to max.
+      var tabsX = cfg.tables.length === 0 ? rangeTo(2, cfg.max) : cfg.tables;
       tabsX.forEach(function (t) {
         for (kk = 1; kk <= cfg.max; kk++) facts.push(makeFact('x', kk, t));
       });
     } else if (op === '/') {
-      var tabsD = (cfg.coach || cfg.tables.length === 0) ? rangeTo(2, cfg.max) : cfg.tables;
+      var tabsD = cfg.tables.length === 0 ? rangeTo(2, cfg.max) : cfg.tables;
       tabsD.forEach(function (t) {
         for (kk = 1; kk <= cfg.max; kk++) facts.push(makeFact('/', t * kk, t));
       });
@@ -408,7 +414,11 @@
 
     var out = {};
     Object.keys(stats).forEach(function (k) { out[k] = stats[k]; });
-    out[key] = { n: n, miss: miss, box: box, ms: ms, last: now };
+    // ok = first-try-correct answers in a row (accuracy-only skill mastery, v1.1);
+    // additive field - a stat written before v1.1 just starts its streak here.
+    var prevOk = (prev && typeof prev.ok === 'number' && prev.ok >= 0) ? Math.floor(prev.ok) : 0;
+    var ok = result.wrongs > 0 ? 0 : prevOk + 1;
+    out[key] = { n: n, miss: miss, box: box, ms: ms, last: now, ok: ok };
     return out;
   }
 
@@ -560,9 +570,10 @@
     var hasAddSub = ops.indexOf('+') !== -1 || ops.indexOf('-') !== -1;
     var hasMulDiv = ops.indexOf('x') !== -1 || ops.indexOf('/') !== -1;
     var parts = [cfg.mode, ops.join('')];
+    if (cfg.skill) parts.unshift('sk:' + cfg.skill);
     if (hasAddSub) parts.push('r' + cfg.addRange + (cfg.coach && !hasMulDiv ? '|coach' : ''));
     if (hasMulDiv) {
-      parts.push(cfg.coach ? 'coach' : (cfg.tables.length ? cfg.tables.join(',') : 'all'));
+      parts.push((cfg.tables.length ? cfg.tables.join(',') : 'all') + (cfg.coach ? '|coach' : ''));
       parts.push('m' + cfg.max);
       // An in-order single table (1x7, 2x7, ...) is easier than random x7, so
       // it keeps its own best. Mirrors the condition buildSet orders under.
@@ -574,6 +585,7 @@
 
   function cfgLabel(cfg) {
     cfg = normalizeCfg(cfg);
+    if (cfg.label) return cfg.label;
     var ops = sortOps(cfg.ops);
     var hasAddSub = ops.indexOf('+') !== -1 || ops.indexOf('-') !== -1;
     var hasMulDiv = ops.indexOf('x') !== -1 || ops.indexOf('/') !== -1;

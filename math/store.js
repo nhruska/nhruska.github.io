@@ -39,7 +39,9 @@
     prefs: 'math.prefs.v1',
     schema: 'math.schema.v1',
     facts: function (id) { return 'math.facts.' + id + '.v1'; },
-    sessions: function (id) { return 'math.sessions.' + id + '.v1'; }
+    sessions: function (id) { return 'math.sessions.' + id + '.v1'; },
+    // v1.1: earned skill stars + badges (never go down), per player. Additive key.
+    earned: function (id) { return 'math.skills.' + id + '.v1'; }
   };
 
   var MAX_SESSIONS = 300;
@@ -101,6 +103,8 @@
 
     function saveProfiles(state) { return writeJSON(KEYS.profiles, state); }
 
+    function validStart(v) { return typeof v === 'string' && /^[a-z0-9-]{1,32}$/.test(v); }
+
     function addProfile(opts) {
       opts = opts || {};
       var state = getProfiles();
@@ -111,6 +115,7 @@
         cfg: opts.cfg,
         created: Date.now()
       };
+      if (validStart(opts.start)) profile.start = opts.start; // v1.1: where this player's skill path begins
       state.list.push(profile);
       if (state.list.length === 1) state.active = profile.id; // first profile becomes active
       saveProfiles(state);
@@ -124,10 +129,12 @@
       if (idx === -1) return null;
       var profile = state.list[idx];
       var next = { id: profile.id, name: profile.name, color: profile.color, cfg: profile.cfg, created: profile.created };
+      if (validStart(profile.start)) next.start = profile.start;
       if (patch && typeof patch === 'object') {
         if (Object.prototype.hasOwnProperty.call(patch, 'name')) next.name = normalizeName(patch.name);
         if (Object.prototype.hasOwnProperty.call(patch, 'color')) next.color = patch.color;
         if (Object.prototype.hasOwnProperty.call(patch, 'cfg')) next.cfg = patch.cfg;
+        if (validStart(patch.start)) next.start = patch.start;
       }
       state.list[idx] = next;
       saveProfiles(state);
@@ -156,12 +163,13 @@
       if (idx === -1) return null;
       var profile = state.list[idx];
       var wasActive = state.active === id;
-      var snapshot = { profile: profile, index: idx, facts: getFacts(id), sessions: getSessions(id), wasActive: wasActive };
+      var snapshot = { profile: profile, index: idx, facts: getFacts(id), sessions: getSessions(id), earned: getEarned(id), wasActive: wasActive };
       state.list.splice(idx, 1);
       if (wasActive) state.active = state.list.length ? state.list[0].id : null;
       saveProfiles(state);
       removeItemSafe(KEYS.facts(id));
       removeItemSafe(KEYS.sessions(id));
+      removeItemSafe(KEYS.earned(id));
       return snapshot; // returned regardless of write success - the caller needs it for undo either way
     }
 
@@ -179,6 +187,7 @@
       var ok1 = saveProfiles(state);
       var ok2 = saveFacts(snapshot.profile.id, snapshot.facts || {});
       var ok3 = writeJSON(KEYS.sessions(snapshot.profile.id), snapshot.sessions || []);
+      if (snapshot.earned) saveEarned(snapshot.profile.id, snapshot.earned);
       return !!(ok1 && ok2 && ok3);
     }
 
@@ -188,6 +197,12 @@
     }
 
     function saveFacts(id, stats) { return writeJSON(KEYS.facts(id), stats || {}); }
+
+    function getEarned(id) {
+      var v = readJSON(KEYS.earned(id), null);
+      return (v && typeof v === 'object' && !Array.isArray(v)) ? v : {};
+    }
+    function saveEarned(id, earned) { return writeJSON(KEYS.earned(id), earned || {}); }
 
     // Oldest first - addSession() always appends, so storage order IS
     // chronological order; nothing to sort here.
@@ -232,9 +247,10 @@
     }
 
     function resetProgress(id) {
-      var snapshot = { facts: getFacts(id), sessions: getSessions(id) };
+      var snapshot = { facts: getFacts(id), sessions: getSessions(id), earned: getEarned(id) };
       saveFacts(id, {});
       writeJSON(KEYS.sessions(id), []);
+      saveEarned(id, {});
       return snapshot;
     }
 
@@ -242,7 +258,8 @@
       if (!snapshot) return false;
       var ok1 = saveFacts(id, snapshot.facts || {});
       var ok2 = writeJSON(KEYS.sessions(id), snapshot.sessions || []);
-      return !!(ok1 && ok2);
+      var ok3 = snapshot.earned ? saveEarned(id, snapshot.earned) : true;
+      return !!(ok1 && ok2 && ok3);
     }
 
     function getPrefs() {
@@ -300,6 +317,8 @@
       restoreProfile: restoreProfile,
       getFacts: getFacts,
       saveFacts: saveFacts,
+      getEarned: getEarned,
+      saveEarned: saveEarned,
       getSessions: getSessions,
       addSession: addSession,
       best: best,

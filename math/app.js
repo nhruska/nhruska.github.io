@@ -103,9 +103,15 @@
         else if (kind === 'done') { blip(523, 0.14, 'sine', 0.08); blip(659, 0.14, 'sine', 0.08, 0.1); blip(784, 0.22, 'sine', 0.08, 0.2); }
       } catch (e) { /* audio is garnish - never break the round */ }
     }
-    if (pf.haptics && navigator.vibrate) {
-      try { if (kind === 'bad') navigator.vibrate([35, 40, 35]); else if (kind === 'done') navigator.vibrate(30); } catch (e) {}
-    }
+    buzz(kind);
+  }
+  // Haptic grammar (Android; iOS Safari has no vibrate API). One light tick per
+  // key so a press is FELT, a short pulse for right, a double for wrong, a
+  // rising pattern for the finish and a longer one for a mastered skill.
+  var BUZZ = { tick: 8, ok: 22, bad: [40, 50, 40], done: [30, 60, 90], level: [60, 40, 60, 40, 160] };
+  function buzz(kind) {
+    if (!BUZZ[kind] || !prefs().haptics || !navigator.vibrate) return;
+    try { navigator.vibrate(BUZZ[kind]); } catch (e) {}
   }
 
   /* ------------------------------------------------------------------
@@ -165,7 +171,10 @@
     unwindTo(d);
   });
   function closeLayer(name) {
-    if (name === 'run') { stopLoop(); if (state.run && !state.run.done) saveStats(); state.run = null; $('runLayer').hidden = true; }
+    if (name === 'run') {
+      stopLoop(); clearTimeout(state.okT); state.okHold = null; $('card').classList.remove('ok', 'bad');
+      if (state.run && !state.run.done) saveStats(); state.run = null; $('runLayer').hidden = true;
+    }
     else if (name === 'results') { $('resLayer').hidden = true; }
     else if (name === 'pause') {
       $('pauseOv').hidden = true;
@@ -455,9 +464,10 @@
   }
   function renderRun() {
     var r = state.run; if (!r) return;
-    var f = E.current(r), ans = $('answer'), now = Date.now();
-    $('problem').textContent = f ? f.text : '';
+    var f = E.current(r), ans = $('answer'), now = Date.now(), h = state.okHold;
+    $('problem').textContent = h ? h.text : (f ? f.text : '');
     ans.className = 'mAnswer';
+    if (h) { ans.textContent = h.typed; ans.classList.add('good'); $('hint').textContent = ''; renderClock(now); return; }
     if (r.input) { ans.textContent = r.input; ans.classList.add('typed'); }
     else if (state.badShow && state.badShow.until > now) { ans.textContent = state.badShow.text; ans.classList.add('bad'); }
     else if (r.reveal && f) { ans.textContent = String(f.answer); ans.classList.add('ghost'); }
@@ -483,22 +493,51 @@
     clearTimeout(el._t);
     el._t = setTimeout(function () { el.classList.remove('on'); }, 900);
   }
+  // Right answer: the player's own digits turn green on the problem they just
+  // solved for OK_HOLD_MS, with the clock PAUSED so the confirmation is free.
+  // Keys during the hold are ignored (they would belong to a problem not yet
+  // shown). Operator UAT 2026-09-25: "color highlights on my input".
+  var OK_HOLD_MS = 260;
+  function hitKey(k) {
+    var el = document.querySelector('#keypad [data-k="' + k + '"]'); if (!el) return;
+    el.classList.remove('hit'); void el.offsetWidth; el.classList.add('hit');
+    clearTimeout(el._hitT);
+    el._hitT = setTimeout(function () { el.classList.remove('hit'); }, 170);
+  }
+  function holdCorrect(fact, typed, now, done) {
+    state.okHold = { text: fact ? fact.text : '', typed: typed, done: done, at: now };
+    if (!done) { state.run = E.pause(state.run, now); stopLoop(); }
+    var card = $('card'); card.classList.remove('bad'); card.classList.add('ok');
+    renderRun();
+    clearTimeout(state.okT);
+    state.okT = setTimeout(endOkHold, OK_HOLD_MS);
+  }
+  function endOkHold() {
+    var h = state.okHold; if (!h) return;
+    state.okHold = null; clearTimeout(state.okT);
+    $('card').classList.remove('ok');
+    if (h.done) { finishRun(h.at); return; }
+    if (state.run && state.run.pausedAt != null) { state.run = E.resume(state.run, Date.now()); startLoop(); }
+    renderRun();
+  }
   function onKey(k) {
     var r0 = state.run;
     if (!r0 || r0.done || r0.pausedAt != null) return;
-    var now = Date.now(), typed = r0.input + k;
+    var now = Date.now(), typed = r0.input + k, shown = E.current(r0);
+    hitKey(k); buzz('tick');
     var out = E.press(r0, k, now);
     state.run = out.run;
     if (out.event === 'correct' || out.event === 'done') {
       var res = out.run.results[out.run.results.length - 1];
       state.stats = E.recordAnswer(state.stats, res, now);
-      feedback('ok'); flashCard('ok');
+      feedback('ok');
+      holdCorrect(shown, typed, now, out.event === 'done');
+      return;
     } else if (out.event === 'wrong') {
       state.badShow = { text: typed, until: now + 380 };
       feedback('bad'); flashCard('bad');
       if (out.run.cfg.mode !== 'practice') flashPenalty();
     }
-    if (out.event === 'done') { finishRun(now); return; }
     renderRun();
   }
   $('keypad').addEventListener('click', function (e) {
@@ -515,6 +554,7 @@
   });
 
   function pauseRun() {
+    if (state.okHold) endOkHold(); // never strand a paused-for-feedback clock
     if (!state.run || state.run.done || state.run.pausedAt != null) return;
     state.run = E.pause(state.run, Date.now());
     stopLoop();
