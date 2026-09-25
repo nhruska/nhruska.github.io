@@ -23,7 +23,12 @@
 # below. The two guards are INDEPENDENT: each runs regardless of whether the
 # other app changed, so a PR touching only math/ still gets checked (the
 # original script exited 0 immediately when music/ had no diff, which would
-# have skipped a math-only PR entirely).
+# have skipped a math-only PR entirely). check_math() also runs the same
+# per-commit walk check_music() does (S-SW-PER-COMMIT below) - a tip-vs-base
+# compare alone misses a first commit that bumps and a follow-up commit that
+# edits math/ while holding that same version - and treats any music/shared/
+# file math/sw.js's CORE list precaches (e.g. theme.js) as a Math asset too,
+# since Math serves those from its own cache the same way it serves math/*.
 #
 # Usage: scripts/check-cache-bump.sh [base-ref]   (default: origin/main)
 # Exit 0: no music/shared|play diff vs base (or CACHE was bumped alongside it
@@ -256,13 +261,32 @@ extract_math_version() {
   git show "$1:math/version.js" 2>/dev/null | grep -oE "MATH_VERSION *= *'[^']+'" | head -1 | sed -E "s/MATH_VERSION *= *'//; s/'\$//"
 }
 
-check_math() {
-  local MATH_DIFF_FILES BASE_MATH_VERSION HEAD_MATH_VERSION
+# Parses math/sw.js's CORE list AT HEAD (the current definition of what a
+# Math install precaches) for every '../music/shared/<file>' entry and prints
+# the corresponding music/shared/<file> path, one per line. A change to one
+# of these is as much a "Math asset changed" event as a change under math/
+# itself - math/sw.js's fromCache() looks these up in Math's OWN cache (never
+# the origin-wide caches.match()), so a stale copy there is exactly the
+# collision shape this script guards against, one origin over.
+math_precached_shared_files() {
+  git show "HEAD:math/sw.js" 2>/dev/null \
+    | grep -oE "'\.\./music/shared/[^']+'" \
+    | sed -e "s/^'\.\.\///" -e "s/'\$//"
+}
 
-  MATH_DIFF_FILES="$(git diff --name-only "$BASE"...HEAD -- math ':!math/CLAUDE.md' || true)"
+check_math() {
+  local MATH_DIFF_FILES BASE_MATH_VERSION HEAD_MATH_VERSION MATH_SHARED
+  local PREV_VERSION PREV_REF SEEN_VERSIONS TIP_VERSION TIP_REF TIP_REPEAT_OF WARNED
+
+  # Math-precached music/shared/ files (e.g. theme.js) count as Math assets -
+  # include them in the diff pathspec alongside math/ itself, both here and
+  # in the walk below.
+  MATH_SHARED="$(math_precached_shared_files | tr '\n' ' ')"
+
+  MATH_DIFF_FILES="$(git diff --name-only "$BASE"...HEAD -- math ':!math/CLAUDE.md' $MATH_SHARED || true)"
 
   if [ -z "$MATH_DIFF_FILES" ]; then
-    echo "check-cache-bump: no math/ changes (excluding math/CLAUDE.md) vs $BASE - nothing to guard for Math."
+    echo "check-cache-bump: no math/ (excluding math/CLAUDE.md) or Math-precached music/shared changes vs $BASE - nothing to guard for Math."
     return 0
   fi
 
@@ -280,14 +304,76 @@ check_math() {
   fi
 
   if [ "$BASE_MATH_VERSION" = "$HEAD_MATH_VERSION" ]; then
-    echo "check-cache-bump: FAIL - math/ changed vs $BASE (excluding math/CLAUDE.md) but MATH_VERSION is unchanged ($HEAD_MATH_VERSION)." >&2
+    echo "check-cache-bump: FAIL - math/ or Math-precached music/shared changed vs $BASE but MATH_VERSION is unchanged ($HEAD_MATH_VERSION)." >&2
     echo "Changed files:" >&2
     echo "$MATH_DIFF_FILES" | sed 's/^/  /' >&2
     echo "Bump MATH_VERSION in math/version.js in the same commit (mirrors the Music CACHE-bump discipline above - math/CLAUDE.md)." >&2
     return 1
   fi
 
-  echo "check-cache-bump: OK - MATH_VERSION bumped ($BASE_MATH_VERSION -> $HEAD_MATH_VERSION) alongside the math/ diff vs $BASE."
+  # ---------------------------------------------------------------------
+  # Per-push walk (mirrors check_music()'s S-SW-PER-COMMIT logic above; N3
+  # re-review, 2026-09-25). The tip-vs-base check above only proves SOME
+  # commit on the branch bumped MATH_VERSION - not that EVERY Math-asset-
+  # changing commit did. A first commit that bumps to math-v2 and a
+  # follow-up commit that edits math/app.js while holding math-v2 passes the
+  # check above (HEAD differs from BASE) but ships the follow-up under the
+  # SAME version, so a phone that already installed the first build never
+  # refetches it - the exact #306 shape one app over. Walk the branch
+  # oldest-first, seeded with the base's MATH_VERSION, and fail when the
+  # newest Math-asset-changing commit reuses a version an earlier one already
+  # shipped; an earlier reuse a later commit already superseded is a WARN,
+  # not a merge blocker, same as check_music().
+  # ---------------------------------------------------------------------
+  PREV_VERSION="$BASE_MATH_VERSION"
+  PREV_REF="$BASE"
+  SEEN_VERSIONS=""
+  TIP_VERSION=""
+  TIP_REF=""
+  TIP_REPEAT_OF=""
+  WARNED=0
+
+  while read -r sha; do
+    [ -z "$sha" ] && continue
+    touched="$(git diff-tree --no-commit-id --name-only -r "$sha" -- math ':!math/CLAUDE.md' $MATH_SHARED || true)"
+    [ -z "$touched" ] && continue
+    cur_version="$(extract_math_version "$sha")"
+    if [ -z "$cur_version" ]; then
+      echo "check-cache-bump: FAIL - could not extract MATH_VERSION from math/version.js at $sha." >&2
+      return 1
+    fi
+    if [ "$cur_version" = "$PREV_VERSION" ]; then
+      if [ "$sha" != "$(git rev-parse HEAD)" ]; then
+        echo "check-cache-bump: WARN - $(git log -1 --format=%h "$sha") changed Math-precached assets while reusing $cur_version from $(git log -1 --format=%h "$PREV_REF"). A device that installed the preview at that commit was served the older build until the next bump." >&2
+        WARNED=1
+      fi
+      TIP_REPEAT_OF="$PREV_REF"
+    else
+      TIP_REPEAT_OF=""
+    fi
+    case " $SEEN_VERSIONS " in
+      *" $cur_version "*) TIP_REPEAT_OF="${TIP_REPEAT_OF:-an earlier commit on this branch}" ;;
+    esac
+    SEEN_VERSIONS="$SEEN_VERSIONS $cur_version"
+    TIP_VERSION="$cur_version"
+    TIP_REF="$sha"
+    PREV_VERSION="$cur_version"
+    PREV_REF="$sha"
+  done <<EOF
+$(git rev-list --reverse --no-merges "$BASE"..HEAD)
+EOF
+
+  if [ -n "$TIP_REPEAT_OF" ]; then
+    echo "check-cache-bump: FAIL - the newest Math-asset-changing commit $(git log -1 --format=%h "$TIP_REF") ships $TIP_VERSION, which $( [ "$TIP_REPEAT_OF" = "an earlier commit on this branch" ] && echo "an earlier commit on this branch" || git log -1 --format=%h "$TIP_REPEAT_OF" ) already shipped." >&2
+    echo "A device that installed this PR's preview keeps serving the EARLIER Math build under that same version - give this build its own version: math-v<PR#> for the first Math-asset-changing commit, then -2, -3 ... for each later one (math/CLAUDE.md)." >&2
+    return 1
+  fi
+
+  if [ "$WARNED" -eq 1 ]; then
+    echo "check-cache-bump: (warnings above are historical - the branch tip is clean for Math)" >&2
+  fi
+
+  echo "check-cache-bump: OK - MATH_VERSION bumped ($BASE_MATH_VERSION -> $HEAD_MATH_VERSION) alongside the math/ diff vs $BASE; the tip does not reuse a version an earlier commit already shipped."
   return 0
 }
 
