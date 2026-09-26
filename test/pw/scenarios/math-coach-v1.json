@@ -1,0 +1,23 @@
+{
+  "name": "math-coach-v1",
+  "description": "Review #14 on 2aa2dc0: a v1-era Custom profile saved Coach on with stale table picks (8, 9). Custom's Coach means every table, so its race keeps the v1 best key race|x|coach|m10|l10.",
+  "url": "/math/",
+  "seed": {
+    "math.profiles.v1": "{\"active\": \"pAva\", \"list\": [{\"id\": \"pAva\", \"name\": \"Ava\", \"color\": \"#fb3b5c\", \"cfg\": {\"ops\": [\"x\"], \"addRange\": 10, \"tables\": [8, 9], \"max\": 10, \"order\": \"random\", \"coach\": true, \"mode\": \"race\", \"length\": 10}, \"created\": 1}]}"
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"setup\"]"
+    },
+    {
+      "action": "tap",
+      "selector": "#startBtn"
+    },
+    {
+      "action": "evalAssert",
+      "label": "a v1 Custom coach profile (Coach on, 8 and 9 left picked) races every table and keeps its v1 best key (review #14)",
+      "js": "(async function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}function lvl(){return document.getElementById('lvlLayer').hidden?null:document.getElementById('lvlName').textContent;}var n=0;while(!document.getElementById('runLayer').hidden&&n<30){type(ans());n++;await sleep(330);}var s=JSON.parse(localStorage.getItem('math.sessions.pAva.v1'));return n===10&&s.length===1&&s[0].cfgKey==='race|x|coach|m10|l10';})()"
+    }
+  ]
+}

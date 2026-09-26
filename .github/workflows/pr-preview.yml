@@ -46,6 +46,11 @@ jobs:
             // (commit gets GC'd), so it must never be the default tap target.
             const baseBranch = `https://raw.githack.com/${hOwner}/${hName}/${branchPath}`;
             const liveUrl = `https://${owner}.github.io/music/play/`;
+            // Math app links, same branch-form-default / commit-pinned-isolated
+            // split as the Music links above.
+            const mathBranchUrl = `${baseBranch}/math/`;
+            const mathCommitUrl = `${base}/math/`;
+            const mathLiveUrl = `https://${owner}.github.io/math/`;
             // The profile label + branch are PR-controlled; truncate FIRST, THEN
             // escape Markdown-active chars, so a slice can't sever an escape pair
             // and leave a dangling backslash that eats the closing bracket.
@@ -88,6 +93,8 @@ jobs:
               '**Try a tuning:** ' + apps.map(([n, u]) => `[${n}](${u})`).join(' · '),
               '',
               `**Branch preview** [music/play](${baseBranch}/music/play/) (tracks latest push - the default) · **Commit** [\`${sha.slice(0, 7)}\`](${base}/music/play/) (isolated per-commit testing; EXPIRES after merge) · **Source** [${mdText(branch)}](${branchUrl}) · **Deployed** [live site](${liveUrl})`,
+              '',
+              `**Math app:** **Branch preview** [math/](${mathBranchUrl}) (tracks latest push - the default) · **Commit** [\`${sha.slice(0, 7)}\`](${mathCommitUrl}) (isolated per-commit testing; EXPIRES after merge) · **Deployed** [live site](${mathLiveUrl})`,
             ].join('\n');
 
             const { data: comments } = await github.rest.issues.listComments({

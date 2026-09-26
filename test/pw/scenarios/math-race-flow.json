@@ -1,0 +1,137 @@
+{
+  "name": "math-race-flow",
+  "description": "Math race end to end (goal-math-app-v1): a wrong answer adds 3s and keeps the same fact on screen until it is answered right; after 2 misses the answer is revealed; finishing records the session, the missed fact, a best time and per-fact stats that the Progress map shows.",
+  "url": "/math/",
+  "seed": {
+    "math.profiles.v1": "{\"active\": \"pAva\", \"list\": [{\"id\": \"pAva\", \"name\": \"Ava\", \"color\": \"#fb3b5c\", \"cfg\": {\"ops\": [\"+\", \"-\"], \"addRange\": 10, \"tables\": [], \"max\": 10, \"order\": \"random\", \"coach\": false, \"mode\": \"race\", \"length\": 10}, \"created\": 1}]}"
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"setup\"]"
+    },
+    {
+      "action": "tap",
+      "selector": "#startBtn"
+    },
+    {
+      "action": "assertVisible",
+      "selector": "#runLayer"
+    },
+    {
+      "action": "evalAssert",
+      "label": "problem is an add/sub fact up to 10",
+      "js": "(function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}var t=document.getElementById('problem').textContent;var a=ans();return /^\\d+ [+\\u2212] \\d+$/.test(t)&&a>=1&&a<=10;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "stub navigator.vibrate to record haptic calls",
+      "js": "(function(){window.__buzz=[];navigator.vibrate=function(p){window.__buzz.push(JSON.stringify(p));return true;};return true;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "right answer: my digits show GREEN on the solved problem, card glows, key flashes, haptic tick + ok pulse",
+      "js": "(function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}var t0=document.getElementById('problem').textContent,a=String(ans());type(a);var el=document.getElementById('answer');window.__clk=document.getElementById('clock').textContent;return document.getElementById('problem').textContent===t0&&el.textContent===a&&el.classList.contains('good')&&document.getElementById('card').classList.contains('ok')&&document.querySelectorAll('#keypad .mKey.hit').length>=1&&window.__buzz.indexOf('8')>=0&&window.__buzz.indexOf('22')>=0;})()"
+    },
+    {
+      "action": "wait",
+      "ms": 180
+    },
+    {
+      "action": "evalAssert",
+      "label": "the confirmation is free: the clock is frozen during the green hold",
+      "js": "document.getElementById('clock').textContent===window.__clk"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "evalAssert",
+      "label": "after the hold the next problem shows with an empty slot",
+      "js": "document.getElementById('answer').textContent==='?'&&document.getElementById('runCount').textContent==='2 of 10'&&!document.getElementById('card').classList.contains('ok')"
+    },
+    {
+      "action": "evalAssert",
+      "label": "wrong answer: +3s penalty, same fact kept, try-again hint + double buzz",
+      "js": "(function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}var t0=document.getElementById('problem').textContent,a=ans(),w=String(a).length===1?(a===9?8:a+1):a+1;type(w);var clock=parseFloat(document.getElementById('clock').textContent);return document.getElementById('problem').textContent===t0&&clock>=3&&window.__buzz.indexOf('[40,50,40]')>=0&&document.getElementById('penaltyFlash').textContent==='+3s'&&/Try again/.test(document.getElementById('hint').textContent);})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "second miss: the wrong digits flash red and the hint gives the answer",
+      "js": "(function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}var a=ans(),w=String(a).length===1?(a===9?8:a+1):a+1;type(w);var el=document.getElementById('answer');return el.classList.contains('bad')&&el.textContent===String(w)&&document.getElementById('hint').textContent==='It\\'s '+a+'. Type it to keep going.';})()"
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "evalAssert",
+      "label": "after the flash the answer shows ghosted (reveal after 2 misses)",
+      "js": "(function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}var a=ans(),el=document.getElementById('answer');return el.classList.contains('ghost')&&el.textContent===String(a);})()"
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "evalAssert",
+      "label": "the hold is really free: over 5 answers the race clock moves less than half the wall time (review #8)",
+      "js": "(async function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}function rd(){return parseFloat(document.getElementById('clock').textContent);}var c0=rd(),t0=performance.now();for(var i=0;i<5;i++){type(ans());await sleep(330);}var dc=(rd()-c0)*1000,dt=performance.now()-t0;window.__holdRatio=dc/dt;return dc/dt<0.5;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "answer every remaining fact correctly (waiting out each green hold)",
+      "js": "(async function(){function ans(){var t=document.getElementById('problem').textContent.split(' ');var a=+t[0],b=+t[2],o=t[1];return o==='+'?a+b:(o==='\\u2212'?a-b:(o==='\\u00d7'?a*b:a/b));}function type(n){String(n).split('').forEach(function(d){document.querySelector('#keypad [data-k=\"'+d+'\"]').click();});}function sleep(ms){return new Promise(function(r){setTimeout(r,ms);});}var n=0;while(!document.getElementById('runLayer').hidden&&n<40){type(ans());n++;await sleep(330);}return document.getElementById('runLayer').hidden&&n===4;})()"
+    },
+    {
+      "action": "assertVisible",
+      "selector": "#resLayer"
+    },
+    {
+      "action": "evalAssert",
+      "label": "results: time incl. 6s penalty, 1 missed, the missed fact listed",
+      "js": "(function(){var big=parseFloat(document.getElementById('resBig').textContent);var tiles=document.getElementById('resTiles').textContent;return big>=6&&/1Missed/.test(tiles)&&/\\+6s/.test(tiles)&&document.querySelectorAll('#resFacts .mFact.miss').length===1&&!document.getElementById('drillBtn').hidden;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "session + fact stats persisted",
+      "js": "(function(){var s=JSON.parse(localStorage.getItem('math.sessions.pAva.v1'));var f=JSON.parse(localStorage.getItem('math.facts.pAva.v1'));return s.length===1&&s[0].misses===1&&s[0].penaltyMs===6000&&s[0].mode==='race'&&Object.keys(f).length>=1;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "math-race-results"
+    },
+    {
+      "action": "tap",
+      "selector": "#doneBtn"
+    },
+    {
+      "action": "assertHidden",
+      "selector": "#resLayer"
+    },
+    {
+      "action": "evalAssert",
+      "label": "Start shows the new best time",
+      "js": "/^Best \\d+\\.\\ds$/.test(document.getElementById('startSub').textContent)"
+    },
+    {
+      "action": "tapText",
+      "text": "Progress"
+    },
+    {
+      "action": "evalAssert",
+      "label": "fact map colours the facts just practised (the missed fact is weak on its own op map)",
+      "js": "(function(){var weak=0,seen=0;['+','-'].forEach(function(o){document.querySelector('#progOpSeg [data-seg=\"'+o+'\"]').click();weak+=document.querySelectorAll('#grid .mCell.weak').length;seen+=document.querySelectorAll('#grid .mCell.learning, #grid .mCell.weak, #grid .mCell.strong').length;});return weak>=1&&seen>=2&&document.querySelectorAll('#grid .mCell.new').length>=1;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "recent workouts lists the race with a BEST tag",
+      "js": "document.querySelectorAll('#recent .mRec').length===1&&/BEST/.test(document.getElementById('recent').textContent)"
+    },
+    {
+      "action": "screenshot",
+      "name": "math-progress"
+    }
+  ]
+}
