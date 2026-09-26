@@ -1,0 +1,410 @@
+{
+  "schema": "verify-manifest/1",
+  "app": "music",
+  "level": "V2",
+  "base": "origin/main",
+  "runtime": {
+    "up": {
+      "cmd": "python3 -m http.server {port} --bind 127.0.0.1"
+    },
+    "ready": {
+      "path": "/music/play/",
+      "status": [
+        200
+      ],
+      "contains": "tabbar",
+      "timeout_s": 20
+    },
+    "port_base": 18000,
+    "port_span": 1000
+  },
+  "ignore": [
+    "**/*.md",
+    "docs/**",
+    "music/docs/**",
+    "music/engineering-wiki/**",
+    ".claude/**",
+    ".github/**",
+    ".verify/**",
+    "test/pw/evidence/**",
+    "_handoff/**",
+    "scripts/verify.py"
+  ],
+  "gates": [
+    {
+      "id": "unit-suite",
+      "cmd": "node test/run-all.js",
+      "timeout_s": 300
+    },
+    {
+      "id": "cache-bump",
+      "cmd": "bash scripts/check-cache-bump.sh origin/main",
+      "timeout_s": 60
+    }
+  ],
+  "state": [
+    {
+      "id": "app-shell",
+      "http": {
+        "path": "/music/play/"
+      },
+      "expect": {
+        "status": 200,
+        "contains": "id=\"offlinePill\""
+      }
+    },
+    {
+      "id": "build-stamp",
+      "http": {
+        "path": "/music/shared/build-stamp.js"
+      },
+      "expect": {
+        "status": 200,
+        "contains": "var VERSION = 'music-v"
+      }
+    },
+    {
+      "id": "capabilities",
+      "http": {
+        "path": "/music/agent/capabilities.json"
+      },
+      "expect": {
+        "status": 200,
+        "json": {
+          "schema": "music-app-capabilities/v1"
+        }
+      }
+    }
+  ],
+  "features": [
+    {
+      "id": "shell",
+      "title": "App shell, PWA + build stamp",
+      "how": "Open /music/play/ (trailing slash): 3-tab tabbar, offline pill, Settings meta line shows BuildStamp.VERSION == sw.js CACHE",
+      "paths": [
+        "music/play/**",
+        "music/index.html",
+        "music/sw.js",
+        "music/shared/build-stamp.js",
+        "music/shared/nav-history.js",
+        "music/shared/theme.js",
+        "music/shared/toast.js",
+        "music/shared/songbook.css",
+        "music/shared/esc.js",
+        "music/shared/accordion.js",
+        "music/shared/scroll-hint.js",
+        "music/shared/callouts.js",
+        "music/shared/legend.js",
+        "music/shared/guidance-level.js",
+        "music/shared/notables.js",
+        "music/shared/setup-doc.js",
+        "music/shared/profiles/**",
+        "music/shared/manifest.json",
+        "scripts/check-cache-bump.sh",
+        "test/build-stamp.test.js",
+        "test/sw-verify.test.js",
+        "test/theme.test.js",
+        "test/toast.test.js",
+        "test/nav-history-solo.test.js",
+        "test/accordion.test.js",
+        "test/pw/scenarios/smoke-boot.json"
+      ],
+      "checks": [
+        {
+          "id": "unit",
+          "cmd": "node test/build-stamp.test.js && node test/sw-verify.test.js && node test/theme.test.js && node test/toast.test.js && node test/nav-history-solo.test.js && node test/accordion.test.js",
+          "timeout_s": 120
+        },
+        {
+          "id": "served-build-stamp",
+          "cmd": "python3 -c \"import re,urllib.request as u; s=u.urlopen('{url}/music/shared/build-stamp.js').read().decode(); v=re.search(r\\\"VERSION = '([^']+)'\\\",s).group(1); c=re.search(r\\\"CACHE = '([^']+)'\\\",open('music/sw.js').read()).group(1); print('served VERSION',v,'| tree sw.js CACHE',c); assert v==c, 'served build stamp != tree CACHE'\"",
+          "needs_runtime": true,
+          "timeout_s": 30
+        },
+        {
+          "id": "scenario-smoke-boot",
+          "cmd": "PY=python3; python3 -c 'import playwright' 2>/dev/null || PY=\"$HOME/.claude/.venv/bin/python\"; \"$PY\" test/pw/run-scenario.py test/pw/scenarios/smoke-boot.json --base-url={url}",
+          "needs_runtime": true,
+          "timeout_s": 120
+        }
+      ],
+      "probes": [
+        {
+          "id": "play-page",
+          "http": {
+            "path": "/music/play/"
+          },
+          "expect": {
+            "status": 200,
+            "contains": "class=\"tabbar\""
+          }
+        },
+        {
+          "id": "sw",
+          "http": {
+            "path": "/music/sw.js"
+          },
+          "expect": {
+            "status": 200,
+            "contains": "var CACHE = 'music-v"
+          }
+        }
+      ]
+    },
+    {
+      "id": "tuner",
+      "title": "Tuner (Tune tab)",
+      "how": "Tune tab: mic autocorrelation needle + reference tones per instrument profile",
+      "paths": [
+        "music/shared/tuner.js",
+        "music/shared/sound.js",
+        "music/shared/audio.js",
+        "test/tuner.test.js",
+        "test/sound.test.js",
+        "test/audio.test.js"
+      ],
+      "checks": [
+        {
+          "id": "unit",
+          "cmd": "node test/tuner.test.js && node test/sound.test.js && node test/audio.test.js",
+          "timeout_s": 120
+        }
+      ],
+      "probes": [
+        {
+          "id": "tuner-js",
+          "http": {
+            "path": "/music/shared/tuner.js"
+          },
+          "expect": {
+            "status": 200,
+            "contains": "Tuner.mount"
+          }
+        }
+      ]
+    },
+    {
+      "id": "jam",
+      "title": "Jam + jam deep links",
+      "how": "Jam tab: pick a Play-now starter; ?jam=&key=&yt=&name= deep links open a jam",
+      "paths": [
+        "music/shared/jam-link.js",
+        "music/shared/jam-queries.js",
+        "music/shared/queue.js",
+        "music/shared/sugg.js",
+        "music/shared/suggest-model.js",
+        "test/jam-link.test.js",
+        "test/jam-queries.test.js",
+        "test/queue.test.js",
+        "test/sugg.test.js",
+        "test/pw/scenarios/jam-starter.json"
+      ],
+      "checks": [
+        {
+          "id": "unit",
+          "cmd": "node test/jam-link.test.js && node test/jam-queries.test.js && node test/queue.test.js && node test/sugg.test.js",
+          "timeout_s": 120
+        },
+        {
+          "id": "scenario-jam-starter",
+          "cmd": "PY=python3; python3 -c 'import playwright' 2>/dev/null || PY=\"$HOME/.claude/.venv/bin/python\"; \"$PY\" test/pw/run-scenario.py test/pw/scenarios/jam-starter.json --base-url={url}",
+          "needs_runtime": true,
+          "timeout_s": 120
+        }
+      ]
+    },
+    {
+      "id": "compose",
+      "title": "Compose / song builder + theory engine",
+      "how": "Compose tab: default key C, chord grid, sections; spelling is key-aware",
+      "paths": [
+        "music/shared/song-model.js",
+        "music/shared/song-templates.js",
+        "music/shared/sheet-render.js",
+        "music/shared/circle.js",
+        "music/shared/theory.js",
+        "music/shared/key-explorer.js",
+        "music/shared/diagram.js",
+        "music/shared/diagram-pref.js",
+        "music/shared/chord-*.js",
+        "music/shared/chords-*.js",
+        "music/shared/shape-classify.js",
+        "music/shared/solo-guide.js",
+        "test/song-templates.test.js",
+        "test/sheet-render.test.js",
+        "test/circle.test.js",
+        "test/key-spelling.test.js",
+        "test/theory-canon.test.js",
+        "test/diagram.test.js",
+        "test/key-explorer.test.js",
+        "test/chord-collapse.test.js",
+        "test/pw/scenarios/compose-default-c.json"
+      ],
+      "checks": [
+        {
+          "id": "unit",
+          "cmd": "node test/song-templates.test.js && node test/sheet-render.test.js && node test/circle.test.js && node test/key-spelling.test.js && node test/theory-canon.test.js && node test/diagram.test.js && node test/key-explorer.test.js && node test/chord-collapse.test.js",
+          "timeout_s": 120
+        },
+        {
+          "id": "scenario-compose-default-c",
+          "cmd": "PY=python3; python3 -c 'import playwright' 2>/dev/null || PY=\"$HOME/.claude/.venv/bin/python\"; \"$PY\" test/pw/run-scenario.py test/pw/scenarios/compose-default-c.json --base-url={url}",
+          "needs_runtime": true,
+          "timeout_s": 120
+        }
+      ]
+    },
+    {
+      "id": "repertoire",
+      "title": "Library / songbook / setlist",
+      "how": "Songs tab: Jams / All / Setlist segments; songs.json catalog renders",
+      "paths": [
+        "music/shared/songbook.js",
+        "music/shared/songs.json",
+        "music/shared/repertoire.js",
+        "music/shared/repertoire-form.*",
+        "music/shared/list-item.js",
+        "music/shared/candidates.js",
+        "music/shared/competency.js",
+        "test/songbook.test.js",
+        "test/repertoire.test.js",
+        "test/repertoire-form.test.js",
+        "test/list-item.test.js",
+        "test/candidates.test.js",
+        "test/competency.test.js",
+        "test/pw/scenarios/setlist-add-toast.json"
+      ],
+      "checks": [
+        {
+          "id": "unit",
+          "cmd": "node test/songbook.test.js && node test/repertoire.test.js && node test/repertoire-form.test.js && node test/list-item.test.js && node test/candidates.test.js && node test/competency.test.js",
+          "timeout_s": 120
+        },
+        {
+          "id": "scenario-setlist-add-toast",
+          "cmd": "PY=python3; python3 -c 'import playwright' 2>/dev/null || PY=\"$HOME/.claude/.venv/bin/python\"; \"$PY\" test/pw/run-scenario.py test/pw/scenarios/setlist-add-toast.json --base-url={url}",
+          "needs_runtime": true,
+          "timeout_s": 120
+        }
+      ],
+      "probes": [
+        {
+          "id": "songs-json",
+          "http": {
+            "path": "/music/shared/songs.json"
+          },
+          "expect": {
+            "status": 200,
+            "contains": "\"seq\""
+          }
+        }
+      ]
+    },
+    {
+      "id": "backing-tracks",
+      "title": "Backing-track Studio",
+      "how": "Library -> Studio: tracks.json catalog, solo scales, YouTube URLs, playlist import",
+      "paths": [
+        "music/shared/tracks*.js",
+        "music/shared/tracks.css",
+        "music/shared/studio-theory.js",
+        "music/shared/yt-info.js",
+        "music/shared/playlist-import.js",
+        "music/backing-tracks/**",
+        "test/tracks.test.js",
+        "test/tracks-catalog.test.js",
+        "test/yt-info.test.js",
+        "test/playlist-import.test.js",
+        "test/solo-scales.test.js",
+        "test/pw/scenarios/persona-beginner-studio.json"
+      ],
+      "checks": [
+        {
+          "id": "unit",
+          "cmd": "node test/tracks.test.js && node test/tracks-catalog.test.js && node test/yt-info.test.js && node test/playlist-import.test.js && node test/solo-scales.test.js",
+          "timeout_s": 120
+        },
+        {
+          "id": "scenario-persona-beginner-studio",
+          "cmd": "PY=python3; python3 -c 'import playwright' 2>/dev/null || PY=\"$HOME/.claude/.venv/bin/python\"; \"$PY\" test/pw/run-scenario.py test/pw/scenarios/persona-beginner-studio.json --base-url={url}",
+          "needs_runtime": true,
+          "timeout_s": 120
+        }
+      ]
+    },
+    {
+      "id": "backup-restore",
+      "title": "Settings -> Backup / storage schema",
+      "how": "Settings -> Backup: export/import zip of namespaced localStorage; SCHEMA_VERSION migrations",
+      "paths": [
+        "music/shared/backup.js",
+        "music/shared/storage-migrate.js",
+        "music/shared/zip-store.js",
+        "music/dev/**",
+        "test/backup.test.js",
+        "test/storage-migrate.test.js",
+        "test/zip-store.test.js"
+      ],
+      "checks": [
+        {
+          "id": "unit",
+          "cmd": "node test/backup.test.js && node test/storage-migrate.test.js && node test/zip-store.test.js",
+          "timeout_s": 120
+        }
+      ]
+    },
+    {
+      "id": "agent",
+      "title": "Agent surface (capabilities, skills export)",
+      "how": "GET /music/agent/capabilities.json; Settings -> Skills export/import SKILL.md",
+      "paths": [
+        "music/agent/**",
+        "music/shared/capabilities.js",
+        "music/shared/agent-readme.js",
+        "music/shared/skill-md.js",
+        "test/agent-manifest.test.js",
+        "test/agent-readme.test.js",
+        "test/agent-roundtrip.test.js",
+        "test/skill-md.test.js"
+      ],
+      "checks": [
+        {
+          "id": "unit",
+          "cmd": "node test/agent-manifest.test.js && node test/agent-readme.test.js && node test/agent-roundtrip.test.js && node test/skill-md.test.js",
+          "timeout_s": 120
+        }
+      ],
+      "probes": [
+        {
+          "id": "capabilities",
+          "http": {
+            "path": "/music/agent/capabilities.json"
+          },
+          "expect": {
+            "status": 200,
+            "json": {
+              "schema": "music-app-capabilities/v1",
+              "capabilities": "*"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "test-harness",
+      "title": "Test harness (unit runner + USDD scenario runner)",
+      "how": "node test/run-all.js runs every test/*.test.js; test/pw/run-scenario.py <scenario> --base-url=<url> drives one persona flow",
+      "paths": [
+        "test/**"
+      ],
+      "checks": [
+        {
+          "id": "scenario-smoke-boot",
+          "cmd": "PY=python3; python3 -c 'import playwright' 2>/dev/null || PY=\"$HOME/.claude/.venv/bin/python\"; \"$PY\" test/pw/run-scenario.py test/pw/scenarios/smoke-boot.json --base-url={url}",
+          "needs_runtime": true,
+          "timeout_s": 120
+        }
+      ]
+    }
+  ]
+}
