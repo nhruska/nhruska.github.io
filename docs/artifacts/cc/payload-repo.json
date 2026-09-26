@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-25T14:38:39Z",
+  "generatedAt": "2026-09-26T13:46:52Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,24 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-09-24T14:15:29Z",
-    "sha": "7258fe1c3903675a8d6a0075b210fa3f99d1f88e",
-    "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/7258fe1c3903675a8d6a0075b210fa3f99d1f88e"
+    "date": "2026-09-25T22:02:53Z",
+    "sha": "c46a08e0d536f7dce2fc9e4252ebfeea2a393c6a",
+    "subject": "Round 19: a new song raises the theater (scrimmed), and the dock stops eating tuner strings (#352)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/c46a08e0d536f7dce2fc9e4252ebfeea2a393c6a"
   },
   "commits": [
+    {
+      "date": "2026-09-25T22:02:53Z",
+      "sha": "c46a08e0d536f7dce2fc9e4252ebfeea2a393c6a",
+      "subject": "Round 19: a new song raises the theater (scrimmed), and the dock stops eating tuner strings (#352)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/c46a08e0d536f7dce2fc9e4252ebfeea2a393c6a"
+    },
+    {
+      "date": "2026-09-25T14:38:45Z",
+      "sha": "7f836726bf70697960a47b4c806acfca0050529b",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/7f836726bf70697960a47b4c806acfca0050529b"
+    },
     {
       "date": "2026-09-24T14:15:29Z",
       "sha": "7258fe1c3903675a8d6a0075b210fa3f99d1f88e",
@@ -78,21 +90,95 @@
       "sha": "5fb114d0a550185a5417e958ce117954ec1e8624",
       "subject": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/5fb114d0a550185a5417e958ce117954ec1e8624"
-    },
-    {
-      "date": "2026-09-15T14:21:56Z",
-      "sha": "f529a08a399bb4b844ab79b3ee61c0f173bb3f16",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/f529a08a399bb4b844ab79b3ee61c0f173bb3f16"
-    },
-    {
-      "date": "2026-09-14T15:55:48Z",
-      "sha": "4168e46ea376d9ae584a77c740851b71bf09be21",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/4168e46ea376d9ae584a77c740851b71bf09be21"
     }
   ],
   "openPRs": [
+    {
+      "number": 358,
+      "title": "docs: propose Thought-Ware method v0.1 (base of the #346/#347 stack)",
+      "branch": "propose/methodology-v0.1",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/358",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34087313969/job/101633721097"
+        },
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36238488558/job/108394530577"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34087313962/job/101633721235"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36238488495/job/108394530323"
+        }
+      ]
+    },
+    {
+      "number": 357,
+      "title": "test(pw): salvage the setlist-scroll regression gate from #350",
+      "branch": "claude/setlist-scroll-gate",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/357",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36238483108/job/108394516033"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36238483114/job/108394515987"
+        }
+      ]
+    },
+    {
+      "number": 356,
+      "title": "docs(plans): SBS merge plan for the 6 open PRs",
+      "branch": "claude/music-app-pr-merge-p4g8ji",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/356",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36238666024/job/108395002689"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36238666048/job/108395002815"
+        }
+      ]
+    },
     {
       "number": 355,
       "title": "Math app v1: timed workouts + skills path at /math/, landing lists 2 apps",
@@ -106,38 +192,14 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36135813786/job/108073493899"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36238422278/job/108394352383"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36135813916/job/108073494409"
-        }
-      ]
-    },
-    {
-      "number": 352,
-      "title": "Round 19: a new song raises the theater (scrimmed), and the dock stops eating tuner strings",
-      "branch": "claude/round19-theater-scrim-tuner-dock",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/352",
-      "draft": true,
-      "ciState": "green",
-      "checks": [
-        {
-          "name": "preview",
-          "workflow": "PR preview link",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/35457295824/job/105934740803"
-        },
-        {
-          "name": "unit",
-          "workflow": "tests",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/35457295819/job/105934740956"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36238422408/job/108394352790"
         }
       ]
     },
@@ -154,14 +216,14 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34781381152/job/103788906331"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36238627592/job/108394902014"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34781381132/job/103788906231"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36238627584/job/108394901927"
         }
       ]
     },
@@ -271,6 +333,13 @@
       "url": "https://github.com/nhruska/nhruska.github.io/pull/353"
     },
     {
+      "createdAt": "2026-09-17T05:38:28Z",
+      "mergedAt": "2026-09-25T22:02:53Z",
+      "number": 352,
+      "title": "Round 19: a new song raises the theater (scrimmed), and the dock stops eating tuner strings",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/352"
+    },
+    {
       "createdAt": "2026-09-06T15:01:39Z",
       "mergedAt": "2026-09-13T08:58:43Z",
       "number": 345,
@@ -360,30 +429,23 @@
       "number": 332,
       "title": "S13+S14: agent interchange floor + ?jam= deep link (M-AGENT build 1)",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/332"
-    },
-    {
-      "createdAt": "2026-08-17T04:31:49Z",
-      "mergedAt": "2026-08-17T05:04:15Z",
-      "number": 331,
-      "title": "docs: coding-agent interaction spec for the Music app (M-AGENT)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/331"
     }
   ],
   "lastCiRun": {
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-09-25T14:38:34Z",
+    "runStartedAt": "2026-09-26T13:46:46Z",
     "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36148846688",
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36246293245",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 0,
+    "merged_count": 1,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
-    "typical_merge_hours": 1.79,
+    "typical_merge_hours": 3.5,
     "weekly": null
   },
   "deploy": {
@@ -393,8 +455,8 @@
       "sourceBranch": "main",
       "buildType": "legacy"
     },
-    "liveCacheVersion": "music-v353-2",
-    "localCacheVersion": "music-v353-2",
+    "liveCacheVersion": "music-v352-2",
+    "localCacheVersion": "music-v352-2",
     "cacheMatch": true
   },
   "missions": [
@@ -897,7 +959,7 @@
   },
   "suite": {
     "testFileCount": 71,
-    "testCaseCount": 3967,
+    "testCaseCount": 3969,
     "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
     "runner": "node test/run-all.js"
