@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-12T12:55:24Z",
+  "generatedAt": "2026-09-25T14:38:39Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,86 +13,182 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-09-11T13:39:04Z",
-    "sha": "3075419130be03808433a5b42f170d1aed9b5c8a",
+    "date": "2026-09-24T14:15:29Z",
+    "sha": "7258fe1c3903675a8d6a0075b210fa3f99d1f88e",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/3075419130be03808433a5b42f170d1aed9b5c8a"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/7258fe1c3903675a8d6a0075b210fa3f99d1f88e"
   },
   "commits": [
     {
-      "date": "2026-09-11T13:39:04Z",
-      "sha": "3075419130be03808433a5b42f170d1aed9b5c8a",
+      "date": "2026-09-24T14:15:29Z",
+      "sha": "7258fe1c3903675a8d6a0075b210fa3f99d1f88e",
       "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/3075419130be03808433a5b42f170d1aed9b5c8a"
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/7258fe1c3903675a8d6a0075b210fa3f99d1f88e"
     },
     {
-      "date": "2026-09-10T13:40:34Z",
-      "sha": "02b4691c770cb36cac9f2fe2fcca629209d45a8d",
+      "date": "2026-09-23T14:16:57Z",
+      "sha": "297a3c97812993ea01359e28364f9c31d8616886",
       "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/02b4691c770cb36cac9f2fe2fcca629209d45a8d"
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/297a3c97812993ea01359e28364f9c31d8616886"
     },
     {
-      "date": "2026-09-09T13:46:47Z",
-      "sha": "81f3b737fb89dfb2ed2c259077e8421cd617716f",
+      "date": "2026-09-22T14:04:40Z",
+      "sha": "5cc7bc102d8ec47e4a1a4a23073ef7107bedb374",
       "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/81f3b737fb89dfb2ed2c259077e8421cd617716f"
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/5cc7bc102d8ec47e4a1a4a23073ef7107bedb374"
     },
     {
-      "date": "2026-09-08T13:42:10Z",
-      "sha": "c3225232a5bb25722ca8c4329483883fac40bca2",
+      "date": "2026-09-21T15:56:33Z",
+      "sha": "46f8028c5e3a6270a9e0eb0178b81343ec630c05",
       "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/c3225232a5bb25722ca8c4329483883fac40bca2"
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/46f8028c5e3a6270a9e0eb0178b81343ec630c05"
     },
     {
-      "date": "2026-09-07T15:06:12Z",
-      "sha": "d156f9ba82b170b2b68f3d3b6321d5bfe4a20331",
+      "date": "2026-09-20T13:36:58Z",
+      "sha": "1b1ae61f7e8423afa5af087a614a6ce523a650ef",
       "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/d156f9ba82b170b2b68f3d3b6321d5bfe4a20331"
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/1b1ae61f7e8423afa5af087a614a6ce523a650ef"
     },
     {
-      "date": "2026-09-06T12:55:42Z",
-      "sha": "5e41dd4885c97ec8bb5224d6b21d490367eae471",
+      "date": "2026-09-19T13:13:19Z",
+      "sha": "35bedced4b6a15169ce2b43aa3649a6645e554dc",
       "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/5e41dd4885c97ec8bb5224d6b21d490367eae471"
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/35bedced4b6a15169ce2b43aa3649a6645e554dc"
     },
     {
-      "date": "2026-09-06T02:41:12Z",
-      "sha": "6833aba1f67e1c96c279c692e02109a5dec7b4cb",
-      "subject": "docs(artifacts): the UAT loop as a guided timeline, linked from the Evidence rail (#343)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/6833aba1f67e1c96c279c692e02109a5dec7b4cb"
-    },
-    {
-      "date": "2026-09-05T12:49:08Z",
-      "sha": "127c795c3ed5773df68f94427bac8d39307b54b8",
+      "date": "2026-09-18T13:40:23Z",
+      "sha": "4c9217a909f3c7e793f2c917712c770559023b4b",
       "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/127c795c3ed5773df68f94427bac8d39307b54b8"
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/4c9217a909f3c7e793f2c917712c770559023b4b"
     },
     {
-      "date": "2026-09-05T06:38:30Z",
-      "sha": "00f78d5768fed18e6a6f6749be48551f7d924ad3",
-      "subject": "feat(artifact-pack): add SDD deep-dive page (personas, friction, hallucination, priority)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/00f78d5768fed18e6a6f6749be48551f7d924ad3"
+      "date": "2026-09-17T23:23:15Z",
+      "sha": "4e1db973a514f548bf466cd24b9916e2f1141c8d",
+      "subject": "fix(setlist): stop rows flex-shrinking below content height on overflow (#353)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/4e1db973a514f548bf466cd24b9916e2f1141c8d"
     },
     {
-      "date": "2026-09-05T06:32:00Z",
-      "sha": "d7918d33f58cca07fee51098e3e0892798df1580",
-      "subject": "feat(artifact-pack): add three inline-SVG concept diagrams",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/d7918d33f58cca07fee51098e3e0892798df1580"
+      "date": "2026-09-17T14:20:26Z",
+      "sha": "fadbf95490bd87e080a7479abe01d749d7f7ed56",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/fadbf95490bd87e080a7479abe01d749d7f7ed56"
     },
     {
-      "date": "2026-09-05T06:20:16Z",
-      "sha": "9ac4962ceac3d41d022dfd5fcab04ad99d68f9f4",
-      "subject": "docs(wiki): encode the theme-tokens SSOT (f: use themes same active as music app)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/9ac4962ceac3d41d022dfd5fcab04ad99d68f9f4"
+      "date": "2026-09-16T14:14:35Z",
+      "sha": "5fb114d0a550185a5417e958ce117954ec1e8624",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/5fb114d0a550185a5417e958ce117954ec1e8624"
     },
     {
-      "date": "2026-09-05T06:17:02Z",
-      "sha": "86dd9545b74b3c4280dd943497651f03d55d9a0b",
-      "subject": "fix(settings): let the build-stamp footer wrap instead of truncating",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/86dd9545b74b3c4280dd943497651f03d55d9a0b"
+      "date": "2026-09-15T14:21:56Z",
+      "sha": "f529a08a399bb4b844ab79b3ee61c0f173bb3f16",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/f529a08a399bb4b844ab79b3ee61c0f173bb3f16"
+    },
+    {
+      "date": "2026-09-14T15:55:48Z",
+      "sha": "4168e46ea376d9ae584a77c740851b71bf09be21",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/4168e46ea376d9ae584a77c740851b71bf09be21"
     }
   ],
   "openPRs": [
+    {
+      "number": 355,
+      "title": "Math app v1: timed workouts + skills path at /math/, landing lists 2 apps",
+      "branch": "claude/math-workout-app-launch-isdkyd",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/355",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36135813786/job/108073493899"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36135813916/job/108073494409"
+        }
+      ]
+    },
+    {
+      "number": 352,
+      "title": "Round 19: a new song raises the theater (scrimmed), and the dock stops eating tuner strings",
+      "branch": "claude/round19-theater-scrim-tuner-dock",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/352",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/35457295824/job/105934740803"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/35457295819/job/105934740956"
+        }
+      ]
+    },
+    {
+      "number": 351,
+      "title": "feat(profile): portable lifelong Musician Profile + VNext semantic model (unassessed everywhere, global musicianship, coach contract, Settings > Musician profile) - review-only",
+      "branch": "claude/musician-profile-interop-qdt7lh",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/351",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34781381152/job/103788906331"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34781381132/job/103788906231"
+        }
+      ]
+    },
+    {
+      "number": 350,
+      "title": "fix(setlist): rows keep their height and the set scrolls - flex-shrink:0 on #setBody children",
+      "branch": "claude/setlist-scroll",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/350",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34734743583/job/103664012294"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34734743607/job/103664012390"
+        }
+      ]
+    },
     {
       "number": 348,
       "title": "feat(tuner): Guided Tune - string-by-string loop, runway, drone cancellation, tuning lab",
@@ -164,57 +260,30 @@
           "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34087367838/job/101633873047"
         }
       ]
-    },
-    {
-      "number": 345,
-      "title": "docs: propose Thought-Ware Development method v0.1",
-      "branch": "propose/methodology-v0.1",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/345",
-      "draft": true,
-      "ciState": "green",
-      "checks": [
-        {
-          "name": "preview",
-          "workflow": "PR preview link",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34087313969/job/101633721097"
-        },
-        {
-          "name": "unit",
-          "workflow": "tests",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34087313962/job/101633721235"
-        }
-      ]
-    },
-    {
-      "number": 344,
-      "title": "Re-author the two video scenarios to the shipped PIP contract",
-      "branch": "claude/pip-contract-and-about-label",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/344",
-      "draft": true,
-      "ciState": "green",
-      "checks": [
-        {
-          "name": "preview",
-          "workflow": "PR preview link",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34043814869/job/101515178281"
-        },
-        {
-          "name": "unit",
-          "workflow": "tests",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34043814871/job/101515178344"
-        }
-      ]
     }
   ],
   "recentMerges": [
+    {
+      "createdAt": "2026-09-17T23:11:45Z",
+      "mergedAt": "2026-09-17T23:23:15Z",
+      "number": 353,
+      "title": "fix(setlist): stop rows flex-shrinking below content height on overflow",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/353"
+    },
+    {
+      "createdAt": "2026-09-06T15:01:39Z",
+      "mergedAt": "2026-09-13T08:58:43Z",
+      "number": 345,
+      "title": "docs: propose Thought-Ware Development method v0.1",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/345"
+    },
+    {
+      "createdAt": "2026-09-05T06:29:42Z",
+      "mergedAt": "2026-09-13T08:57:28Z",
+      "number": 344,
+      "title": "Re-author the two video scenarios to the shipped PIP contract",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/344"
+    },
     {
       "createdAt": "2026-09-05T02:24:57Z",
       "mergedAt": "2026-09-06T02:41:12Z",
@@ -298,44 +367,23 @@
       "number": 331,
       "title": "docs: coding-agent interaction spec for the Music app (M-AGENT)",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/331"
-    },
-    {
-      "createdAt": "2026-08-13T21:34:02Z",
-      "mergedAt": "2026-08-18T19:26:32Z",
-      "number": 330,
-      "title": "Round 15: video hidden by default, theater dismisses clean, honest pause sync, scrub that holds + README truth pass",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/330"
-    },
-    {
-      "createdAt": "2026-08-12T03:50:10Z",
-      "mergedAt": "2026-08-13T04:30:35Z",
-      "number": 329,
-      "title": "Round 9: video PIP overlay + progress scrub + refocus pause honesty",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/329"
-    },
-    {
-      "createdAt": "2026-08-09T17:27:02Z",
-      "mergedAt": "2026-08-10T04:40:49Z",
-      "number": 328,
-      "title": "Player-feel UAT rounds 3-8: jams-first landing, tour ends in a jam, row anatomy, stage zoom + icon standard, studio IA",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/328"
     }
   ],
   "lastCiRun": {
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-09-12T12:55:19Z",
+    "runStartedAt": "2026-09-25T14:38:34Z",
     "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/34694993254",
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36148846688",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 2,
+    "merged_count": 0,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
-    "typical_merge_hours": 3.5,
+    "typical_merge_hours": 1.79,
     "weekly": null
   },
   "deploy": {
@@ -345,8 +393,8 @@
       "sourceBranch": "main",
       "buildType": "legacy"
     },
-    "liveCacheVersion": "music-v348",
-    "localCacheVersion": "music-v348",
+    "liveCacheVersion": "music-v353-2",
+    "localCacheVersion": "music-v353-2",
     "cacheMatch": true
   },
   "missions": [
@@ -848,8 +896,8 @@
     ]
   },
   "suite": {
-    "testFileCount": 70,
-    "testCaseCount": 3959,
+    "testFileCount": 71,
+    "testCaseCount": 3967,
     "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
     "runner": "node test/run-all.js"

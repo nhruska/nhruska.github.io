@@ -401,8 +401,23 @@ body.studioopen .tabbar{position:relative;z-index:55;}
  * fixed and is revealed as .li-inner slides off it - the underlay is never
  * itself part of the moving layer. touch-action:pan-y lets the browser keep
  * native (fast, uncontested) vertical list-scrolling; only X-axis pointer
- * movement is left for wireSetlistDrag's own directional lock to claim. */
-.listItem.swipeable{background:transparent;border:0;padding:0;overflow:hidden;}
+ * movement is left for wireSetlistDrag's own directional lock to claim.
+ * flex-shrink:0 (UAT 2026-09-17, "setlist rows get stuck with a set height
+ * switching tabs"): #setBody is itself a flex COLUMN (songbook.css above)
+ * with a bounded height (overflow-y:auto), so its row children are flex
+ * items. Per the flexbox spec, a flex item's automatic minimum main size
+ * collapses to 0 when its own `overflow` isn't `visible` - and this rule
+ * sets overflow:hidden. Once the setlist grows past what fits on screen,
+ * that 0-floor let every row get flex-SHRUNK (not scrolled) to fit, and
+ * overflow:hidden then clipped the now-too-tall content - rows looked
+ * "stuck" at a smaller height with overlapping text. It was never about
+ * switching tabs or a stale render; a fresh render with enough songs to
+ * overflow showed it immediately (repro: any setlist over ~7 short rows on
+ * a phone viewport). Plain All/Jams rows never had `overflow:hidden`, so
+ * they never hit this floor and always scrolled correctly, which is why
+ * only the Setlist view was affected. flex-shrink:0 pins each row to its
+ * own content height so #setBody scrolls instead of squeezing rows. */
+.listItem.swipeable{background:transparent;border:0;padding:0;overflow:hidden;flex-shrink:0;}
 /* flex:1 1 auto is load-bearing: .li-inner is the outer .listItem's (still
  * display:flex, row axis) ONE in-flow flex item - without an explicit grow
  * it hugs its own content width instead of filling the row, leaving the
@@ -2127,4 +2142,16 @@ footer{display:none;}
 /* While the mini bar is up, the scrollers keep their last rows reachable above
    it, and the toast rides above the bar instead of colliding with it. */
 body.miniplayer .view{padding-bottom:104px;} /* two-row bar (batch 7) */
+/* ROUND 19: the docked PIP is position:fixed 152x110 at bottom+150px, so it
+   covers a corner NO amount of scrolling can move content out of. For a
+   scrolling view that is the accepted PIP trade (scroll and the row clears it);
+   for the Tune tab it is a DEAD TARGET, because .tunerWrap is a height:100%
+   flex column whose reference-tone strings are PINNED to the bottom and can
+   never scroll clear. Measured at 412x915 before this rule: the E and A string
+   buttons both returned .bt-st-media from elementFromPoint at their centres -
+   two of four strings untappable while anything was playing.
+   Reserve the dock's full height (110px + its 150px offset, less the 104px the
+   bar already reserves) so the strings sit ABOVE it. Scoped to the Tune tab:
+   no other view pins content into that corner. */
+body.pipdock #s-tune .tunerWrap{padding-bottom:162px;}
 body.miniplayer .toast{bottom:calc(max(env(safe-area-inset-bottom,0px), 8px) + 132px);}
