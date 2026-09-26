@@ -131,6 +131,12 @@
 
   function nowIso() { return new Date().toISOString(); }
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
+  // Maps keyed by strings from an IMPORTED file: no prototype, so an id like
+  // `constructor` or `__proto__` is just another key (never an inherited hit).
+  function dict() { return Object.create(null); }
+  function hasOwn(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
+  // Assignment to `__proto__` swaps the prototype; defineProperty stores it as data.
+  function setOwn(o, k, v) { Object.defineProperty(o, k, { value: v, writable: true, enumerable: true, configurable: true }); }
   function isObj(o) { return !!o && typeof o === 'object' && !Array.isArray(o); }
   function arr(a) { return Array.isArray(a) ? a : []; }
   // "Is stamp a at-or-after stamp b?" ISO stamps are PARSED, never compared
@@ -284,7 +290,7 @@
   // and the panel's history view read this map instead of rescanning the
   // list per competency (quadratic as coaches append history).
   function latestMap(doc) {
-    var m = {};
+    var m = dict();
     arr(doc && doc.assessments).forEach(function (a) {
       if (!a || !a.competency) return;
       if (!m[a.competency] || later(a.at, m[a.competency].at)) m[a.competency] = a;
@@ -341,15 +347,15 @@
   function summary(doc, frameworks, progression) {
     var d = normalize(doc || blank());
     frameworks = arr(frameworks); progression = isObj(progression) ? progression : {};
-    var fwById = {}; frameworks.forEach(function (fw) { fwById[fw.id] = fw; });
-    var counters = {};
+    var fwById = dict(); frameworks.forEach(function (fw) { fwById[fw.id] = fw; });
+    var counters = dict();
     Object.keys(progression).forEach(function (fwId) {
       arr(progression[fwId] && progression[fwId].competencies).forEach(function (c) {
         if (c && c.id) counters[competencyId(fwId, c.id)] = c;
       });
     });
     var latest = latestMap(d);
-    var groups = { musicianship: {}, instruments: {}, crafts: {}, other: {} };
+    var groups = { musicianship: dict(), instruments: dict(), crafts: dict(), other: dict() };
     function titleCase(s) { s = String(s || ''); return s.charAt(0).toUpperCase() + s.slice(1).replace(/-/g, ' '); }
     function put(bucket, key, label, entry) {
       if (!groups[bucket][key]) groups[bucket][key] = { id: key, name: label, competencies: [], assessed: 0, unassessed: 0, observed: 0 };
@@ -395,7 +401,7 @@
     // Instruments: the app's own frameworks first (in FRAMEWORKS order, the
     // strings fundamentals ahead of the instruments under them), then every
     // instrument only the profile knows, in the order the document names them.
-    var fwOrder = {}; frameworks.forEach(function (fw, i) { fwOrder[fw.id] = i; });
+    var fwOrder = dict(); frameworks.forEach(function (fw, i) { fwOrder[fw.id] = i; });
     var instruments = list(groups.instruments).sort(function (a, b) {
       var ia = a.id in fwOrder ? fwOrder[a.id] : 1e9, ib = b.id in fwOrder ? fwOrder[b.id] : 1e9;
       return ia - ib;
@@ -429,7 +435,7 @@
     var lines = [];
     var msTotal = sm.musicianship.reduce(function (n, g) { return n + g.competencies.length; }, 0);
     if (sm.musicianshipAssessed > 0) {
-      var votes = {};
+      var votes = dict();
       sm.musicianship.forEach(function (g) { g.competencies.forEach(function (c) {
         if (c.assessment && typeof c.assessment.value === 'string') votes[c.assessment.value] = (votes[c.assessment.value] || 0) + 1;
       }); });
@@ -451,7 +457,7 @@
         // when only some are assessed. A coarser branch-level claim that
         // disagrees is still shown - never hidden, never allowed to outrank
         // (a one-tap "beginner" over four advanced strings claims).
-        var v = {}; g.competencies.forEach(function (c) { if (c.assessment && typeof c.assessment.value === 'string') v[c.assessment.value] = (v[c.assessment.value] || 0) + 1; });
+        var v = dict(); g.competencies.forEach(function (c) { if (c.assessment && typeof c.assessment.value === 'string') v[c.assessment.value] = (v[c.assessment.value] || 0) + 1; });
         var top = Object.keys(v).sort(function (a, b) { return v[b] - v[a]; })[0];
         var split = g.assessed + ' of ' + g.competencies.length + ' assessed';
         s = top ? (g.assessed === g.competencies.length ? top : top + ' - ' + split) : split;
@@ -495,7 +501,7 @@
   // only ever folded into the first match, so a lifelong document could carry
   // three `export` rows (observed on the operator's own export). Idempotent.
   function collapseRoutine(doc) {
-    var keep = [], seen = {};
+    var keep = [], seen = dict();
     arr(doc.provenance).forEach(function (p) {
       if (!p) return;
       if (p.source === APP_ID && ROUTINE_ACTIONS[p.action] && !p.note) {
@@ -548,11 +554,11 @@
     }
 
     I.participants.forEach(function (p) { if (p && p.id) upsertById(M.participants, clone(p), 'last_seen'); });
-    var provIndex = {};
+    var provIndex = dict();
     M.provenance.forEach(function (p) { provIndex[provenanceKey(p)] = true; });
     I.provenance.forEach(function (p) { if (p) pushProvenance(M, clone(p), provIndex); });
 
-    var compById = {};
+    var compById = dict();
     M.competencies.forEach(function (c) { if (c && c.id) compById[c.id] = c; });
     I.competencies.forEach(function (c) {
       if (!c || !c.id) return;
@@ -566,7 +572,7 @@
     if (I.plan && (!M.plan || later(I.plan.updated, M.plan.updated))) M.plan = clone(I.plan);
 
     // preferences: competency.js's rule - union by id, sum evidence, later statement.
-    var prefById = {};
+    var prefById = dict();
     M.preferences.forEach(function (p) { if (p && p.id) prefById[p.id] = p; });
     I.preferences.forEach(function (ip) {
       if (!ip || !ip.id) return;
@@ -580,11 +586,11 @@
     // extensions + unknown top-level keys: preserve. Both sides carry the
     // same unknown key -> the newer document wins (we cannot judge content).
     Object.keys(I.extensions).forEach(function (k) {
-      if (!(k in M.extensions) || incomingNewer) M.extensions[k] = clone(I.extensions[k]);
+      if (!hasOwn(M.extensions, k) || incomingNewer) setOwn(M.extensions, k, clone(I.extensions[k]));
     });
     Object.keys(I).forEach(function (k) {
       if (KNOWN_KEYS.indexOf(k) >= 0) return;
-      if (!(k in M) || incomingNewer) M[k] = clone(I[k]);
+      if (!hasOwn(M, k) || incomingNewer) setOwn(M, k, clone(I[k]));
     });
 
     M.updated = later(I.updated, L.updated) ? I.updated : L.updated;
@@ -619,7 +625,7 @@
       understands: UNDERSTANDS.slice(), last_seen: now
     }, 'last_seen');
 
-    var compById = {};
+    var compById = dict();
     d.competencies.forEach(function (c) { if (c && c.id) compById[c.id] = true; });
     frameworks.forEach(function (fw) {
       arr(fw.competencies).forEach(function (c) {
@@ -644,7 +650,7 @@
     // legacy record - counters some OTHER device authored - is never deleted:
     // it moves to the per-device shape under the synthetic device `legacy`
     // so it keeps living beside every real device's record.
-    var reEmits = {};
+    var reEmits = dict();
     Object.keys(progression).forEach(function (fwId) {
       var p = progression[fwId];
       if (p && Array.isArray(p.competencies) && p.competencies.some(function (c) { return c && (c.evidence_count || 0) > 0; })) reEmits[fwId] = true;

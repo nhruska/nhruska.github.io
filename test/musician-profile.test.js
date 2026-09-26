@@ -582,4 +582,41 @@ test('REAL HAND-BACK SHAPES (ChatGPT, 2026-09-13): stringed-instrument/* ids wit
   assert.deepStrictEqual(out.goals, hand.goals);
 });
 
+// ---- adversarial keys (review of 7bf2d9c): ids and keys come from an IMPORTED file,
+// so every name Object.prototype carries must behave like any other string ----
+var PROTO_NAMES = ['constructor', 'toString', 'hasOwnProperty', '__proto__', 'valueOf'];
+function protoDoc() {
+  var doc = JSON.parse('{"schema":"musician-profile/v1","id":"mp_adv","updated":"2026-09-26T00:00:00Z",' +
+    '"extensions":{"constructor":{"x":1},"__proto__":{"y":2}},"hasOwnProperty":{"z":3},' +
+    '"competencies":[],"assessments":[]}');
+  PROTO_NAMES.forEach(function (n) {
+    doc.competencies.push({ id: n, name: n, branch: ['craft'] });
+    doc.competencies.push({ id: n + '/x', name: n + ' x', branch: ['instrument'] });
+    doc.competencies.push({ id: 'musicianship/' + n, name: 'ms ' + n, branch: ['musicianship', n] });
+    doc.assessments.push({ id: 'as_' + n, competency: 'musicianship/' + n, value: n, method: 'coach', at: '2026-09-26T00:00:00Z' });
+  });
+  return doc;
+}
+test('an imported file whose ids/keys are Object.prototype names imports, summarizes and exports without loss', function () {
+  var s = FakeStore();
+  var r = MP.importJson(JSON.stringify(protoDoc()), s, { now: '2026-09-26T01:00:00Z' });
+  assert.strictEqual(r.ok, true, JSON.stringify(r));
+  var stored = JSON.parse(s.getItem('music.profile.v1'));
+  var ids = stored.competencies.map(function (c) { return c.id; });
+  PROTO_NAMES.forEach(function (n) {
+    assert.ok(ids.indexOf(n) >= 0, 'competency ' + n + ' preserved');
+    assert.ok(ids.indexOf(n + '/x') >= 0, 'competency ' + n + '/x preserved');
+  });
+  assert.ok(Object.prototype.hasOwnProperty.call(stored.extensions, 'constructor'), 'extension constructor preserved');
+  assert.ok(Object.prototype.hasOwnProperty.call(stored.extensions, '__proto__'), 'extension __proto__ stored as data, not as a prototype');
+  assert.deepStrictEqual(stored.extensions['__proto__'], { y: 2 });
+  assert.ok(Object.prototype.hasOwnProperty.call(stored, 'hasOwnProperty'), 'unknown top-level key hasOwnProperty preserved');
+  var sm = MP.summary(MP.load(s), C.FRAMEWORKS, {});
+  var instIds = sm.instruments.map(function (g) { return g.id; });
+  PROTO_NAMES.forEach(function (n) { assert.ok(instIds.indexOf(n) >= 0, 'instrument group ' + n); });
+  var lines = MP.headline(sm);
+  assert.ok(/^Musicianship: \S+ - 5 of \d+ assessed$/.test(lines[0]), lines[0]);
+  assert.strictEqual(({}).level, undefined, 'no prototype pollution');
+});
+
 run();
