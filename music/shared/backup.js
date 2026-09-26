@@ -55,7 +55,10 @@
   // music.lastRestore. mirrors the music.lastBackup. reasoning exactly: it is THIS
   // device's own restore time (the Settings Restore row's meta) - restoring a backup
   // must not overwrite when the DESTINATION device last ran a restore.
-  var EXCLUDE = ['music.devlog.', 'music.lastBackup.', 'music.lastRestore.', SCHEMA_KEY];
+  // music.device. (M-MUSICIAN-PROFILE): THIS device's id, scoping the app's
+  // progression evidence inside profile.json - restoring a backup onto another
+  // device must not make it impersonate the source device.
+  var EXCLUDE = ['music.devlog.', 'music.lastBackup.', 'music.lastRestore.', 'music.device.', SCHEMA_KEY];
 
   // Ordered migrations. MIGRATIONS[n] upgrades the {key:value} map FROM (n-1)
   // TO n, returning the new map. Empty today - the seam for future changes.
