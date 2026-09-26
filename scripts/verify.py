@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# vendor-from: agent-config skills/verify-runtime/lib/verify.py 1.0.0
-# vendor-hash: 323dc3c1aecc501b
+# vendor-from: agent-config skills/verify-runtime/lib/verify.py 1.1.1
+# vendor-hash: 1e710c49e5b4be63
 # vendor-note: DO NOT EDIT - re-sync from the SSOT; check with vendor-sync.sh <this> --check
 """
 verify.py - agent-drivable verification runtime (SSOT, vendored per repo).
@@ -40,10 +40,11 @@ import urllib.request
 import zlib
 from pathlib import Path
 
-VERIFY_VERSION = "1.0.0"
+VERIFY_VERSION = "1.1.1"
 MANIFEST_SCHEMA = "verify-manifest/1"
 VERDICT_SCHEMA = "verify-verdict/1"
 TAIL_LINES = 30
+FAIL_LINE = re.compile(r"(FAIL|Error|ERROR|Traceback|assert|expected|\u2716|\u2717|\u00d7)")
 
 
 class ConfigError(Exception):
@@ -88,6 +89,23 @@ def matches(path: str, globs: list[str]) -> bool:
 
 def tail(text: str, n: int = TAIL_LINES) -> str:
     return "\n".join(text.splitlines()[-n:])
+
+
+def fail_lines(text: str, n: int = 15) -> list[str]:
+    """Lines that NAME a failure. A runner that prints the failing file mid-stream
+    and totals last leaves the tail saying "2 failed" and nothing about which."""
+    return [ln.strip()[:300] for ln in text.splitlines() if FAIL_LINE.search(ln)][:n]
+
+
+def self_ignores(root: Path) -> list[str]:
+    """The vendored runner and its own dir are tooling, never app code to map.
+    Without this, a baseline written before the runner is staged goes red on it."""
+    out = [".verify/**"]
+    try:
+        out.append(Path(__file__).resolve().relative_to(root).as_posix())
+    except ValueError:
+        pass
+    return out
 
 
 # ---------------------------------------------------------------- manifest
@@ -221,7 +239,7 @@ def changed_files(root: Path, ref: str) -> list[str]:
 
 def select(root: Path, m: dict, args) -> dict:
     feats = {f["id"]: f for f in m["features"]}
-    ignore = m.get("ignore", []) + [".verify/run/**"]
+    ignore = m.get("ignore", []) + self_ignores(root)
     sel = {"mode": "", "base": None, "changed_files": [], "features": [],
            "unmapped_files": []}
     if args.all:
@@ -415,7 +433,8 @@ def run_check(u: dict, root: Path, m: dict, ctx: dict) -> dict:
         code, status = 124, "timeout"
     logp.write_text(out)
     return {"status": status, "exit_code": code, "duration_s": round(time.time() - t0, 2),
-            "log": str(logp.relative_to(root)), "tail": tail(out) if status != "pass" else ""}
+            "log": str(logp.relative_to(root)), "tail": tail(out) if status != "pass" else "",
+            "fail_lines": fail_lines(out) if status != "pass" else []}
 
 
 def run(root: Path, m: dict, mp: Path, ctx: dict, sel: dict, args) -> dict:
@@ -453,7 +472,7 @@ def run(root: Path, m: dict, mp: Path, ctx: dict, sel: dict, args) -> dict:
         "schema": VERDICT_SCHEMA, "verify_version": VERIFY_VERSION, "app": m["app"],
         "sha": sh(["git", "rev-parse", "HEAD"], root),
         "dirty": bool(sh(["git", "status", "--porcelain"], root)),
-        "manifest": {"path": str(mp.relative_to(root)),
+        "manifest": {"path": (str(mp.relative_to(root)) if mp.is_relative_to(root) else str(mp)),
                      "sha256": hashlib.sha256(mp.read_bytes()).hexdigest()[:16]},
         "started_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(t0)),
         "duration_s": round(time.time() - t0, 2),
@@ -467,14 +486,18 @@ def run(root: Path, m: dict, mp: Path, ctx: dict, sel: dict, args) -> dict:
         "verdict_reason": ("no units selected - nothing was verified" if empty else
                            f"{len(failing)} failing" if failing else
                            "unmapped changed files under --strict" if strict_unmapped else
+                           f"gates only - {len(sel['unmapped_files'])} changed file(s) map to no "
+                           "feature and were not verified (--strict fails this)"
+                           if sel["mode"] == "changed" and sel["unmapped_files"] and not sel["features"] else
                            "all selected units passed"),
+        "unverified_files": sel["unmapped_files"],
     }
 
 
 # ---------------------------------------------------------------- coverage
 
 def coverage(root: Path, m: dict) -> dict:
-    ignore = m.get("ignore", [])
+    ignore = m.get("ignore", []) + self_ignores(root)
     tracked = [x for x in sh(["git", "ls-files"], root).splitlines() if x]
     unmapped = sorted(x for x in tracked if not matches(x, ignore)
                       and not any(matches(x, f["paths"]) for f in m["features"]))
