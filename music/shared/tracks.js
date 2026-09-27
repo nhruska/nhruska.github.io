@@ -335,6 +335,7 @@
       if (studioAudioWarm && window.ChordAudio) window.ChordAudio.releaseWarm();
       studioAudioWarm = false;
       elPlayer.classList.remove('on'); elPlayer.classList.remove('studio'); elPlayer.classList.remove('vidopen'); elPlayer.classList.remove('vidhid'); elPlayer._setVid = null; elPlayer.innerHTML = '';
+      document.body.classList.remove('pipdock'); // round 19: no dock, no reserved space
       exitMini();
       if (nowPlaying) lastStopAt = Date.now(); // round 17: a real stop starts the idle clock
       nowPlaying = null; userPaused = false;
@@ -450,7 +451,7 @@
     // every open starts hidden, and the video layer is screen-independent
     // (round 12), so studio-minimize no longer touches it. The old
     // session-sticky preference dissolved into that one law.
-    function minimizeStudio() {
+    function minimizeStudio(keepTheater) {
       if (!nowPlaying) { closePlayer(); return; }
       if (global.Sound) global.Sound.stopAll();       // synth audition stops; the YT iframe keeps playing
       studioSound = null;
@@ -476,7 +477,18 @@
       // theater does NOT overwrite the user's remembered video choice for the
       // next open (rounds 16/17). Parked and already-PIP states are left alone -
       // only a theater is impossible once the sheet is down.
-      if (typeof elPlayer._setVid === 'function' && elPlayer.classList.contains('vidopen')) {
+      // ROUND 19 (operator UAT 2026-09-17, verbatim: "show the theatre view of
+      // the video when a new song starts - so I can shut off the skip button on
+      // the yt video"). The demotion above is right when the OPERATOR collapsed
+      // the sheet (intent: give me the app back) and wrong when a NEW SONG
+      // opened minimized (intent: let me kill the ad). Same call, two intents,
+      // so the caller now says which: dismissStudio() demotes, the startMini
+      // open keeps the theater. A kept theater over a mini player wears a SCRIM
+      // (CSS .bt-player.mini.vidopen) - that is what makes it honest rather
+      // than the invisible tap-eating overlay #342 removed: the dim layer is
+      // visible system status, and one tap ANYWHERE outside the video docks it.
+      // Round 16 still holds - nothing here is on a timer, the user dismisses.
+      if (!keepTheater && typeof elPlayer._setVid === 'function' && elPlayer.classList.contains('vidopen')) {
         elPlayer._setVid('pip', true);
       }
       elPlayer.classList.add('mini');
@@ -1225,6 +1237,13 @@
           // Round 10 ("hide video CTA stuck to left of pip"): the park handle,
           // a slim tab on the PIP's left edge (CSS shows it only while .min).
           + '<button class="bt-st-piphide" data-piphide type="button" aria-label="Hide video - audio keeps playing"><span aria-hidden="true">&#8964;</span></button>'
+          // Round 19: the theater's scrim. Rendered always, shown by CSS ONLY
+          // in .bt-player.mini.vidopen - a theater floating over the app with
+          // no sheet behind it. It is the affordance #342's defect was missing:
+          // the card used to sit over live-looking content and swallow taps, so
+          // the dim layer both ANNOUNCES the overlay and gives the dismissal a
+          // viewport-sized target (Fitts) instead of a 24px handle.
+          + '<button class="bt-st-scrim" data-vidscrim type="button" aria-label="Dock video to the corner"></button>'
           // Round 16 (operator UAT 2026-09-02, "don't auto hide yt video. I keep
           // having to open it to skip after ads"): the auto-minimize countdown +
           // its Keep-open / Minimize-now controls are GONE. Nothing hides the
@@ -1455,6 +1474,14 @@
           vidState = state;            // round 17: what the NEXT open carries forward
           if (!fromOpen) writeVidPref(state);
           mediaEl.classList.toggle('min', state === 'pip');
+          // Round 19: the PIP is position:fixed and covers a 152x110 corner, so
+          // any view with content PINNED to the bottom (the Tune tab's
+          // reference-tone strings) has to pad for it the way .view already pads
+          // for the bar. Measured before the fix: the E and A string buttons
+          // returned .bt-st-media at elementFromPoint - two dead targets.
+          // A body class is the only handle CSS has (the dock state lives on a
+          // descendant, and there is no parent selector).
+          try { document.body.classList.toggle('pipdock', state === 'pip'); } catch (e) {}
           mediaEl.classList.toggle('hid', state === 'hid');
           elPlayer.classList.toggle('vidopen', state === 'theater'); // strip swaps Minimize CTA <-> pp/progress (one transport owner)
           elPlayer.classList.toggle('vidhid', state === 'hid'); // the bar title wears the restore cue (CSS)
@@ -1510,6 +1537,20 @@
         // the song name"): the edge handle parks the video - audio keeps
         // playing, the bar title wears the cue, and the park is remembered for
         // the session so auto-advance never pops it back unasked.
+        // Round 19: a tap anywhere on the scrim docks the theater to the PIP.
+        // Docking (not parking) - the video stays visible per round 16, it just
+        // stops covering the app. fromOpen=false: dismissing IS a user choice.
+        var scrimEl = elPlayer.querySelector('[data-vidscrim]');
+        if (scrimEl && mediaEl) scrimEl.onclick = function (e) {
+          e.stopPropagation(); // never also expand the Studio underneath
+          // fromOpen=true ON PURPOSE - this is the ONE dismissal that must not
+          // be remembered. Docking THIS song's theater means "I'm done with this
+          // ad", not "stop showing me the video"; writing 'pip' here would make
+          // the very next song open docked and quietly undo the round-19 ask
+          // after a single tap. Parking ([data-thmin] / the park handle) is the
+          // standing choice - it still writes, and it still wins on every open.
+          setVid('pip', true);
+        };
         var pipHideBtn = elPlayer.querySelector('[data-piphide]');
         if (pipHideBtn && mediaEl) pipHideBtn.onclick = function (e) {
           e.stopPropagation(); // in mini, a stage tap would otherwise expand the Studio
@@ -1547,9 +1588,24 @@
         //     jumps up between songs nor gets yanked away (round 16 stands: the
         //     app never hides it).
         // fromOpen=true: replaying a state must not re-store it as a user choice.
-        var wasPlaying = !!nowPlaying; // nowPlaying is still the PREVIOUS track here (set after this wiring)
-        var adLikely = adLikelyOpen({ wasPlaying: wasPlaying, hasPlayedThisLoad: hasPlayedThisLoad, lastStopAt: lastStopAt, idleMs: VID_IDLE_MS });
-        setVid(adLikely ? 'theater' : (vidState || readVidPref()), true);
+        // ROUND 19 supersedes round 17's ad-likely GUESS. Round 17 tried to
+        // predict where a pre-roll would fire (first play of a load, or after an
+        // idle gap) and show the theater only there. The ad boundary is
+        // undetectable cross-origin, so that was always a heuristic - and the
+        // cost of being wrong is asymmetric: guessing "no ad" when there is one
+        // traps the operator inside it (three separate rounds have now shipped
+        // that trap), while guessing "ad" when there is none costs one tap on a
+        // scrim. So stop guessing and show it every time.
+        // PARKING STILL WINS. 'hid' is the operator saying "do not show me this
+        // video"; round 16's law only forbids the app HIDING it unasked, and
+        // overriding an explicit park every song would be its own trap. Any
+        // other carried state (docked, theater, fresh device) opens THEATER -
+        // the only geometry where YouTube's Skip is a real tap target (the PIP
+        // is 152px wide; Skip inside it is ~4mm).
+        // adLikelyOpen() stays in tracks-model (still unit-tested) - the open
+        // path just no longer consults it.
+        var carried = vidState || readVidPref();
+        setVid(carried === 'hid' ? 'hid' : 'theater', true);
         hasPlayedThisLoad = true;
         var paused = false;
         // UAT batch 6 ("when track ends... shows at the last time code and
@@ -2379,7 +2435,7 @@
         } catch (e) { /* MediaMetadata absent or handler unsupported - fine */ }
       }
       if (o.startMini && nowPlaying) {
-        minimizeStudio();
+        minimizeStudio(true); // round 19: a new song keeps its theater (scrimmed) so Skip is reachable
       } else {
         if (window.NavHistory) window.NavHistory.open('studio', dismissStudio);
         dispatchNowPlaying();
