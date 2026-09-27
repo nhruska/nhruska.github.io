@@ -155,4 +155,152 @@ test('still FAILS a stamp/CACHE drift', function () {
   assert.ok(/does not mirror/.test(r.out), r.out);
 });
 
+/* =====================================================================
+ * Math app - check_math() (N3 re-review, 2026-09-25): the same per-push walk
+ * as check_music() above, plus Math-precached music/shared/ files (parsed
+ * out of math/sw.js's CORE list) counting as Math assets. Fixtures below
+ * always seed a VALID Music base+bump alongside any music/shared/ touch, so
+ * the independent Music guard stays green and the observed exit code is a
+ * clean assertion about check_math() alone.
+ * ===================================================================== */
+
+function writeMathBuild(repo, version, sharedFiles) {
+  fs.mkdirSync(path.join(repo, 'math'), { recursive: true });
+  fs.writeFileSync(path.join(repo, 'math', 'version.js'),
+    "var MATH_VERSION = '" + version + "';\n");
+  var core = (sharedFiles || ['theme.js']).map(function (f) {
+    return "'../music/shared/" + f + "'";
+  }).join(', ');
+  fs.writeFileSync(path.join(repo, 'math', 'sw.js'),
+    "importScripts('version.js');\nvar CACHE = self.MATH_VERSION;\nvar CORE = ['./', './index.html', " + core + "];\n");
+}
+
+function touchMathApp(repo, text) {
+  fs.appendFileSync(path.join(repo, 'math', 'app.js'), '/* ' + text + ' */\n');
+}
+
+function touchMathClaude(repo, text) {
+  fs.appendFileSync(path.join(repo, 'math', 'CLAUDE.md'), '\n' + text + '\n');
+}
+
+function touchSharedOnly(repo, filename, text) {
+  fs.appendFileSync(path.join(repo, 'music', 'shared', filename), '/* ' + text + ' */\n');
+}
+
+// Base branch holds BOTH a valid Music build (music-v100) and a valid Math
+// build (math-v100, precaching music/shared/theme.js). `steps` is a list of
+// function(repo) mutators applied as commits on a `feature` branch.
+function buildMathRepo(steps) {
+  var repo = fs.mkdtempSync(path.join(os.tmpdir(), 'cachebump-math-'));
+  fs.mkdirSync(path.join(repo, 'music', 'shared'), { recursive: true });
+  fs.mkdirSync(path.join(repo, 'scripts'), { recursive: true });
+  fs.copyFileSync(SCRIPT, path.join(repo, 'scripts', 'check-cache-bump.sh'));
+  git(repo, ['init', '-q', '-b', 'base']);
+  git(repo, ['config', 'user.email', 'test@example.invalid']);
+  git(repo, ['config', 'user.name', 'cache bump test']);
+  writeBuild(repo, 'music-v100');
+  writeMathBuild(repo, 'math-v100');
+  commit(repo, 'base build');
+  git(repo, ['checkout', '-q', '-b', 'feature']);
+  steps.forEach(function (step) { step(repo); });
+  return repo;
+}
+
+// A Math-asset-changing commit that also bumps MATH_VERSION.
+function mathBump(version, label) {
+  return function (repo) {
+    writeMathBuild(repo, version);
+    touchMathApp(repo, label);
+    commit(repo, label);
+  };
+}
+
+// A Math-asset-changing commit that does NOT bump MATH_VERSION.
+function mathTouchNoBump(label) {
+  return function (repo) {
+    touchMathApp(repo, label);
+    commit(repo, label);
+  };
+}
+
+function mathClaudeOnly(label) {
+  return function (repo) {
+    touchMathClaude(repo, label);
+    commit(repo, label);
+  };
+}
+
+// Touches a music/shared/ file and ALSO bumps Music's own CACHE alongside it
+// so the independent Music guard stays green - the resulting exit code is
+// governed by check_math() alone.
+function sharedTouchKeepingMusicGreen(filename, label) {
+  return function (repo) {
+    writeBuild(repo, 'music-v200');
+    touchSharedOnly(repo, filename, label);
+    commit(repo, label);
+  };
+}
+
+test('Math: OK when math/ changes are accompanied by a MATH_VERSION bump', function () {
+  var repo = buildMathRepo([mathBump('math-v2', 'bump to v2')]);
+  var r = runGuard(repo);
+  assert.strictEqual(r.code, 0, 'expected exit 0, got ' + r.code + '\n' + r.out);
+});
+
+test('Math: FAILS when math/ changes vs base with no MATH_VERSION bump', function () {
+  var repo = buildMathRepo([mathTouchNoBump('edit app.js, no bump')]);
+  var r = runGuard(repo);
+  assert.strictEqual(r.code, 1, 'expected exit 1, got ' + r.code + '\n' + r.out);
+  assert.ok(/MATH_VERSION is unchanged/.test(r.out), r.out);
+});
+
+test('Math: OK when only math/CLAUDE.md changes (docs-only, no bump required)', function () {
+  var repo = buildMathRepo([mathClaudeOnly('docs tweak')]);
+  var r = runGuard(repo);
+  assert.strictEqual(r.code, 0, 'expected exit 0, got ' + r.code + '\n' + r.out);
+  assert.ok(/nothing to guard for Math/.test(r.out), r.out);
+});
+
+test('Math: FAILS the reviewer\'s 2-commit case - bump then a follow-up edit under the same version', function () {
+  var repo = buildMathRepo([
+    mathBump('math-v2', 'bump to v2'),
+    mathTouchNoBump('follow-up edit, same version')
+  ]);
+  var r = runGuard(repo);
+  assert.strictEqual(r.code, 1, 'expected exit 1, got ' + r.code + '\n' + r.out);
+  assert.ok(/newest Math-asset-changing commit/.test(r.out), r.out);
+});
+
+test('Math: PASSES with a WARN when an intermediate reuse is superseded by a later bump', function () {
+  var repo = buildMathRepo([
+    mathBump('math-v2', 'bump to v2'),
+    mathTouchNoBump('follow-up edit, same version'),
+    mathBump('math-v2-2', 'later bump takes its own version')
+  ]);
+  var r = runGuard(repo);
+  assert.strictEqual(r.code, 0, 'expected exit 0, got ' + r.code + '\n' + r.out);
+  assert.ok(/WARN/.test(r.out), r.out);
+});
+
+test('Math: FAILS when a Math-precached music/shared file changes without a MATH_VERSION bump', function () {
+  var repo = buildMathRepo([sharedTouchKeepingMusicGreen('theme.js', 'tweak shared theme')]);
+  var r = runGuard(repo);
+  assert.strictEqual(r.code, 1, 'expected exit 1, got ' + r.code + '\n' + r.out);
+  assert.ok(/MATH_VERSION is unchanged/.test(r.out), r.out);
+});
+
+test('Math: does not fail on a music/shared file Math does not precache', function () {
+  var repo = buildMathRepo([sharedTouchKeepingMusicGreen('tuner.js', 'tweak music-only file')]);
+  var r = runGuard(repo);
+  assert.strictEqual(r.code, 0, 'expected exit 0, got ' + r.code + '\n' + r.out);
+  assert.ok(/nothing to guard for Math/.test(r.out), r.out);
+});
+
+test('Math: a music-only repo with no math/ dir reports nothing to guard for Math', function () {
+  var repo = buildRepo([['music-v306', 'music-only change']]);
+  var r = runGuard(repo);
+  assert.strictEqual(r.code, 0, 'expected exit 0, got ' + r.code + '\n' + r.out);
+  assert.ok(/nothing to guard for Math/.test(r.out), r.out);
+});
+
 run();

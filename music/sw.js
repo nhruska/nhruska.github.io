@@ -17,7 +17,7 @@
  * cache-bump history lives in git log + engineering-wiki/change-history.md.
  * ===================================================================== */
 'use strict';
-var CACHE = 'music-v352-2';
+var CACHE = 'music-v355-4';
 // Everything precached for offline use. Every shared/*.js that play/index.html
 // or play/triad-inversions.html script-tags MUST appear here, or an offline
 // install 404s on it (test/sw-verify.test.js guards this). The list order is
@@ -78,7 +78,10 @@ self.addEventListener('install', function (e) {
 self.addEventListener('activate', function (e) {
   e.waitUntil(
     caches.keys().then(function (keys) {
-      return Promise.all(keys.map(function (k) { if (k !== CACHE) return caches.delete(k); }));
+      // Only ever touch OUR OWN caches (the 'music-' family) - the origin also
+      // hosts the Math app's 'math-' caches (math/sw.js), and wiping those on
+      // Music's activate would silently evict Math's offline install.
+      return Promise.all(keys.map(function (k) { if (k.indexOf('music-') === 0 && k !== CACHE) return caches.delete(k); }));
     }).then(function () { return self.clients.claim(); })
   );
 });
@@ -98,6 +101,13 @@ self.addEventListener('message', function (e) {
 // that a dead one never strands the user on a spinner or freezes a
 // render-blocking <link>.
 var NET_DEADLINE_MS = 3500;
+// Look up ONLY this worker's own cache. The origin-wide caches.match() also
+// searches the sibling app's cache (Math and Music share the origin and both
+// cache music/shared/*), and could answer with that app's stale copy.
+function fromCache(req, opts) {
+  return caches.open(CACHE).then(function (c) { return c.match(req, opts); });
+}
+
 self.addEventListener('fetch', function (e) {
   var req = e.request;
   if (req.method !== 'GET') return;
@@ -122,14 +132,14 @@ self.addEventListener('fetch', function (e) {
       // resource identity - CORE precaches the bare paths, so an offline lookup
       // for `songbook.css?v=music-v342-11` must still resolve to `songbook.css`.
       // Online this branch is network-first anyway, so the fresh bytes win.
-      caches.match(req, { ignoreSearch: true }).then(function (cached) {
+      fromCache(req, { ignoreSearch: true }).then(function (cached) {
         var netP = fetch(req).then(function (res) {
           if (res && res.status === 200) { var copy = res.clone(); caches.open(CACHE).then(function (c) { return c.put(req, copy); }).catch(function () {}); }
           return res;
         });
         var answered = netP.catch(function () {
           if (cached) return cached;
-          if (req.mode === 'navigate') return caches.match('./play/').then(function (shell) { return shell || caches.match('./play/index.html'); });
+          if (req.mode === 'navigate') return fromCache('./play/').then(function (shell) { return shell || fromCache('./play/index.html'); });
           return Response.error();
         });
         if (!cached) return answered;
@@ -156,7 +166,7 @@ self.addEventListener('fetch', function (e) {
     // is not) while the fetch stays alive via waitUntil so a late answer
     // still lands in the cache for next time.
     e.respondWith(
-      caches.match(req).then(function (cached) {
+      fromCache(req).then(function (cached) {
         if (cached) return cached;
         var netP = fetch(req).then(function (res) {
           if (res && (res.status === 200 || res.type === 'opaque')) { var copy = res.clone(); caches.open(CACHE).then(function (c) { return c.put(req, copy); }).catch(function () {}); }

@@ -2082,7 +2082,7 @@ footer{display:none;}
 .prefEx .chord,.prefEx .bigC{transform:scale(.82);}
 .prefEx .suggChip{margin:0;cursor:default;}
 .themeSeg{display:flex;gap:6px;background:var(--bg-2);border:1px solid var(--line);border-radius:11px;padding:4px;}
-.thSeg{flex:1;padding:9px 8px;border:0;background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.85rem;border-radius:8px;cursor:pointer;transition:background .15s,color .15s;}
+.thSeg{flex:1;min-height:44px;padding:9px 8px;border:0;background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.85rem;border-radius:8px;cursor:pointer;transition:background .15s,color .15s;}
 .thSeg.on{background:var(--accent);color:var(--on-accent);}
 .thSeg:active{transform:scale(.97);}
 .setSummary{margin:0;display:flex;flex-direction:column;gap:5px;}
