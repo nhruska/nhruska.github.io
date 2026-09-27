@@ -1,0 +1,162 @@
+{
+ "project": "nh-pages",
+ "updated_at": "2026-09-27T19:52:45Z",
+ "gates": [
+  {
+   "id": "355-verify-music-palette",
+   "pr": "nhruska/nhruska.github.io#355",
+   "head_sha": "e6b93547d66f9eed56445f8550ab108a4023d780",
+   "kind": "verify",
+   "title": "Music app looks the same after the Math app lands",
+   "expect": "Music Songs and Tune screens match main pixel-for-pixel in light and dark. Math home renders with zero app errors",
+   "do": "Compare the before and after shots",
+   "evidence": [],
+   "ci": "none",
+   "limit": "capture pending: branch not yet resolved against current main"
+  },
+  {
+   "id": "355-hands-workout",
+   "pr": "nhruska/nhruska.github.io#355",
+   "head_sha": "e6b93547d66f9eed56445f8550ab108a4023d780",
+   "kind": "hands",
+   "title": "Run one Math workout on your phone",
+   "expect": "A timed workout starts, takes answers from the on-screen keypad, and ends on a score screen",
+   "do": "Open the commit preview link on your phone and finish one workout",
+   "evidence": [],
+   "ci": "none",
+   "limit": "preview link added once the branch head is final"
+  },
+  {
+   "id": "360-verify-runtime",
+   "pr": "nhruska/nhruska.github.io#360",
+   "head_sha": "67f9506e6ab814a59915dc6022cee54348a0036c",
+   "kind": "verify",
+   "title": "Music app unchanged by the verify tooling",
+   "expect": "Music app renders identically to main. verify.py run passes on the head",
+   "do": "Compare the before and after shots",
+   "evidence": [],
+   "ci": "none",
+   "limit": "capture pending: branch not yet resolved against current main"
+  },
+  {
+   "id": "357-verify-setlist-gate",
+   "pr": "nhruska/nhruska.github.io#357",
+   "head_sha": "a9c2ddce6f6305af40db35df1f788666cd5c3eb4",
+   "kind": "verify",
+   "title": "Long setlist rows keep their height and scroll",
+   "expect": "A 25-song setlist shows full-height rows and scrolls, on main and on this head",
+   "do": "Compare the before and after shots",
+   "evidence": [],
+   "ci": "none",
+   "limit": "capture pending: branch not yet resolved against current main"
+  },
+  {
+   "id": "351-verify-profile",
+   "pr": "nhruska/nhruska.github.io#351",
+   "head_sha": "2a4a057002b887fb3e3b48aa6da0dedb4d640912",
+   "kind": "verify",
+   "title": "Settings shows the Musician profile section",
+   "expect": "Settings opens a Musician profile section with zero app errors. everything else matches main",
+   "do": "Compare the before and after shots",
+   "evidence": [],
+   "ci": "none",
+   "limit": "capture pending: branch not yet resolved against current main"
+  },
+  {
+   "id": "351-taste-restore",
+   "pr": "nhruska/nhruska.github.io#351",
+   "head_sha": "2a4a057002b887fb3e3b48aa6da0dedb4d640912",
+   "kind": "taste",
+   "title": "When you restore a backup, what should happen to what you have learned on this phone?",
+   "expect": "Pick one: (A) merge on restore: keep this phone's progress and add the backup's, or (B) warn in the dialog: say restore replaces this phone's progress before you confirm",
+   "do": "Choose A or B",
+   "evidence": [],
+   "ci": "none",
+   "limit": ""
+  },
+  {
+   "id": "348-verify-dock",
+   "pr": "nhruska/nhruska.github.io#348",
+   "head_sha": "fd07caee88aa8063acf569658f109b1d00e4e5cc",
+   "kind": "verify",
+   "title": "Tuner strings stay tappable with the player open",
+   "expect": "With the mini-player docked, every string button and the tuning guide sit fully above it",
+   "do": "Compare the before and after shots",
+   "evidence": [],
+   "ci": "none",
+   "limit": "capture pending: branch not yet resolved against current main"
+  },
+  {
+   "id": "348-hands-mic",
+   "pr": "nhruska/nhruska.github.io#348",
+   "head_sha": "fd07caee88aa8063acf569658f109b1d00e4e5cc",
+   "kind": "hands",
+   "title": "Tune a real guitar with the phone",
+   "expect": "Each string goes green when in tune, and the reference tone does not fool the needle",
+   "do": "Open the commit preview link on your phone, tap Tune, tune all six strings",
+   "evidence": [],
+   "ci": "none",
+   "limit": "preview link added once the branch head is final"
+  },
+  {
+   "id": "348-taste-feel",
+   "pr": "nhruska/nhruska.github.io#348",
+   "head_sha": "fd07caee88aa8063acf569658f109b1d00e4e5cc",
+   "kind": "taste",
+   "title": "Does tuning your guitar feel right?",
+   "expect": "Pass if tuning string by string feels natural and quick. Fail with what felt off",
+   "do": "Tune your guitar once and judge the feel",
+   "evidence": [],
+   "ci": "none",
+   "limit": "preview link added once the branch head is final"
+  },
+  {
+   "id": "358-verify-docs",
+   "pr": "nhruska/nhruska.github.io#358",
+   "head_sha": "a238bff658121baeb778b7ecd3f58a242151dde6",
+   "kind": "verify",
+   "title": "Method docs land cleanly (docs only)",
+   "expect": "Docs-only diff, suite green. no app surface changes",
+   "do": "Read the PR summary",
+   "evidence": [],
+   "ci": "none",
+   "limit": "docs-only: no app surface to screenshot"
+  },
+  {
+   "id": "346-verify-docs",
+   "pr": "nhruska/nhruska.github.io#346",
+   "head_sha": "6bbe96383ca0899aaf6e879eb8bf68a77bb0cd28",
+   "kind": "verify",
+   "title": "Public-claims calibration docs (docs only, stacked on #358)",
+   "expect": "Docs-only diff. merges after #358",
+   "do": "Read the PR summary",
+   "evidence": [],
+   "ci": "none",
+   "limit": "docs-only: no app surface to screenshot. stacked on #358"
+  },
+  {
+   "id": "347-verify-docs",
+   "pr": "nhruska/nhruska.github.io#347",
+   "head_sha": "e848419a41bff21cda8e1cbc305419d46128cc5b",
+   "kind": "verify",
+   "title": "Wiki lifecycle docs (docs only, stacked on #346)",
+   "expect": "Docs-only diff. merges after #346",
+   "do": "Read the PR summary",
+   "evidence": [],
+   "ci": "none",
+   "limit": "docs-only: no app surface to screenshot. stacked on #346"
+  },
+  {
+   "id": "356-verify-plan",
+   "pr": "nhruska/nhruska.github.io#356",
+   "head_sha": "c10ef17d45597bda3a99f6036f7510b234ab34f7",
+   "kind": "verify",
+   "title": "Merge plan and gate file (docs only, merges last)",
+   "expect": "Docs and evidence only. merges after every other PR is terminal",
+   "do": "Read the PR summary",
+   "evidence": [],
+   "ci": "none",
+   "limit": "docs-only. merges last"
+  }
+ ]
+}
