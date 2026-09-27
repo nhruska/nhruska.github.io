@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# vendor-from: agent-config skills/verify-runtime/lib/verify.py 1.1.1
-# vendor-hash: 1e710c49e5b4be63
+# vendor-from: agent-config skills/verify-runtime/lib/verify.py 1.2.1
+# vendor-hash: 4e122984d7b31b7e
 # vendor-note: DO NOT EDIT - re-sync from the SSOT; check with vendor-sync.sh <this> --check
 """
 verify.py - agent-drivable verification runtime (SSOT, vendored per repo).
@@ -19,6 +19,7 @@ Subcommands (all print JSON on stdout; human summary on stderr):
   lint  [--coverage]      validate the manifest; --coverage ratchets unmapped files
 
 Selection: --changed [REF] (default) | --feature ID (repeatable) | --all
+Shard:     --param VAR=VALUE (repeatable) keeps one slice of every `matrix` unit
 
 Exit codes: 0 pass, 1 verdict fail, 2 manifest/config/runtime error.
 Stdlib only. Vendored copies carry a stamp line; see SKILL.md.
@@ -28,6 +29,7 @@ from __future__ import annotations
 import argparse
 import fnmatch
 import hashlib
+import itertools
 import json
 import os
 import re
@@ -40,10 +42,12 @@ import urllib.request
 import zlib
 from pathlib import Path
 
-VERIFY_VERSION = "1.1.1"
+VERIFY_VERSION = "1.2.1"
 MANIFEST_SCHEMA = "verify-manifest/1"
 VERDICT_SCHEMA = "verify-verdict/1"
 TAIL_LINES = 30
+MATRIX_VAR = re.compile(r"[a-z_]+\Z")
+BUILTIN_VARS = ("root", "port", "run_dir", "worktree_id", "url", "sha")
 FAIL_LINE = re.compile(r"(FAIL|Error|ERROR|Traceback|assert|expected|\u2716|\u2717|\u00d7)")
 
 
@@ -126,10 +130,38 @@ def load_manifest(root: Path, path: str | None) -> tuple[dict, Path]:
     return m, mp
 
 
+def _lint_matrix(u: dict, where: str, problems: list[str]) -> None:
+    mx = u.get("matrix")
+    if mx is None:
+        return
+    if not isinstance(mx, dict) or not mx:
+        problems.append(f"{where}/{u['id']}: matrix must be a non-empty object of var -> [values]")
+        return
+    for var, vals in mx.items():
+        if not isinstance(var, str) or not MATRIX_VAR.match(var):
+            problems.append(f"{where}/{u['id']}: matrix var {var!r} must match [a-z_]+")
+        elif var in BUILTIN_VARS:
+            problems.append(f"{where}/{u['id']}: matrix var {var!r} shadows a built-in placeholder")
+        if (not isinstance(vals, list) or not vals
+                or not all(isinstance(v, str) and v for v in vals)):
+            problems.append(f"{where}/{u['id']}: matrix var {var!r} needs a non-empty list "
+                            "of non-empty strings")
+        elif len(set(vals)) != len(vals):
+            problems.append(f"{where}/{u['id']}: matrix var {var!r} repeats a value")
+
+
 def _check_unit(u: dict, where: str, problems: list[str], kind: str) -> None:
     if not isinstance(u, dict) or not u.get("id"):
         problems.append(f"{where}: {kind} needs an 'id'")
         return
+    _lint_matrix(u, where, problems)
+    if "artifacts" in u:
+        arts = u["artifacts"]
+        if kind != "check":
+            problems.append(f"{where}/{u['id']}: 'artifacts' is only valid on a check")
+        elif (not isinstance(arts, list) or not arts
+              or not all(isinstance(a, str) and a.strip() for a in arts)):
+            problems.append(f"{where}/{u['id']}: artifacts must be a non-empty list of globs")
     if kind == "check" and not u.get("cmd"):
         problems.append(f"{where}/{u['id']}: check needs 'cmd'")
     if kind == "probe":
@@ -241,7 +273,7 @@ def select(root: Path, m: dict, args) -> dict:
     feats = {f["id"]: f for f in m["features"]}
     ignore = m.get("ignore", []) + self_ignores(root)
     sel = {"mode": "", "base": None, "changed_files": [], "features": [],
-           "unmapped_files": []}
+           "unmapped_files": [], "params": parse_params(m, getattr(args, "param", None))}
     if args.all:
         sel["mode"], sel["features"] = "all", list(feats)
     elif args.feature:
@@ -263,16 +295,74 @@ def select(root: Path, m: dict, args) -> dict:
     return sel
 
 
+def psub(s: str, params: dict) -> str:
+    """Substitute matrix vars only; built-in placeholders are left for subst()."""
+    return re.sub(r"\{([a-z_]+)\}", lambda mo: params.get(mo.group(1), mo.group(0)), s)
+
+
+def expand(u: dict, qid: str) -> list[dict]:
+    """One unit per matrix combination (cartesian product, declaration order)."""
+    mx = u.get("matrix")
+    if not mx:
+        return [{**u, "qid": qid, "params": {}}]
+    out = []
+    for combo in itertools.product(*mx.values()):
+        params = dict(zip(mx, combo))
+        e = {**u, "params": params,
+             "qid": qid + "@" + ",".join(f"{k}={v}" for k, v in params.items())}
+        if "cmd" in e:
+            e["cmd"] = psub(e["cmd"], params)
+        if "env" in e:
+            e["env"] = {k: psub(str(v), params) for k, v in e["env"].items()}
+        if "http" in e:
+            e["http"] = {**e["http"], "path": psub(e["http"]["path"], params)}
+        if "artifacts" in e:
+            e["artifacts"] = [psub(a, params) for a in e["artifacts"]]
+        out.append(e)
+    return out
+
+
+def parse_params(m: dict, pairs: list[str] | None) -> dict:
+    """--param VAR=VALUE -> {var: value}. A var no unit declares is an error: a shard
+    that selects nothing is not a pass."""
+    if not pairs:
+        return {}
+    declared: dict[str, set] = {}
+    raw = list(m.get("gates", []))
+    for f in m["features"]:
+        raw += f.get("checks", []) + f.get("probes", [])
+    for u in raw:
+        for k, vals in (u.get("matrix") or {}).items():
+            declared.setdefault(k, set()).update(vals)
+    want: dict[str, str] = {}
+    for p in pairs:
+        var, eq, val = p.partition("=")
+        if not eq or not var or not val:
+            raise ConfigError(f"--param must be VAR=VALUE, got {p!r}")
+        if var not in declared:
+            raise ConfigError(f"--param {var!r}: no unit declares a matrix var {var!r} "
+                              f"(declared: {sorted(declared)})")
+        if val not in declared[var]:
+            raise ConfigError(f"--param {var}={val!r}: no unit declares that value "
+                              f"(declared: {sorted(declared[var])})")
+        want[var] = val
+    return want
+
+
 def units_for(m: dict, sel: dict) -> list[dict]:
     feats = {f["id"]: f for f in m["features"]}
-    units = [{**g, "kind": "gate", "qid": f"gate/{g['id']}"} for g in m.get("gates", [])]
+    units = [x for g in m.get("gates", [])
+             for x in expand({**g, "kind": "gate"}, f"gate/{g['id']}")]
     for fid in sel["features"]:
         f = feats[fid]
-        units += [{**c, "kind": "check", "feature": fid, "qid": f"{fid}/{c['id']}"}
-                  for c in f.get("checks", [])]
-        units += [{**p, "kind": "probe", "feature": fid, "qid": f"{fid}/{p['id']}"}
-                  for p in f.get("probes", [])]
-    return units
+        units += [x for c in f.get("checks", [])
+                  for x in expand({**c, "kind": "check", "feature": fid}, f"{fid}/{c['id']}")]
+        units += [x for p in f.get("probes", [])
+                  for x in expand({**p, "kind": "probe", "feature": fid}, f"{fid}/{p['id']}")]
+    want = sel.get("params") or {}
+    # A shard keeps only matrix units matching every pair; plain units always run.
+    return [u for u in units if not u.get("matrix")
+            or all(u["params"].get(k) == v for k, v in want.items())]
 
 
 # ---------------------------------------------------------------- runtime
@@ -370,8 +460,11 @@ def runtime_down(m: dict, ctx: dict) -> dict:
         return {"stopped": False, "reason": "no runtime started by this worktree"}
     st = json.loads(sp.read_text())
     if m.get("runtime", {}).get("down", {}).get("cmd"):
-        subprocess.run(subst(m["runtime"]["down"]["cmd"], ctx), shell=True,
-                       env=env_for(m["runtime"]["down"], m, ctx))
+        # stdout carries the verdict JSON; teardown chatter goes to the runtime log
+        with open(Path(ctx["run_dir"]) / "runtime.log", "a") as log:
+            subprocess.run(subst(m["runtime"]["down"]["cmd"], ctx), shell=True,
+                           env=env_for(m["runtime"]["down"], m, ctx),
+                           stdout=log, stderr=subprocess.STDOUT)
     _kill(st["pid"])
     sp.unlink()
     return {"stopped": True, "pid": st["pid"]}
@@ -417,10 +510,48 @@ def run_probe(u: dict, ctx: dict) -> dict:
             "tail": tail(res["body"], 10) if fails else ""}
 
 
+def collect_artifacts(root: Path, globs: list[str], ctx: dict, since: float) -> list[str]:
+    """Repo-relative files matching any glob with mtime >= since, sorted."""
+    found: set[str] = set()
+    for g in globs:
+        g = subst(g, ctx)
+        if os.path.isabs(g):
+            try:
+                g = Path(g).relative_to(root).as_posix()
+            except ValueError:
+                continue  # outside the repo: never evidence a reviewer can open
+        rx = glob_to_regex(g)
+        segs = g.split("/")
+        fixed = []
+        for sg in segs[:-1]:  # walk only below the glob's literal prefix
+            if any(ch in sg for ch in "*?"):
+                break
+            fixed.append(sg)
+        start = root.joinpath(*fixed)
+        if start.is_file():
+            start = start.parent
+        for dp, dns, fns in os.walk(start):
+            dns[:] = [d for d in dns if d != ".git"]
+            for fn in fns:
+                fp = Path(dp) / fn
+                rel = fp.relative_to(root).as_posix()
+                if rx.match(rel):
+                    try:
+                        if fp.stat().st_mtime >= since:
+                            found.add(rel)
+                    except OSError:
+                        pass
+    return sorted(found)
+
+
 def run_check(u: dict, root: Path, m: dict, ctx: dict) -> dict:
     logs = Path(ctx["run_dir"]) / "logs"
     logs.mkdir(parents=True, exist_ok=True)
     logp = logs / (u["qid"].replace("/", "__") + ".log")
+    # Start time read off the FILESYSTEM clock, the one artifact mtimes use: the kernel
+    # stamps files from a coarse clock that can trail time.time() by a tick.
+    logp.write_text("")
+    since = logp.stat().st_mtime
     t0 = time.time()
     try:
         r = subprocess.run(subst(u["cmd"], ctx), shell=True, cwd=root / u.get("cwd", "."),
@@ -432,9 +563,16 @@ def run_check(u: dict, root: Path, m: dict, ctx: dict) -> dict:
         out = (e.stdout or b"").decode(errors="replace") if isinstance(e.stdout, bytes) else (e.stdout or "")
         code, status = 124, "timeout"
     logp.write_text(out)
-    return {"status": status, "exit_code": code, "duration_s": round(time.time() - t0, 2),
-            "log": str(logp.relative_to(root)), "tail": tail(out) if status != "pass" else "",
-            "fail_lines": fail_lines(out) if status != "pass" else []}
+    res = {"status": status, "exit_code": code, "duration_s": round(time.time() - t0, 2),
+           "log": str(logp.relative_to(root)), "tail": tail(out) if status != "pass" else "",
+           "fail_lines": fail_lines(out) if status != "pass" else []}
+    if u.get("artifacts"):
+        res["artifacts"] = collect_artifacts(root, u["artifacts"], ctx, since)
+        if status == "pass" and not res["artifacts"]:
+            # Evidence that was promised and is missing is a failure, not a pass.
+            res.update(status="fail", failures=["declared artifacts not produced"],
+                       tail=tail(out))
+    return res
 
 
 def run(root: Path, m: dict, mp: Path, ctx: dict, sel: dict, args) -> dict:
@@ -448,7 +586,7 @@ def run(root: Path, m: dict, mp: Path, ctx: dict, sel: dict, args) -> dict:
             started_here = not rt_info.get("reused")
         for u in units:  # sequential on purpose: one heavy process at a time
             base = {"id": u["qid"], "kind": u["kind"], "feature": u.get("feature"),
-                    "goalpost": bool(u.get("goalpost"))}
+                    "goalpost": bool(u.get("goalpost")), "params": u["params"], "artifacts": []}
             if args.fail_fast and any(r["status"] in ("fail", "timeout") and not r["goalpost"]
                                       for r in results):
                 results.append({**base, "status": "skip", "reason": "fail-fast"})
@@ -491,6 +629,7 @@ def run(root: Path, m: dict, mp: Path, ctx: dict, sel: dict, args) -> dict:
                            if sel["mode"] == "changed" and sel["unmapped_files"] and not sel["features"] else
                            "all selected units passed"),
         "unverified_files": sel["unmapped_files"],
+        "artifacts_total": sum(len(r.get("artifacts") or []) for r in results),
     }
 
 
@@ -526,6 +665,8 @@ def main(argv: list[str] | None = None) -> int:
         g.add_argument("--feature", action="append")
         g.add_argument("--all", action="store_true")
         s.add_argument("--strict", action="store_true", help="fail on unmapped changed files")
+        s.add_argument("--param", action="append", metavar="VAR=VALUE",
+                       help="keep one matrix shard (repeatable)")
         if name == "run":
             s.add_argument("--keep", action="store_true", help="leave the runtime up")
             s.add_argument("--fail-fast", action="store_true")
@@ -583,7 +724,8 @@ def main(argv: list[str] | None = None) -> int:
         sel = select(root, m, args)
         if args.cmd == "plan":
             emit({"selection": sel, "units": [{"id": u["qid"], "kind": u["kind"],
-                                               "goalpost": bool(u.get("goalpost"))}
+                                               "goalpost": bool(u.get("goalpost")),
+                                               "params": u["params"]}
                                               for u in units_for(m, sel)]}, None)
             return 0
         verdict = run(root, m, mp, ctx, sel, args)
