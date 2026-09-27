@@ -260,6 +260,34 @@
 /* Round 10 .hid: the video parked INTO the bar title - a zero-size clip (NEVER
    display:none, audio must keep playing), untouchable until restored. */
 .bt-st-media.hid{position:fixed;width:0;height:0;max-height:0;border:0;box-shadow:none;pointer-events:none;overflow:hidden;}
+/* ROUND 19 - THE THEATER'S SCRIM (operator UAT 2026-09-17: "show the theatre
+   view of the video when a new song starts - so I can shut off the skip button
+   on the yt video").
+   A new song now opens its theater even though the player is MINI, which is the
+   exact geometry #342 removed. What made that a defect was NOT the card - it was
+   a 245px opaque overlay floating over live-LOOKING content with no modal
+   affordance, so the app read as tappable while every tap died in the iframe's
+   layer. The scrim is the missing affordance: it dims the app (visibility of
+   system status - this is a layer, not the page) and it makes the whole viewport
+   the dismiss target, so docking costs one tap anywhere instead of hunting a
+   24px handle. z-index sits BETWEEN the app and the theater card (96), so the
+   card and its handles stay above it.
+   Shown ONLY when a theater has no sheet behind it (.mini.vidopen). In the open
+   Studio the sheet is already the backdrop - a second scrim there would be
+   double-dimming. */
+.bt-st-scrim{display:none;}
+.bt-player.mini.vidopen .bt-st-scrim{
+  display:block;position:fixed;inset:0;z-index:94;
+  border:0;padding:0;margin:0;-webkit-appearance:none;appearance:none;
+  background:rgba(0,0,0,.42);
+  /* LOAD-BEARING, same trap the PIP + park handle hit: the mini player
+     container disables pointer events broadly, so without this the scrim is
+     tap-dead and the overlay goes right back to swallowing taps silently. */
+  pointer-events:auto;cursor:pointer;
+}
+/* The park handle rides the PIP's edge only - it must never show under a
+   scrimmed theater (the theater carries its own thmin/thdock handles). */
+.bt-player.mini.vidopen .bt-st-piphide{display:none;}
 /* Round 10: the park handle stuck to the PIP's LEFT edge (operator ask) - a
    slim vertical tab, chevron pointing down INTO the bar. GEOMETRY PAIR with
    .bt-st-media.min above: right = PIP right (10px) + PIP width (152px) + 6px
@@ -816,7 +844,9 @@
   /* flex/max-width/border/overflow neutralize the landscape two-pane split
      rules leaking into the (invisible) stage shell. */
   .bt-player.mini .bt-st-stage{flex:0 0 auto;min-width:0;max-width:none;border-right:0;overflow:visible;}
-  .bt-player.mini .bt-st-stage > :not(.bt-st-media):not(.bt-st-piphide){display:none;}
+  /* round 19: the scrim is a stage child too, and it is the ONE piece of mini
+     chrome that must survive - it is what makes a kept theater honest. */
+  .bt-player.mini .bt-st-stage > :not(.bt-st-media):not(.bt-st-piphide):not(.bt-st-scrim){display:none;}
   /* An EXPANDED video still collapses to clipped audio when the whole Studio
    minimizes (unchanged); a PIP'd video keeps its fixed overlay - the :not
    scope keeps the old clip off it. */
