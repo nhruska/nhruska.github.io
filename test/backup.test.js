@@ -41,6 +41,7 @@ test('owned() accepts app namespaces, rejects foreign + excluded keys', function
   assert.strictEqual(Backup.owned('music.devlog.v1'), false);      // dev-only excluded
   assert.strictEqual(Backup.owned('music.lastBackup.v1'), false);  // device-local stamp excluded
   assert.strictEqual(Backup.owned('music.lastRestore.v1'), false); // device-local stamp excluded (M-SETTINGS-CLARITY - same rationale as lastBackup)
+  assert.strictEqual(Backup.owned('music.device.v1'), false); // M-MUSICIAN-PROFILE: THIS device's id scopes its progression evidence in profile.json - a restore must not make one device impersonate another
   assert.strictEqual(Backup.owned(Backup.SCHEMA_KEY), false);      // the marker itself excluded
   assert.strictEqual(Backup.owned(null), false);
 });

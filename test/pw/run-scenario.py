@@ -43,6 +43,11 @@ in scenarios):
   dragReorder {from, to, side?}        - pointer-drag from one element onto the
                                          before/after side of another (S-PROG-REORDER)
   screenshot {name}                    - PNG to test/pw/evidence/<scenario>/<name>.png
+  uploadText {selector, name, text|textFile, mimeType?}
+                                       - hand an in-memory file to an <input type=file>
+                                         (textFile = repo-relative path to a fixture)
+                                         (fires its real change handler - the import
+                                         picker's dispatch path, not an API shortcut)
 
 Top-level scenario keys (beside "steps"): "firstRun" (opt out of the runner's
 welcomeDone seed - tour scenarios), "persona" + "dismissNotables" (guidance-level
@@ -315,6 +320,18 @@ def run(scenario_path, base_url=None):
                             raise AssertionError(step.get('label', step['js']))
                     elif act == 'screenshot':
                         page.screenshot(path=os.path.join(evdir, step['name'] + '.png'))
+                    elif act == 'uploadText':
+                        # `text` inline, or `textFile` (repo-relative) so a fixture
+                        # shared with the node suite is uploaded byte-identical.
+                        if 'textFile' in step:
+                            with open(os.path.join(REPO, step['textFile']), 'rb') as fh:
+                                buf = fh.read()
+                        else:
+                            buf = step['text'].encode('utf-8')
+                        page.set_input_files(step['selector'], {
+                            'name': step['name'],
+                            'mimeType': step.get('mimeType', 'application/json'),
+                            'buffer': buf})
                     else:
                         raise AssertionError('unknown action %r' % act)
                 except Exception as e:  # collect, snapshot, and stop - later steps depend on earlier

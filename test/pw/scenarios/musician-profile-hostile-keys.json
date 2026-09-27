@@ -1,0 +1,62 @@
+{
+  "name": "musician-profile-hostile-keys",
+  "persona": "intermediate",
+  "dismissNotables": [
+    "composeintro",
+    "transposetip",
+    "backup"
+  ],
+  "seed": {
+    "music.profile.v1": "{\"schema\": \"musician-profile/v1\", \"id\": \"mp_adv\", \"updated\": \"2026-09-26T00:00:00Z\", \"extensions\": {\"constructor\": {\"x\": 1}}, \"competencies\": [{\"id\": \"constructor/x\", \"name\": \"constructor x\", \"branch\": [\"instrument\"]}, {\"id\": \"musicianship/constructor\", \"name\": \"ms constructor\", \"branch\": [\"musicianship\", \"constructor\"]}, {\"id\": \"toString/x\", \"name\": \"toString x\", \"branch\": [\"instrument\"]}, {\"id\": \"musicianship/toString\", \"name\": \"ms toString\", \"branch\": [\"musicianship\", \"toString\"]}, {\"id\": \"hasOwnProperty/x\", \"name\": \"hasOwnProperty x\", \"branch\": [\"instrument\"]}, {\"id\": \"musicianship/hasOwnProperty\", \"name\": \"ms hasOwnProperty\", \"branch\": [\"musicianship\", \"hasOwnProperty\"]}, {\"id\": \"__proto__/x\", \"name\": \"__proto__ x\", \"branch\": [\"instrument\"]}, {\"id\": \"musicianship/__proto__\", \"name\": \"ms __proto__\", \"branch\": [\"musicianship\", \"__proto__\"]}, {\"id\": \"valueOf/x\", \"name\": \"valueOf x\", \"branch\": [\"instrument\"]}, {\"id\": \"musicianship/valueOf\", \"name\": \"ms valueOf\", \"branch\": [\"musicianship\", \"valueOf\"]}], \"assessments\": [{\"id\": \"as_constructor\", \"competency\": \"musicianship/constructor\", \"value\": \"intermediate\", \"method\": \"coach\", \"at\": \"2026-09-26T00:00:00Z\"}, {\"id\": \"as_toString\", \"competency\": \"musicianship/toString\", \"value\": \"intermediate\", \"method\": \"coach\", \"at\": \"2026-09-26T00:00:00Z\"}, {\"id\": \"as_hasOwnProperty\", \"competency\": \"musicianship/hasOwnProperty\", \"value\": \"intermediate\", \"method\": \"coach\", \"at\": \"2026-09-26T00:00:00Z\"}, {\"id\": \"as___proto__\", \"competency\": \"musicianship/__proto__\", \"value\": \"intermediate\", \"method\": \"coach\", \"at\": \"2026-09-26T00:00:00Z\"}, {\"id\": \"as_valueOf\", \"competency\": \"musicianship/valueOf\", \"value\": \"intermediate\", \"method\": \"coach\", \"at\": \"2026-09-26T00:00:00Z\"}]}"
+  },
+  "note": "Review of #351 (7bf2d9c): a stored profile whose ids are Object.prototype names (constructor, toString, hasOwnProperty, __proto__, valueOf) made summary() throw on a plain {} group map, so the panel silently fell back to the legacy view on every open. Proof: the real profile headline renders, lists the five hostile instrument groups, and counts all five musicianship assessments.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 1200
+    },
+    {
+      "action": "tap",
+      "selector": "#settingsBtn"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#settingsBody .accSec"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": "#accBtnSkills"
+    },
+    {
+      "action": "wait",
+      "ms": 600
+    },
+    {
+      "action": "evalAssert",
+      "label": "the profile headline renders (not the legacy fallback)",
+      "js": "(function(){var h=document.getElementById('profileHeadline');return !!h && /Musicianship: intermediate - 5 of \\d+ assessed/.test(h.textContent);})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "every hostile-named instrument group gets its own headline line",
+      "js": "(function(){var t=(document.getElementById('profileHeadline')||{}).textContent||'';return ['Constructor','ToString','HasOwnProperty','__proto__','ValueOf'].every(function(n){return t.indexOf(n+':')>=0;});})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "no prototype pollution after render",
+      "js": "(function(){return ({}).level===undefined && ({}).competencies===undefined;})()"
+    }
+  ]
+}
