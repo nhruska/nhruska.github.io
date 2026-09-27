@@ -1,6 +1,6 @@
 {
  "project": "nh-pages",
- "updated_at": "2026-09-27T20:05:58Z",
+ "updated_at": "2026-09-27T23:20:17Z",
  "gates": [
   {
    "id": "357-verify-setlist-gate",
@@ -147,7 +147,7 @@
     }
    ],
    "ci": "pass",
-   "limit": "Pixel diff before vs after: 0 changed pixels in 5 of 6 music shots. The 6th (desktop dark Tune) differs by 13 antialiased pixels on a card edge, and the two sides look the same. /math/ opens on its first-run name sheet, as a fresh device should."
+   "limit": "MERGED as 42d3bec (23:14:34Z). Live build stamp not yet confirmed (the check was refused, see the blocker on #356). Pixel diff before vs after: 0 changed pixels in 5 of 6 music shots. The 6th (desktop dark Tune) differs by 13 antialiased pixels on a card edge, and the two sides look the same. /math/ opens on its first-run name sheet, as a fresh device should."
   },
   {
    "id": "355-hands-workout",
@@ -159,12 +159,12 @@
    "do": "Open https://raw.githack.com/nhruska/nhruska.github.io/5d9766be225475a7c24b850bef33860ad0e70461/math/ on your phone, enter a name, tap Save, start a workout and finish it",
    "evidence": [],
    "ci": "pass",
-   "limit": "Commit is on the remote and math/index.html exists at that SHA. The link could not be fetched from this container because raw.githack.com is blocked by its egress policy."
+   "limit": "MERGED as 42d3bec. Commit is on the remote and math/index.html exists at that SHA. The link could not be fetched from this container because raw.githack.com is blocked by its egress policy."
   },
   {
    "id": "351-verify-profile",
    "pr": "nhruska/nhruska.github.io#351",
-   "head_sha": "72cc927410272db3c67b26ad74428cf10457e1f6",
+   "head_sha": "a12e50c0f3750a71bf6988613db27310fd599b38",
    "kind": "verify",
    "title": "Settings shows the Musician profile section",
    "expect": "Settings has a section named Musician profile that lists what the app has observed (main still says Skills). Zero app errors",
@@ -189,20 +189,39 @@
      "assert": "BEFORE ok=False: section=Skills headline=none rows=5 | AFTER ok=True: section=Musician profile headline=Musicianship: not yet assessedStringed instrument: intermedi rows=6 | app errors before/after: 0/0"
     }
    ],
-   "ci": "pass",
-   "limit": "BEFORE fails the assert by design, since main has no profile section. All 3 profile scenarios (baseline, import, hostile-keys) PASS on the head. Copy note: the new intro text has a semicolon (\"adds what it has seen you do; a coach adds the rest\"), which breaks the no-semicolon copy rule. It can be fixed in a follow-up."
+   "ci": "none",
+   "limit": "Re-captured on head a12e50c (restore warning commit). BEFORE fails the assert by design, since main has no profile section. All 3 profile scenarios (baseline, import, hostile-keys) PASS on the head. Copy note: the new intro text has a semicolon (\"adds what it has seen you do; a coach adds the rest\"), which breaks the no-semicolon copy rule. It can be fixed in a follow-up."
   },
   {
    "id": "351-taste-restore",
    "pr": "nhruska/nhruska.github.io#351",
-   "head_sha": "72cc927410272db3c67b26ad74428cf10457e1f6",
+   "head_sha": "a12e50c0f3750a71bf6988613db27310fd599b38",
    "kind": "taste",
    "title": "When you restore a backup, what should happen to what this phone has learned about you?",
    "expect": "Pick one. (A) Merge on restore: keep this phone's progress and add the backup's. (B) Warn in the dialog: say the restore replaces this phone's progress before you confirm",
    "do": "Reply A or B",
-   "evidence": [],
-   "ci": "pass",
-   "limit": "No screenshot applies. This is a behavior choice, and the chosen option gets built and verified before the merge."
+   "evidence": [
+    {
+     "profile": "pixel10-portrait+restore",
+     "before": "docs/uat/evidence/351/pixel10-portrait-restore-before.png",
+     "after": "docs/uat/evidence/351/pixel10-portrait-restore-after.png",
+     "assert": "BEFORE ok=False: warning=false buttonsInViewport=true msgBox=82-187 of 711 | AFTER ok=True: warning=true buttonsInViewport=true msgBox=82-274 of 711 | app errors before/after: 0/0"
+    },
+    {
+     "profile": "pixel10-landscape+restore",
+     "before": "docs/uat/evidence/351/pixel10-landscape-restore-before.png",
+     "after": "docs/uat/evidence/351/pixel10-landscape-restore-after.png",
+     "assert": "BEFORE ok=False: warning=false buttonsInViewport=true msgBox=48-153 of 368 | AFTER ok=True: warning=true buttonsInViewport=true msgBox=48-222 of 368 | app errors before/after: 0/0"
+    },
+    {
+     "profile": "desktop-1440+restore",
+     "before": "docs/uat/evidence/351/desktop-1440-restore-before.png",
+     "after": "docs/uat/evidence/351/desktop-1440-restore-after.png",
+     "assert": "BEFORE ok=False: warning=false buttonsInViewport=true msgBox=101-206 of 900 | AFTER ok=True: warning=true buttonsInViewport=true msgBox=101-276 of 900 | app errors before/after: 0/0"
+    }
+   ],
+   "ci": "none",
+   "limit": "VERDICT B (warn in the dialog), relayed @ 5be52ec. Now implemented on head a12e50c: with a profile in the backup, the restore dialog adds \"It also replaces the Musician profile on this device (what the app has learned about you) with the one in this backup.\" Main has no warning (BEFORE fails by design). The scenario restore-profile-warning FAILED before the fix and PASSES after it. Suite 74/0, cache gate OK (music-v351-9). Restore behavior is unchanged: it still replaces. CI none: since #355 merged, this head conflicts with main on the cache files, so no workflow runs until it is re-resolved (paused, see the blocker on #356). Scope note for the operator: the Settings line \"Restore adds and overwrites - it never deletes.\" was left unchanged."
   },
   {
    "id": "348-verify-dock",
