@@ -1,0 +1,4 @@
+# Verification runtime: the checks an agent is graded by. An agent must not
+# loosen its own gate, so changes here need the owner.
+/.verify/            @nhruska
+/scripts/verify.py   @nhruska
