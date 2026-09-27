@@ -1,162 +1,311 @@
 {
  "project": "nh-pages",
- "updated_at": "2026-09-27T19:52:45Z",
+ "updated_at": "2026-09-27T20:05:58Z",
  "gates": [
   {
-   "id": "355-verify-music-palette",
-   "pr": "nhruska/nhruska.github.io#355",
-   "head_sha": "e6b93547d66f9eed56445f8550ab108a4023d780",
+   "id": "357-verify-setlist-gate",
+   "pr": "nhruska/nhruska.github.io#357",
+   "head_sha": "94d64630168d9299c0e95c0e0408ec8b932262e5",
    "kind": "verify",
-   "title": "Music app looks the same after the Math app lands",
-   "expect": "Music Songs and Tune screens match main pixel-for-pixel in light and dark. Math home renders with zero app errors",
+   "title": "Long setlists keep full-height rows and scroll",
+   "expect": "A 25-song setlist shows full-height rows that scroll, the same on main and on this head (this PR only adds the regression test)",
    "do": "Compare the before and after shots",
-   "evidence": [],
-   "ci": "none",
-   "limit": "capture pending: branch not yet resolved against current main"
-  },
-  {
-   "id": "355-hands-workout",
-   "pr": "nhruska/nhruska.github.io#355",
-   "head_sha": "e6b93547d66f9eed56445f8550ab108a4023d780",
-   "kind": "hands",
-   "title": "Run one Math workout on your phone",
-   "expect": "A timed workout starts, takes answers from the on-screen keypad, and ends on a score screen",
-   "do": "Open the commit preview link on your phone and finish one workout",
-   "evidence": [],
-   "ci": "none",
-   "limit": "preview link added once the branch head is final"
+   "evidence": [
+    {
+     "profile": "pixel10-portrait",
+     "before": "docs/uat/evidence/357/pixel10-portrait-before.png",
+     "after": "docs/uat/evidence/357/pixel10-portrait-after.png",
+     "assert": "BEFORE ok=True: rows=25 minRowHeight=87px scrollHeight=2448 clientHeight=420 scrolls=true | AFTER ok=True: rows=25 minRowHeight=87px scrollHeight=2448 clientHeight=420 scrolls=true | app errors before/after: 0/0"
+    },
+    {
+     "profile": "pixel10-landscape",
+     "before": "docs/uat/evidence/357/pixel10-landscape-before.png",
+     "after": "docs/uat/evidence/357/pixel10-landscape-after.png",
+     "assert": "BEFORE ok=True: rows=25 minRowHeight=87px scrollHeight=2386 clientHeight=84 scrolls=true | AFTER ok=True: rows=25 minRowHeight=87px scrollHeight=2386 clientHeight=84 scrolls=true | app errors before/after: 0/0"
+    },
+    {
+     "profile": "desktop-1440",
+     "before": "docs/uat/evidence/357/desktop-1440-before.png",
+     "after": "docs/uat/evidence/357/desktop-1440-after.png",
+     "assert": "BEFORE ok=True: rows=25 minRowHeight=87px scrollHeight=2386 clientHeight=609 scrolls=true | AFTER ok=True: rows=25 minRowHeight=87px scrollHeight=2386 clientHeight=609 scrolls=true | app errors before/after: 0/0"
+    }
+   ],
+   "ci": "pass",
+   "limit": "Test-only PR. setlist-scroll scenario PASS on the head. Pre-existing on main and outside this PR: in phone landscape the set list gets an 84px scroll window, so one row shows at a time."
   },
   {
    "id": "360-verify-runtime",
    "pr": "nhruska/nhruska.github.io#360",
-   "head_sha": "67f9506e6ab814a59915dc6022cee54348a0036c",
+   "head_sha": "48ad1dc32d75b5c2a25081488621de27ec86c185",
    "kind": "verify",
-   "title": "Music app unchanged by the verify tooling",
-   "expect": "Music app renders identically to main. verify.py run passes on the head",
+   "title": "Music app is unchanged by the verify tooling",
+   "expect": "The app renders the same as main. The served build stamp equals the service worker cache. verify.py run --all passes",
    "do": "Compare the before and after shots",
-   "evidence": [],
-   "ci": "none",
-   "limit": "capture pending: branch not yet resolved against current main"
+   "evidence": [
+    {
+     "profile": "pixel10-portrait",
+     "before": "docs/uat/evidence/360/pixel10-portrait-before.png",
+     "after": "docs/uat/evidence/360/pixel10-portrait-after.png",
+     "assert": "BEFORE ok=True: BuildStamp.VERSION=music-v352-2 sw CACHE=music-v352-2 | AFTER ok=True: BuildStamp.VERSION=music-v352-2 sw CACHE=music-v352-2 | app errors before/after: 0/0"
+    },
+    {
+     "profile": "pixel10-landscape",
+     "before": "docs/uat/evidence/360/pixel10-landscape-before.png",
+     "after": "docs/uat/evidence/360/pixel10-landscape-after.png",
+     "assert": "BEFORE ok=True: BuildStamp.VERSION=music-v352-2 sw CACHE=music-v352-2 | AFTER ok=True: BuildStamp.VERSION=music-v352-2 sw CACHE=music-v352-2 | app errors before/after: 0/0"
+    },
+    {
+     "profile": "desktop-1440",
+     "before": "docs/uat/evidence/360/desktop-1440-before.png",
+     "after": "docs/uat/evidence/360/desktop-1440-after.png",
+     "assert": "BEFORE ok=True: BuildStamp.VERSION=music-v352-2 sw CACHE=music-v352-2 | AFTER ok=True: BuildStamp.VERSION=music-v352-2 sw CACHE=music-v352-2 | app errors before/after: 0/0"
+    }
+   ],
+   "ci": "pass",
+   "limit": "Tooling-only PR. verify.py run --all on the head: verdict pass, 22 of 22 units."
   },
   {
-   "id": "357-verify-setlist-gate",
-   "pr": "nhruska/nhruska.github.io#357",
-   "head_sha": "a9c2ddce6f6305af40db35df1f788666cd5c3eb4",
+   "id": "355-verify-music-unchanged",
+   "pr": "nhruska/nhruska.github.io#355",
+   "head_sha": "5d9766be225475a7c24b850bef33860ad0e70461",
    "kind": "verify",
-   "title": "Long setlist rows keep their height and scroll",
-   "expect": "A 25-song setlist shows full-height rows and scrolls, on main and on this head",
+   "title": "Music looks the same and the landing page lists Math",
+   "expect": "Music Songs (light) and Tune (dark) shots are pixel-identical to main. The landing page lists music and math. /math/ renders where main has a 404",
    "do": "Compare the before and after shots",
+   "evidence": [
+    {
+     "profile": "pixel10-portrait",
+     "before": "docs/uat/evidence/355/pixel10-portrait-before.png",
+     "after": "docs/uat/evidence/355/pixel10-portrait-after.png",
+     "assert": "BEFORE ok=True: --accent=#5eead4 --bg=#eef1f4 --ink=#161b22 --card= | AFTER ok=True: --accent=#5eead4 --bg=#eef1f4 --ink=#161b22 --card= | app errors before/after: 0/0"
+    },
+    {
+     "profile": "pixel10-landscape",
+     "before": "docs/uat/evidence/355/pixel10-landscape-before.png",
+     "after": "docs/uat/evidence/355/pixel10-landscape-after.png",
+     "assert": "BEFORE ok=True: --accent=#5eead4 --bg=#eef1f4 --ink=#161b22 --card= | AFTER ok=True: --accent=#5eead4 --bg=#eef1f4 --ink=#161b22 --card= | app errors before/after: 0/0"
+    },
+    {
+     "profile": "desktop-1440",
+     "before": "docs/uat/evidence/355/desktop-1440-before.png",
+     "after": "docs/uat/evidence/355/desktop-1440-after.png",
+     "assert": "BEFORE ok=True: --accent=#5eead4 --bg=#eef1f4 --ink=#161b22 --card= | AFTER ok=True: --accent=#5eead4 --bg=#eef1f4 --ink=#161b22 --card= | app errors before/after: 0/0"
+    },
+    {
+     "profile": "pixel10-portrait+dark-tune",
+     "before": "docs/uat/evidence/355/pixel10-portrait-dark-tune-before.png",
+     "after": "docs/uat/evidence/355/pixel10-portrait-dark-tune-after.png",
+     "assert": "BEFORE ok=True: --accent=#5eead4 --bg=#0d0f12 --ink=#e8ebf0 --card= | AFTER ok=True: --accent=#5eead4 --bg=#0d0f12 --ink=#e8ebf0 --card= | app errors before/after: 0/0"
+    },
+    {
+     "profile": "pixel10-landscape+dark-tune",
+     "before": "docs/uat/evidence/355/pixel10-landscape-dark-tune-before.png",
+     "after": "docs/uat/evidence/355/pixel10-landscape-dark-tune-after.png",
+     "assert": "BEFORE ok=True: --accent=#5eead4 --bg=#0d0f12 --ink=#e8ebf0 --card= | AFTER ok=True: --accent=#5eead4 --bg=#0d0f12 --ink=#e8ebf0 --card= | app errors before/after: 0/0"
+    },
+    {
+     "profile": "desktop-1440+dark-tune",
+     "before": "docs/uat/evidence/355/desktop-1440-dark-tune-before.png",
+     "after": "docs/uat/evidence/355/desktop-1440-dark-tune-after.png",
+     "assert": "BEFORE ok=True: --accent=#5eead4 --bg=#0d0f12 --ink=#e8ebf0 --card= | AFTER ok=True: --accent=#5eead4 --bg=#0d0f12 --ink=#e8ebf0 --card= | app errors before/after: 0/0"
+    },
+    {
+     "profile": "pixel10-portrait+landing",
+     "before": "docs/uat/evidence/355/pixel10-portrait-landing-before.png",
+     "after": "docs/uat/evidence/355/pixel10-portrait-landing-after.png",
+     "assert": "BEFORE ok=True: app links: music/ | AFTER ok=True: app links: music/ math/ | app errors before/after: 0/0"
+    },
+    {
+     "profile": "pixel10-landscape+landing",
+     "before": "docs/uat/evidence/355/pixel10-landscape-landing-before.png",
+     "after": "docs/uat/evidence/355/pixel10-landscape-landing-after.png",
+     "assert": "BEFORE ok=True: app links: music/ | AFTER ok=True: app links: music/ math/ | app errors before/after: 0/0"
+    },
+    {
+     "profile": "desktop-1440+landing",
+     "before": "docs/uat/evidence/355/desktop-1440-landing-before.png",
+     "after": "docs/uat/evidence/355/desktop-1440-landing-after.png",
+     "assert": "BEFORE ok=True: app links: music/ | AFTER ok=True: app links: music/ math/ | app errors before/after: 0/0"
+    },
+    {
+     "profile": "pixel10-portrait+math",
+     "before": "docs/uat/evidence/355/pixel10-portrait-math-before.png",
+     "after": "docs/uat/evidence/355/pixel10-portrait-math-after.png",
+     "assert": "BEFORE ok=False: title=Error response text=Error response |  | Error code: 404 |  | Message: File not found. |  | Error code explanatio | AFTER ok=True: title=Math - timed workouts text=Math | Player |  | Pick your facts, then race the clock |  | All skills | SKILLS | CUSTOM | PROG | app errors before/after: 0/0"
+    },
+    {
+     "profile": "pixel10-landscape+math",
+     "before": "docs/uat/evidence/355/pixel10-landscape-math-before.png",
+     "after": "docs/uat/evidence/355/pixel10-landscape-math-after.png",
+     "assert": "BEFORE ok=False: title=Error response text=Error response |  | Error code: 404 |  | Message: File not found. |  | Error code explanatio | AFTER ok=True: title=Math - timed workouts text=Math | Player |  | Pick your facts, then race the clock |  | All skills | SKILLS | CUSTOM | PROG | app errors before/after: 0/0"
+    },
+    {
+     "profile": "desktop-1440+math",
+     "before": "docs/uat/evidence/355/desktop-1440-math-before.png",
+     "after": "docs/uat/evidence/355/desktop-1440-math-after.png",
+     "assert": "BEFORE ok=False: title=Error response text=Error response |  | Error code: 404 |  | Message: File not found. |  | Error code explanatio | AFTER ok=True: title=Math - timed workouts text=Math | Player |  | Pick your facts, then race the clock |  | All skills | SKILLS | CUSTOM | PROG | app errors before/after: 0/0"
+    }
+   ],
+   "ci": "pass",
+   "limit": "Pixel diff before vs after: 0 changed pixels in 5 of 6 music shots. The 6th (desktop dark Tune) differs by 13 antialiased pixels on a card edge, and the two sides look the same. /math/ opens on its first-run name sheet, as a fresh device should."
+  },
+  {
+   "id": "355-hands-workout",
+   "pr": "nhruska/nhruska.github.io#355",
+   "head_sha": "5d9766be225475a7c24b850bef33860ad0e70461",
+   "kind": "hands",
+   "title": "Run one Math workout on your phone",
+   "expect": "A timed workout starts, the keypad takes your answers, and the run ends on a score screen",
+   "do": "Open https://raw.githack.com/nhruska/nhruska.github.io/5d9766be225475a7c24b850bef33860ad0e70461/math/ on your phone, enter a name, tap Save, start a workout and finish it",
    "evidence": [],
-   "ci": "none",
-   "limit": "capture pending: branch not yet resolved against current main"
+   "ci": "pass",
+   "limit": "Commit is on the remote and math/index.html exists at that SHA. The link could not be fetched from this container because raw.githack.com is blocked by its egress policy."
   },
   {
    "id": "351-verify-profile",
    "pr": "nhruska/nhruska.github.io#351",
-   "head_sha": "2a4a057002b887fb3e3b48aa6da0dedb4d640912",
+   "head_sha": "72cc927410272db3c67b26ad74428cf10457e1f6",
    "kind": "verify",
    "title": "Settings shows the Musician profile section",
-   "expect": "Settings opens a Musician profile section with zero app errors. everything else matches main",
+   "expect": "Settings has a section named Musician profile that lists what the app has observed (main still says Skills). Zero app errors",
    "do": "Compare the before and after shots",
-   "evidence": [],
-   "ci": "none",
-   "limit": "capture pending: branch not yet resolved against current main"
+   "evidence": [
+    {
+     "profile": "pixel10-portrait",
+     "before": "docs/uat/evidence/351/pixel10-portrait-before.png",
+     "after": "docs/uat/evidence/351/pixel10-portrait-after.png",
+     "assert": "BEFORE ok=False: section=Skills headline=none rows=5 | AFTER ok=True: section=Musician profile headline=Musicianship: not yet assessedStringed instrument: intermedi rows=6 | app errors before/after: 0/0"
+    },
+    {
+     "profile": "pixel10-landscape",
+     "before": "docs/uat/evidence/351/pixel10-landscape-before.png",
+     "after": "docs/uat/evidence/351/pixel10-landscape-after.png",
+     "assert": "BEFORE ok=False: section=Skills headline=none rows=5 | AFTER ok=True: section=Musician profile headline=Musicianship: not yet assessedStringed instrument: intermedi rows=6 | app errors before/after: 0/0"
+    },
+    {
+     "profile": "desktop-1440",
+     "before": "docs/uat/evidence/351/desktop-1440-before.png",
+     "after": "docs/uat/evidence/351/desktop-1440-after.png",
+     "assert": "BEFORE ok=False: section=Skills headline=none rows=5 | AFTER ok=True: section=Musician profile headline=Musicianship: not yet assessedStringed instrument: intermedi rows=6 | app errors before/after: 0/0"
+    }
+   ],
+   "ci": "pass",
+   "limit": "BEFORE fails the assert by design, since main has no profile section. All 3 profile scenarios (baseline, import, hostile-keys) PASS on the head. Copy note: the new intro text has a semicolon (\"adds what it has seen you do; a coach adds the rest\"), which breaks the no-semicolon copy rule. It can be fixed in a follow-up."
   },
   {
    "id": "351-taste-restore",
    "pr": "nhruska/nhruska.github.io#351",
-   "head_sha": "2a4a057002b887fb3e3b48aa6da0dedb4d640912",
+   "head_sha": "72cc927410272db3c67b26ad74428cf10457e1f6",
    "kind": "taste",
-   "title": "When you restore a backup, what should happen to what you have learned on this phone?",
-   "expect": "Pick one: (A) merge on restore: keep this phone's progress and add the backup's, or (B) warn in the dialog: say restore replaces this phone's progress before you confirm",
-   "do": "Choose A or B",
+   "title": "When you restore a backup, what should happen to what this phone has learned about you?",
+   "expect": "Pick one. (A) Merge on restore: keep this phone's progress and add the backup's. (B) Warn in the dialog: say the restore replaces this phone's progress before you confirm",
+   "do": "Reply A or B",
    "evidence": [],
-   "ci": "none",
-   "limit": ""
+   "ci": "pass",
+   "limit": "No screenshot applies. This is a behavior choice, and the chosen option gets built and verified before the merge."
   },
   {
    "id": "348-verify-dock",
    "pr": "nhruska/nhruska.github.io#348",
-   "head_sha": "fd07caee88aa8063acf569658f109b1d00e4e5cc",
+   "head_sha": "07e2857a1302c6d9c6cecd0b2da3c5676aebb4c8",
    "kind": "verify",
-   "title": "Tuner strings stay tappable with the player open",
-   "expect": "With the mini-player docked, every string button and the tuning guide sit fully above it",
+   "title": "Tuner strings stay tappable while a song plays",
+   "expect": "With a jam playing and its video docked, every string button and the new tuning runway can be scrolled clear of the player and tapped",
    "do": "Compare the before and after shots",
-   "evidence": [],
-   "ci": "none",
-   "limit": "capture pending: branch not yet resolved against current main"
+   "evidence": [
+    {
+     "profile": "pixel10-portrait",
+     "before": "docs/uat/evidence/348/pixel10-portrait-before.png",
+     "after": "docs/uat/evidence/348/pixel10-portrait-after.png",
+     "assert": "BEFORE ok=True: player=0,711 392x0 checked=6 runway=false coveredEvenAtMaxScroll=[] | AFTER ok=True: player=0,711 392x0 checked=7 runway=true coveredEvenAtMaxScroll=[] | app errors before/after: 0/0"
+    },
+    {
+     "profile": "pixel10-landscape",
+     "before": "docs/uat/evidence/348/pixel10-landscape-before.png",
+     "after": "docs/uat/evidence/348/pixel10-landscape-after.png",
+     "assert": "BEFORE ok=False: player=0,368 767x0 checked=6 runway=false coveredEvenAtMaxScroll=[G3,B2,E1] | AFTER ok=False: player=0,368 767x0 checked=7 runway=true coveredEvenAtMaxScroll=[G3,B2,E1] | app errors before/after: 0/0"
+    },
+    {
+     "profile": "desktop-1440",
+     "before": "docs/uat/evidence/348/desktop-1440-before.png",
+     "after": "docs/uat/evidence/348/desktop-1440-after.png",
+     "assert": "BEFORE ok=True: player=0,900 1440x0 checked=6 runway=false coveredEvenAtMaxScroll=[] | AFTER ok=True: player=0,900 1440x0 checked=7 runway=true coveredEvenAtMaxScroll=[] | app errors before/after: 0/0"
+    }
+   ],
+   "ci": "pass",
+   "limit": "Portrait and desktop PASS on main and on the head. Landscape FAILS on both main and the head: the mini-player bar covers the bottom string row (G, B, E) even at full scroll, and the corner video clips D. That is pre-existing from main (#352 reserves the dock only for portrait), not this PR. It needs its own fix PR. tune-guided scenario PASS on the head. Stamp music-v348-8."
   },
   {
    "id": "348-hands-mic",
    "pr": "nhruska/nhruska.github.io#348",
-   "head_sha": "fd07caee88aa8063acf569658f109b1d00e4e5cc",
+   "head_sha": "07e2857a1302c6d9c6cecd0b2da3c5676aebb4c8",
    "kind": "hands",
    "title": "Tune a real guitar with the phone",
-   "expect": "Each string goes green when in tune, and the reference tone does not fool the needle",
-   "do": "Open the commit preview link on your phone, tap Tune, tune all six strings",
+   "expect": "Each string goes green when it is in tune, and the phone's own reference tone does not move the needle",
+   "do": "Open https://raw.githack.com/nhruska/nhruska.github.io/07e2857a1302c6d9c6cecd0b2da3c5676aebb4c8/music/play/?p=guitar-standard on your phone, tap Tune, tap Start and tune all six strings with Tone on",
    "evidence": [],
-   "ci": "none",
-   "limit": "preview link added once the branch head is final"
+   "ci": "pass",
+   "limit": "Only a real phone mic and speaker can answer this. Earlier evidence is synthetic (sim feed). The commit is on the remote. The link could not be fetched from this container because raw.githack.com is blocked by its egress policy."
   },
   {
    "id": "348-taste-feel",
    "pr": "nhruska/nhruska.github.io#348",
-   "head_sha": "fd07caee88aa8063acf569658f109b1d00e4e5cc",
+   "head_sha": "07e2857a1302c6d9c6cecd0b2da3c5676aebb4c8",
    "kind": "taste",
-   "title": "Does tuning your guitar feel right?",
-   "expect": "Pass if tuning string by string feels natural and quick. Fail with what felt off",
-   "do": "Tune your guitar once and judge the feel",
+   "title": "Does tuning your guitar here feel right?",
+   "expect": "PASS if going string by string feels natural and quick. FAIL with what felt off",
+   "do": "Tune your guitar once with the link in 348-hands-mic and judge the feel",
    "evidence": [],
-   "ci": "none",
-   "limit": "preview link added once the branch head is final"
+   "ci": "pass",
+   "limit": "Feel call only."
   },
   {
    "id": "358-verify-docs",
    "pr": "nhruska/nhruska.github.io#358",
-   "head_sha": "a238bff658121baeb778b7ecd3f58a242151dde6",
+   "head_sha": "cb9fe811ec719f1ea230d0d704ff8d7610afac06",
    "kind": "verify",
-   "title": "Method docs land cleanly (docs only)",
-   "expect": "Docs-only diff, suite green. no app surface changes",
-   "do": "Read the PR summary",
+   "title": "Method proposal docs (docs only, base of the stack)",
+   "expect": "Docs-only diff. Suite green. No app surface changes",
+   "do": "Read the PR summary on #358",
    "evidence": [],
-   "ci": "none",
-   "limit": "docs-only: no app surface to screenshot"
+   "ci": "pass",
+   "limit": "Docs-only: no app surface to screenshot. Merges first in the stack #358, #346, #347."
   },
   {
    "id": "346-verify-docs",
    "pr": "nhruska/nhruska.github.io#346",
    "head_sha": "6bbe96383ca0899aaf6e879eb8bf68a77bb0cd28",
    "kind": "verify",
-   "title": "Public-claims calibration docs (docs only, stacked on #358)",
-   "expect": "Docs-only diff. merges after #358",
-   "do": "Read the PR summary",
+   "title": "Public-claims calibration docs (docs only)",
+   "expect": "Docs-only diff. Merges only after #358, then retargets to main",
+   "do": "Read the PR summary on #346",
    "evidence": [],
    "ci": "none",
-   "limit": "docs-only: no app surface to screenshot. stacked on #358"
+   "limit": "Docs-only: no app surface to screenshot. Stacked on #358, so it is not mergeable until #358 lands. CI is re-checked after the retarget."
   },
   {
    "id": "347-verify-docs",
    "pr": "nhruska/nhruska.github.io#347",
    "head_sha": "e848419a41bff21cda8e1cbc305419d46128cc5b",
    "kind": "verify",
-   "title": "Wiki lifecycle docs (docs only, stacked on #346)",
-   "expect": "Docs-only diff. merges after #346",
-   "do": "Read the PR summary",
+   "title": "Engineering-wiki lifecycle docs (docs only)",
+   "expect": "Docs-only diff. Merges only after #346, then retargets to main",
+   "do": "Read the PR summary on #347",
    "evidence": [],
    "ci": "none",
-   "limit": "docs-only: no app surface to screenshot. stacked on #346"
+   "limit": "Docs-only: no app surface to screenshot. Stacked on #346, so it is not mergeable until #346 lands."
   },
   {
    "id": "356-verify-plan",
    "pr": "nhruska/nhruska.github.io#356",
-   "head_sha": "c10ef17d45597bda3a99f6036f7510b234ab34f7",
+   "head_sha": "61fe7694daee162e066e1fd66e9d2323d5f29d9d",
    "kind": "verify",
-   "title": "Merge plan and gate file (docs only, merges last)",
-   "expect": "Docs and evidence only. merges after every other PR is terminal",
-   "do": "Read the PR summary",
+   "title": "Merge plan and this gate file (docs only, merges last)",
+   "expect": "Docs and evidence only. Merges after every other PR is terminal",
+   "do": "Read the PR summary on #356",
    "evidence": [],
-   "ci": "none",
-   "limit": "docs-only. merges last"
+   "ci": "pass",
+   "limit": "Docs-only. head_sha is the commit before this gate-file push, and it is refreshed on each push of this branch."
   }
  ]
 }

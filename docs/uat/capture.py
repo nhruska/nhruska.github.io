@@ -59,6 +59,7 @@ def main():
     ap.add_argument('--ref', required=True)
     ap.add_argument('--spec', required=True)
     ap.add_argument('--profiles', default=','.join(PROFILES))
+    ap.add_argument('--tag', default='', help='extra surface name: <profile>-<tag>-<side>.png')
     a = ap.parse_args()
     spec = json.load(open(a.spec))
     wt = tempfile.mkdtemp(prefix='uatwt-')
@@ -103,7 +104,7 @@ def main():
                         res = pg.evaluate(spec['assert'])
                     except Exception as e:
                         res = {'ok': False, 'detail': 'assert threw: ' + str(e).splitlines()[0]}
-                shot = os.path.join(out_dir, '%s-%s.png' % (name, a.side))
+                shot = os.path.join(out_dir, '%s%s-%s.png' % (name, ('-' + a.tag) if a.tag else '', a.side))
                 pg.screenshot(path=shot)
                 results[name] = {'assert': res, 'step_error': step_err, 'app_errors': errs,
                                  'png': os.path.relpath(shot, ROOT)}
