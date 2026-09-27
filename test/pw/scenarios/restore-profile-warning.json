@@ -1,0 +1,128 @@
+{
+  "name": "restore-profile-warning",
+  "proves": "M-MUSICIAN-PROFILE restore verdict B: restore REPLACES music.profile.v1 wholesale, so before the user confirms, the restore dialog says plainly that the Musician profile on this device will be replaced by the backup's (announced as part of the dialog's described text, fully on screen with Restore + Cancel at a phone viewport). A backup WITHOUT a profile leaves the profile alone, so its dialog carries no such warning. Cancel writes nothing.",
+  "viewport": {
+    "width": 392,
+    "height": 711
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 1200
+    },
+    {
+      "action": "evalAssert",
+      "label": "seed a local profile the backup would replace",
+      "js": "(function(){localStorage.setItem('music.profile.v1',JSON.stringify({schema:'musician-profile/v1',id:'mp_local',updated:'2026-09-25T00:00:00.000Z'}));return true;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#settingsBtn"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#settingsBody .accSec"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": "#accBtnBackup"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "uploadText",
+      "selector": "#restoreFile",
+      "name": "music-backup.json",
+      "text": "{\"app\": \"music\", \"schema\": 1, \"exportedAt\": \"2026-09-20T12:00:00.000Z\", \"data\": {\"roadcase-ukulele-gcea.setlist.v1\": \"[\\\"riptide\\\"]\", \"music.profile.v1\": \"{\\\"schema\\\": \\\"musician-profile/v1\\\", \\\"id\\\": \\\"mp_backup\\\", \\\"updated\\\": \\\"2026-09-20T12:00:00.000Z\\\", \\\"goals\\\": [{\\\"id\\\": \\\"goal:1\\\", \\\"statement\\\": \\\"Play Riptide at a campfire\\\", \\\"competencies\\\": [], \\\"status\\\": \\\"active\\\", \\\"created\\\": \\\"2026-09-20T12:00:00.000Z\\\", \\\"updated\\\": \\\"2026-09-20T12:00:00.000Z\\\", \\\"source\\\": \\\"human\\\"}]}\"}}"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".composeRow.asModal .composeRowMsg"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "assertText",
+      "selector": ".composeRow.asModal .composeRowMsg",
+      "contains": "It also replaces the Musician profile on this device (what the app has learned about you) with the one in this backup."
+    },
+    {
+      "action": "evalAssert",
+      "label": "the warning is part of the dialog's described text (announced by a screen reader), not a detached element",
+      "js": "(function(){var d=document.querySelector('.composeRow.asModal');var id=d&&d.getAttribute('aria-describedby');var m=id&&document.getElementById(id);return !!m&&m.textContent.indexOf('replaces the Musician profile')>=0;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the dialog no longer claims it deletes nothing while it replaces the profile",
+      "js": "document.querySelector('.composeRow.asModal .composeRowMsg').textContent.indexOf('It will not delete anything already here')<0"
+    },
+    {
+      "action": "assertInViewport",
+      "selector": ".composeRow.asModal .composeRowMsg"
+    },
+    {
+      "action": "assertInViewport",
+      "selector": ".composeRow.asModal .composeRowBtns .btn.red"
+    },
+    {
+      "action": "assertInViewport",
+      "selector": ".composeRow.asModal .composeRowBtns .btn.ghost"
+    },
+    {
+      "action": "screenshot",
+      "name": "rpw-01-warning"
+    },
+    {
+      "action": "tap",
+      "selector": ".composeRow.asModal .composeRowBtns .btn.ghost"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "Cancel writes nothing: the local profile is untouched",
+      "js": "JSON.parse(localStorage.getItem('music.profile.v1')).id==='mp_local'"
+    },
+    {
+      "action": "uploadText",
+      "selector": "#restoreFile",
+      "name": "music-backup.json",
+      "text": "{\"app\": \"music\", \"schema\": 1, \"exportedAt\": \"2026-09-20T12:00:00.000Z\", \"data\": {\"roadcase-ukulele-gcea.setlist.v1\": \"[\\\"riptide\\\"]\"}}"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".composeRow.asModal .composeRowMsg"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "a backup with NO profile does not warn (restore leaves the profile alone) and keeps the original no-delete promise",
+      "js": "(function(){var t=document.querySelector('.composeRow.asModal .composeRowMsg').textContent;return t.indexOf('Musician profile')<0&&t.indexOf('It will not delete anything already here')>=0;})()"
+    },
+    {
+      "action": "tap",
+      "selector": ".composeRow.asModal .composeRowBtns .btn.ghost"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    }
+  ]
+}

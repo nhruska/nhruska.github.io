@@ -293,6 +293,19 @@
     return lines;
   }
 
+  // RESTORE REPLACES THE MUSICIAN PROFILE (operator verdict B on #351: warn, do not
+  // merge). music.profile.v1 is ONE key holding the whole profile document, so the
+  // byte-faithful applyAtomic write swaps this device's profile for the backup's
+  // wholesale - goals or coach notes added here since the backup are gone. The
+  // restore-confirm dialog must say so BEFORE the user confirms. Returns the warning
+  // sentence when the backup carries a profile, else null (a backup without one
+  // leaves the profile untouched, so warning would be false).
+  var PROFILE_KEY = 'music.profile.v1';
+  var PROFILE_REPLACE_WARNING = 'It also replaces the Musician profile on this device (what the app has learned about you) with the one in this backup.';
+  function restoreProfileWarning(data) {
+    return (data && typeof data === 'object' && typeof data[PROFILE_KEY] === 'string') ? PROFILE_REPLACE_WARNING : null;
+  }
+
   // Thresholds for the one-shot backup-staleness nudge (rendered via the 'backup'
   // Notables priority slot in play/index.html). Below NUDGE_MIN_SONGS the data-loss
   // risk is low enough to stay silent; above it, the clock only matters once it has
@@ -374,6 +387,7 @@
     applyAtomic: applyAtomic,
     validate: validate,
     describe: describe,
+    restoreProfileWarning: restoreProfileWarning,
     songCount: songCount,
     backupNudgeState: backupNudgeState,
     restore: restore,

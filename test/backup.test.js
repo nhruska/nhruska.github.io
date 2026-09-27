@@ -161,6 +161,23 @@ test('restore() ignores any foreign keys smuggled into data', function () {
   assert.strictEqual(s.getItem('evil.key'), null);
 });
 
+/* ---------- restore REPLACES the Musician profile, and the confirm says so (#351 verdict B) ---------- */
+test('restore replaces music.profile.v1 wholesale (no merge) - the premise the warning rests on', function () {
+  var local = JSON.stringify({ schema: 'musician-profile/v1', id: 'mp_local', goals: [{ id: 'goal:local' }] });
+  var backed = JSON.stringify({ schema: 'musician-profile/v1', id: 'mp_backup', goals: [] });
+  var store = fakeStore({ 'music.profile.v1': local });
+  Backup.restore(store, { app: 'music', schema: 1, data: { 'music.profile.v1': backed } });
+  assert.strictEqual(store.getItem('music.profile.v1'), backed, 'the backup profile replaces the local one byte-for-byte');
+});
+test('restoreProfileWarning() warns only when the backup carries a profile, in plain words', function () {
+  var w = Backup.restoreProfileWarning({ 'music.profile.v1': '{}', 'roadcase-x.setlist.v1': '[]' });
+  assert.strictEqual(w, 'It also replaces the Musician profile on this device (what the app has learned about you) with the one in this backup.');
+  assert.ok(!/[;—]/.test(w), 'house copy rules: no semicolons, no em dashes');
+  assert.strictEqual(Backup.restoreProfileWarning({ 'roadcase-x.setlist.v1': '[]' }), null, 'no profile in the backup -> profile untouched -> no warning');
+  assert.strictEqual(Backup.restoreProfileWarning(null), null);
+  assert.strictEqual(Backup.restoreProfileWarning({ 'music.profile.v1': 42 }), null, 'a non-string value is never written by restore, so no warning');
+});
+
 /* ---------- describe() translates keys into human counts ---------- */
 test('describe() breaks setlists/progressions down PER INSTRUMENT', function () {
   var lines = Backup.describe({
