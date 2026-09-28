@@ -337,6 +337,11 @@ check_math() {
     [ -z "$sha" ] && continue
     touched="$(git diff-tree --no-commit-id --name-only -r "$sha" -- math ':!math/CLAUDE.md' $MATH_SHARED || true)"
     [ -z "$touched" ] && continue
+    # A commit from before Math existed (a branch that forked pre-Math and
+    # later merged main) has no math/version.js: there was no Math cache to
+    # bump, so it cannot be a reuse. Skip it - the merge that brings Math in
+    # is excluded by --no-merges, and every post-merge commit is checked.
+    git cat-file -e "$sha:math/version.js" 2>/dev/null || continue
     cur_version="$(extract_math_version "$sha")"
     if [ -z "$cur_version" ]; then
       echo "check-cache-bump: FAIL - could not extract MATH_VERSION from math/version.js at $sha." >&2

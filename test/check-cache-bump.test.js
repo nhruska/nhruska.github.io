@@ -303,4 +303,33 @@ test('Math: a music-only repo with no math/ dir reports nothing to guard for Mat
   assert.ok(/nothing to guard for Math/.test(r.out), r.out);
 });
 
+test('Math: PASSES for a branch that forked BEFORE Math existed and merged main afterwards', function () {
+  // Regression shape (#348 vs main after #355): a pre-Math commit touches a
+  // music/shared file Math NOW precaches. At that commit math/version.js did
+  // not exist - there was no Math cache to bump - so the per-commit walk must
+  // skip it instead of failing with "could not extract MATH_VERSION".
+  var repo = fs.mkdtempSync(path.join(os.tmpdir(), 'cachebump-premath-'));
+  fs.mkdirSync(path.join(repo, 'music', 'shared'), { recursive: true });
+  fs.mkdirSync(path.join(repo, 'scripts'), { recursive: true });
+  fs.copyFileSync(SCRIPT, path.join(repo, 'scripts', 'check-cache-bump.sh'));
+  git(repo, ['init', '-q', '-b', 'base']);
+  git(repo, ['config', 'user.email', 'test@example.invalid']);
+  git(repo, ['config', 'user.name', 'cache bump test']);
+  writeBuild(repo, 'music-v100');
+  touchSharedOnly(repo, 'theme.js', 'base');
+  commit(repo, 'base build, no Math yet');
+  git(repo, ['checkout', '-q', '-b', 'feature']);
+  sharedTouchKeepingMusicGreen('theme.js', 'pre-Math shared change')(repo);
+  git(repo, ['checkout', '-q', 'base']);
+  writeMathBuild(repo, 'math-v100');
+  commit(repo, 'Math arrives on base');
+  git(repo, ['checkout', '-q', 'feature']);
+  git(repo, ['merge', '-q', '--no-edit', 'base']);
+  writeMathBuild(repo, 'math-v101');
+  commit(repo, 'bump MATH_VERSION after merging main');
+  var r = runGuard(repo);
+  assert.strictEqual(r.code, 0, 'expected exit 0, got ' + r.code + '\n' + r.out);
+  assert.ok(/MATH_VERSION bumped/.test(r.out), r.out);
+});
+
 run();
