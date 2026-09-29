@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-28T17:43:08Z",
+  "generatedAt": "2026-09-29T15:59:15Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-09-27T23:14:34Z",
-    "sha": "42d3becb18ceeae547772be8bbc5774c0a7e7d3c",
-    "subject": "Math app v1: timed workouts + skills path at /math/, landing lists 2 apps (#355)",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/42d3becb18ceeae547772be8bbc5774c0a7e7d3c"
+    "date": "2026-09-28T17:43:16Z",
+    "sha": "c3acf8e434cb07c95259a5a136ae17f6b31fe946",
+    "subject": "cc: nightly snapshot refresh",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/c3acf8e434cb07c95259a5a136ae17f6b31fe946"
   },
   "commits": [
+    {
+      "date": "2026-09-28T17:43:16Z",
+      "sha": "c3acf8e434cb07c95259a5a136ae17f6b31fe946",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/c3acf8e434cb07c95259a5a136ae17f6b31fe946"
+    },
     {
       "date": "2026-09-27T23:14:34Z",
       "sha": "42d3becb18ceeae547772be8bbc5774c0a7e7d3c",
@@ -84,12 +90,6 @@
       "sha": "35bedced4b6a15169ce2b43aa3649a6645e554dc",
       "subject": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/35bedced4b6a15169ce2b43aa3649a6645e554dc"
-    },
-    {
-      "date": "2026-09-18T13:40:23Z",
-      "sha": "4c9217a909f3c7e793f2c917712c770559023b4b",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/4c9217a909f3c7e793f2c917712c770559023b4b"
     }
   ],
   "openPRs": [
@@ -406,9 +406,9 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-09-28T17:43:01Z",
+    "runStartedAt": "2026-09-29T15:59:09Z",
     "durationSeconds": 4,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36460088823",
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36594348755",
     "headBranch": "main"
   },
   "velocity": {
