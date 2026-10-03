@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-02T15:52:46Z",
+  "generatedAt": "2026-10-03T14:20:26Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-10-01T16:32:09Z",
-    "sha": "7c7cc35a634ccb5e6e9c3d2ade5376d577976359",
+    "date": "2026-10-02T15:52:55Z",
+    "sha": "85b09488a39f517649f28853d424d7abd234e75c",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/7c7cc35a634ccb5e6e9c3d2ade5376d577976359"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/85b09488a39f517649f28853d424d7abd234e75c"
   },
   "commits": [
+    {
+      "date": "2026-10-02T15:52:55Z",
+      "sha": "85b09488a39f517649f28853d424d7abd234e75c",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/85b09488a39f517649f28853d424d7abd234e75c"
+    },
     {
       "date": "2026-10-01T16:32:09Z",
       "sha": "7c7cc35a634ccb5e6e9c3d2ade5376d577976359",
@@ -84,12 +90,6 @@
       "sha": "297a3c97812993ea01359e28364f9c31d8616886",
       "subject": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/297a3c97812993ea01359e28364f9c31d8616886"
-    },
-    {
-      "date": "2026-09-22T14:04:40Z",
-      "sha": "5cc7bc102d8ec47e4a1a4a23073ef7107bedb374",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/5cc7bc102d8ec47e4a1a4a23073ef7107bedb374"
     }
   ],
   "openPRs": [
@@ -406,14 +406,14 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-10-02T15:52:39Z",
-    "durationSeconds": 4,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37030044780",
+    "runStartedAt": "2026-10-03T14:20:21Z",
+    "durationSeconds": 3,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37129246256",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 2,
+    "merged_count": 1,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
     "typical_merge_hours": 9.28,
