@@ -1,6 +1,6 @@
 {
  "project": "nh-pages",
- "updated_at": "2026-09-28T00:15:10Z",
+ "updated_at": "2026-10-03T20:35:21Z",
  "gates": [
   {
    "id": "357-verify-setlist-gate",
@@ -252,7 +252,7 @@
     }
    ],
    "ci": "pass",
-   "limit": "Re-captured on 11e77d9 (re-resolved against main 42d3bec by the #348 author session, music-v348-9, verdicts carried forward as a mechanical re-resolve on #356). tune-guided re-run on 11e77d9 by this orchestrator: PASS 26 steps. Portrait and desktop PASS on main and on the head. Landscape FAILS on both main and the head: the mini-player bar covers the bottom string row (G, B, E) even at full scroll, and the corner video clips D. That is pre-existing from main (#352 reserves the dock only for portrait), not this PR. It needs its own fix PR. tune-guided scenario PASS on the head. Stamp music-v348-9. The head also carries a port of #361, a cache-bump gate fix."
+   "limit": "MERGED as 45679c2 by the operator (2026-10-03T20:34:50Z) from head 11e77d9. Re-captured on 11e77d9 (re-resolved against main 42d3bec by the #348 author session, music-v348-9, verdicts carried forward as a mechanical re-resolve on #356). tune-guided re-run on 11e77d9 by this orchestrator: PASS 26 steps. Portrait and desktop PASS on main and on the head. Landscape FAILS on both main and the head: the mini-player bar covers the bottom string row (G, B, E) even at full scroll, and the corner video clips D. That is pre-existing from main (#352 reserves the dock only for portrait), not this PR. It needs its own fix PR. tune-guided scenario PASS on the head. Stamp music-v348-9. The head also carries a port of #361, a cache-bump gate fix."
   },
   {
    "id": "348-hands-mic",
@@ -264,7 +264,7 @@
    "do": "Open https://raw.githack.com/nhruska/nhruska.github.io/11e77d9301ea509d62de0ccdf65e5848ffd02d85/music/play/?p=guitar-standard on your phone, tap Tune, tap Start and tune all six strings with Tone on",
    "evidence": [],
    "ci": "pass",
-   "limit": "Only a real phone mic and speaker can answer this. Earlier evidence is synthetic (sim feed). The commit is on the remote. The link could not be fetched from this container because raw.githack.com is blocked by its egress policy."
+   "limit": "MERGED as 45679c2 (head 11e77d9). Only a real phone mic and speaker can answer this. Earlier evidence is synthetic (sim feed). The commit is on the remote. The link could not be fetched from this container because raw.githack.com is blocked by its egress policy."
   },
   {
    "id": "348-taste-feel",
@@ -276,7 +276,7 @@
    "do": "Tune your guitar once with the link in 348-hands-mic and judge the feel",
    "evidence": [],
    "ci": "pass",
-   "limit": "Feel call only."
+   "limit": "MERGED as 45679c2 (head 11e77d9). Feel call only."
   },
   {
    "id": "358-verify-docs",
