@@ -22,3 +22,6 @@ package-lock.json
 # agent worktrees (Agent tool + manual)
 .claude/worktrees/
 .worktrees/
+
+# verify runtime per-worktree state (scripts/verify.py)
+.verify/run/
