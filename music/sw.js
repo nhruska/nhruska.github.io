@@ -17,7 +17,7 @@
  * cache-bump history lives in git log + engineering-wiki/change-history.md.
  * ===================================================================== */
 'use strict';
-var CACHE = 'music-v355-4';
+var CACHE = 'music-v348-9';
 // Everything precached for offline use. Every shared/*.js that play/index.html
 // or play/triad-inversions.html script-tags MUST appear here, or an offline
 // install 404s on it (test/sw-verify.test.js guards this). The list order is
@@ -52,7 +52,7 @@ var CORE = [
   './shared/repertoire-form.js',
   './shared/yt-info.js',
   './shared/playlist-import.js',
-  './shared/theory.js', './shared/suggest-model.js', './shared/sheet-render.js', './shared/song-model.js', './shared/songbook.js', './shared/tuner.js', './shared/diagram.js',
+  './shared/theory.js', './shared/suggest-model.js', './shared/sheet-render.js', './shared/song-model.js', './shared/songbook.js', './shared/tune-flow.js', './shared/tuner.js', './shared/diagram.js',
   './shared/legend.js',
   './shared/notables.js',
   './shared/guidance-level.js',
@@ -130,7 +130,7 @@ self.addEventListener('fetch', function (e) {
       // ignoreSearch: the `?v=<VERSION>` the HTML carries on every local asset
       // (scripts/stamp-asset-versions.py) is a cache-buster, NOT part of the
       // resource identity - CORE precaches the bare paths, so an offline lookup
-      // for `songbook.css?v=music-v342-11` must still resolve to `songbook.css`.
+      // for `songbook.css?v=music-v348-9` must still resolve to `songbook.css`.
       // Online this branch is network-first anyway, so the fresh bytes win.
       fromCache(req, { ignoreSearch: true }).then(function (cached) {
         var netP = fetch(req).then(function (res) {
