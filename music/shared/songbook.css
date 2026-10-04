@@ -1887,11 +1887,16 @@ footer{display:none;}
  * ===================================================================== */
 .skillsPanel .skillsImportRow{margin-top:10px;}
 .skillRow{border:1px solid var(--line);border-radius:var(--r-card);background:var(--surface);margin-top:10px;overflow:hidden;}
-.skillHead{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:44px;padding:11px 13px;background:transparent;border:0;color:var(--txt);font-family:inherit;font-weight:700;font-size:1rem;cursor:pointer;text-align:left;transition:background .15s;}
+.skillHead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:2px 10px;width:100%;min-height:44px;padding:11px 13px;background:transparent;border:0;color:var(--txt);font-family:inherit;font-weight:700;font-size:1rem;cursor:pointer;text-align:left;transition:background .15s;}
 .skillHead:active{background:var(--surface-2);}
 .skillHead[aria-expanded="true"]{border-bottom:1px solid var(--line);}
-.skillName{flex:1;min-width:0;overflow-wrap:break-word;}
-.skillMeta{flex:0 0 auto;font-family:'Space Mono',monospace;font-size:.74rem;color:var(--txt-dim);font-weight:400;}
+/* UAT 2026-10-04 (392px): the status was flex:0 0 auto - it never shrank or
+   wrapped - so a long one ("not yet assessed - 1 observed in the app") crushed
+   the name to one letter per line. The head wraps instead: the name keeps a
+   9rem basis, and a status that does not fit beside it drops below, where it
+   may itself wrap. Guarded by test/pw/scenarios/profile-row-layout.json. */
+.skillName{flex:1 1 9rem;min-width:0;overflow-wrap:break-word;}
+.skillMeta{flex:0 1 auto;min-width:0;max-width:100%;overflow-wrap:anywhere;font-family:'Space Mono',monospace;font-size:.74rem;color:var(--txt-dim);font-weight:400;}
 .skillDetail{padding:6px 13px 12px;}
 .skillDetail[hidden]{display:none;}
 .compRow{display:grid;grid-template-columns:1fr;gap:3px;padding:8px 0;border-top:1px solid var(--line);}
