@@ -161,12 +161,16 @@
         "music/shared/audio.js",
         "test/tuner.test.js",
         "test/sound.test.js",
-        "test/audio.test.js"
+        "test/audio.test.js",
+        "music/shared/tune-flow.js",
+        "test/tune-flow.test.js",
+        "test/tuner-gate.test.js",
+        "test/tuner-near.test.js"
       ],
       "checks": [
         {
           "id": "unit",
-          "cmd": "node test/tuner.test.js && node test/sound.test.js && node test/audio.test.js",
+          "cmd": "node test/tuner.test.js && node test/tuner-gate.test.js && node test/tuner-near.test.js && node test/tune-flow.test.js && node test/sound.test.js && node test/audio.test.js",
           "timeout_s": 120
         }
       ],
@@ -386,6 +390,37 @@
               "schema": "music-app-capabilities/v1",
               "capabilities": "*"
             }
+          }
+        }
+      ]
+    },
+    {
+      "id": "math",
+      "title": "Math app (/math/)",
+      "how": "/math/: timed arithmetic workouts + skills path; own SW and store",
+      "paths": [
+        "math/**",
+        "test/math-engine.test.js",
+        "test/math-skills.test.js",
+        "test/math-store.test.js",
+        "test/math-sw.test.js"
+      ],
+      "checks": [
+        {
+          "id": "unit",
+          "cmd": "node test/math-engine.test.js && node test/math-skills.test.js && node test/math-store.test.js && node test/math-sw.test.js",
+          "timeout_s": 120
+        }
+      ],
+      "probes": [
+        {
+          "id": "math-index",
+          "http": {
+            "path": "/math/"
+          },
+          "expect": {
+            "status": 200,
+            "contains": "Math - timed workouts"
           }
         }
       ]

@@ -20,3 +20,4 @@ scripts/template.html
 scripts/vendor-check.py
 scripts/verify-theme.mjs
 tools/cheatsheet.py
+tools/tuner-lab.js
