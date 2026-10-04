@@ -81,7 +81,9 @@ test('the service worker resolves a versioned request against its unversioned pr
   var sw = read('music/sw.js');
   // CORE holds bare paths; requests now carry ?v=. Without ignoreSearch every
   // versioned asset misses the precache and a genuinely OFFLINE install breaks.
-  assert.ok(/caches\.match\(req, \{ ignoreSearch: true \}\)/.test(sw),
+  // Lookups go through the worker's OWN cache (fromCache - see math-sw.test.js:
+  // the origin-wide caches.match can answer with the Math app's copy).
+  assert.ok(/fromCache\(req, \{ ignoreSearch: true \}\)/.test(sw),
     'the same-origin lookup must pass ignoreSearch, or offline 404s on every versioned asset');
 });
 

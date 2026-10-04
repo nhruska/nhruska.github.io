@@ -121,6 +121,7 @@ A self-contained **static** GitHub Pages site, served from `main`. **No build st
 
 - `index.html` — portfolio landing.
 - `music/` — the **Music app** (the real product): live at [nhruska.github.io/music/play/](https://nhruska.github.io/music/play/).
+- `math/` — the **Math app**: live at [nhruska.github.io/math/](https://nhruska.github.io/math/). Sibling PWA, same origin; see [math/CLAUDE.md](math/CLAUDE.md).
 
 **Music-app specifics live in [music/CLAUDE.md](music/CLAUDE.md)** — its layout, the `songs.json` shape, tuner/accent/SW-cache conventions, the note-spelling rules, and the githack preview-link policy (branch link by default, commit link only for isolated testing). Read it before touching anything under `music/`.
 
