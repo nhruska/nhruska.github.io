@@ -38,6 +38,7 @@
 | [compose-key-system.md](systems/compose-key-system.md) | songKey SSOT; transpose==key; mode-change re-harmonizes; In-key/All picker |
 | [layout-tokens.md](systems/layout-tokens.md) | Chord-tile/diagram geometry SSOT (`--tile-min`/`--dg-canvas-w`/`--tile-gap`/`--prog-tile-min`); the U5/#96 overlap bug class; `scripts/layout-check.py` regression suite |
 | [musician-profile.md](systems/musician-profile.md) | The person-owned `musician-profile/v1` (profile.json) + the minimum participation contract; competency vs assessment vs evidence (unassessed explicit everywhere, confidence, history); global musicianship apart from instrument proficiency (the open taxonomy floor); evidence provenance + modality; the coach contract (startup, guided interview, music-first coaching, continuous management); the learning plan + deep-link boundary; Settings > Musician profile; bundle/import round trip; future lifelong-profile direction |
+| [tuner.md](systems/tuner.md) | Guided Tune loop (TuneFlow), the two detectors (free vs known-target), drone cancellation, the runway/progress-row UI contract, the `Tuner._sim` test hook |
 | [theme-tokens.md](systems/theme-tokens.md) | Light/dark token values + the `music.theme.v1` boot mechanism; the copy-don't-invent rule for any surface outside `music/` (artifact packs, case studies) |
 
 ## workflows/ - how we work on it
@@ -48,6 +49,7 @@
 | [testing.md](workflows/testing.md) | Suite map; run-all; canon; localStorage reset helper; what green gates |
 | [data-curation.md](workflows/data-curation.md) | /song flow; songs.json editing rules; track curation; phone->laptop merge |
 | [roadmap-missions.md](workflows/roadmap-missions.md) | Tutor phases; mission/sprint record; wave-2 deferrals; backlog register |
+| [branch-prototypes.md](workflows/branch-prototypes.md) | Feel-variant loop: one branch per variant, `?tunerdemo=1`-style demo flags, githack links as the deliverable, pick by thumb, delete the rest |
 | [render-verification-traps.md](workflows/render-verification-traps.md) | How a render check lies: zero-box rects, display-vs-box, sticky binding the wrong scrollport, selectors that never match; the width x font-scale matrix rationale; prove-the-gate-red discipline |
 
 ## Routing table - "which page owns X"
@@ -57,6 +59,8 @@
 | Why does F major show A#? | theory-engine/note-spelling.md |
 | Add/modify a scale | theory-engine/solo-scales.md (+ theory-verification for canon) |
 | Roman numeral looks wrong | theory-engine/harmonization.md |
+| Tuner reads wrong / the drone fools the needle / guided loop order | systems/tuner.md |
+| Compare two or three FEELS of a feature on the phone | workflows/branch-prototypes.md |
 | A destructive control / undo | ux-philosophy/interaction-safety.md |
 | One-shot hint/banner | ux-philosophy/interaction-safety.md (notables) |
 | A toast / transient feedback / which UI primitive to use | ux-philosophy/ui-primitives.md |
