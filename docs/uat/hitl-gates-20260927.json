@@ -1,11 +1,11 @@
 {
  "project": "nh-pages",
- "updated_at": "2026-10-03T20:35:21Z",
+ "updated_at": "2026-10-04T23:20:38Z",
  "gates": [
   {
    "id": "357-verify-setlist-gate",
    "pr": "nhruska/nhruska.github.io#357",
-   "head_sha": "94d64630168d9299c0e95c0e0408ec8b932262e5",
+   "head_sha": "bf231cbcf8a13f82b73fdf9335d155f9d813b0c7",
    "kind": "verify",
    "title": "Long setlists keep full-height rows and scroll",
    "expect": "A 25-song setlist shows full-height rows that scroll, the same on main and on this head (this PR only adds the regression test)",
@@ -31,7 +31,7 @@
     }
    ],
    "ci": "pass",
-   "limit": "Test-only PR. setlist-scroll scenario PASS on the head. Pre-existing on main and outside this PR: in phone landscape the set list gets an 84px scroll window, so one row shows at a time."
+   "limit": "MERGED as f72b0f6 (2026-10-04, head bf231cb, re-resolved against main, suite 78/0, CI green). Live stamp not re-checked (refused, see #356). Test-only PR. setlist-scroll scenario PASS on the head. Pre-existing on main and outside this PR: in phone landscape the set list gets an 84px scroll window, so one row shows at a time."
   },
   {
    "id": "360-verify-runtime",
@@ -164,7 +164,7 @@
   {
    "id": "351-verify-profile",
    "pr": "nhruska/nhruska.github.io#351",
-   "head_sha": "a12e50c0f3750a71bf6988613db27310fd599b38",
+   "head_sha": "efc9473f5c41d640536ae8fc214ce7f87a7b7ef5",
    "kind": "verify",
    "title": "Settings shows the Musician profile section",
    "expect": "Settings has a section named Musician profile that lists what the app has observed (main still says Skills). Zero app errors",
@@ -189,13 +189,13 @@
      "assert": "BEFORE ok=False: section=Skills headline=none rows=5 | AFTER ok=True: section=Musician profile headline=Musicianship: not yet assessedStringed instrument: intermedi rows=6 | app errors before/after: 0/0"
     }
    ],
-   "ci": "none",
-   "limit": "Re-captured on head a12e50c (restore warning commit). BEFORE fails the assert by design, since main has no profile section. All 3 profile scenarios (baseline, import, hostile-keys) PASS on the head. Copy note: the new intro text has a semicolon (\"adds what it has seen you do; a coach adds the rest\"), which breaks the no-semicolon copy rule. It can be fixed in a follow-up."
+   "ci": "pass",
+   "limit": "Re-captured on head efc9473 (restore warning, re-resolved against main). BEFORE fails the assert by design, since main has no profile section. All 3 profile scenarios (baseline, import, hostile-keys) PASS on the head. Copy note: the new intro text has a semicolon (\"adds what it has seen you do; a coach adds the rest\"), which breaks the no-semicolon copy rule. It can be fixed in a follow-up."
   },
   {
    "id": "351-taste-restore",
    "pr": "nhruska/nhruska.github.io#351",
-   "head_sha": "a12e50c0f3750a71bf6988613db27310fd599b38",
+   "head_sha": "efc9473f5c41d640536ae8fc214ce7f87a7b7ef5",
    "kind": "taste",
    "title": "When you restore a backup, what should happen to what this phone has learned about you?",
    "expect": "Pick one. (A) Merge on restore: keep this phone's progress and add the backup's. (B) Warn in the dialog: say the restore replaces this phone's progress before you confirm",
@@ -220,8 +220,8 @@
      "assert": "BEFORE ok=False: warning=false buttonsInViewport=true msgBox=101-206 of 900 | AFTER ok=True: warning=true buttonsInViewport=true msgBox=101-276 of 900 | app errors before/after: 0/0"
     }
    ],
-   "ci": "none",
-   "limit": "VERDICT B (warn in the dialog), relayed @ 5be52ec. Now implemented on head a12e50c: with a profile in the backup, the restore dialog adds \"It also replaces the Musician profile on this device (what the app has learned about you) with the one in this backup.\" Main has no warning (BEFORE fails by design). The scenario restore-profile-warning FAILED before the fix and PASSES after it. Suite 74/0, cache gate OK (music-v351-9). Restore behavior is unchanged: it still replaces. CI none: since #355 merged, this head conflicts with main on the cache files, so no workflow runs until it is re-resolved (paused, see the blocker on #356). Scope note for the operator: the Settings line \"Restore adds and overwrites - it never deletes.\" was left unchanged."
+   "ci": "pass",
+   "limit": "VERDICT B (warn in the dialog), relayed @ 5be52ec. Implemented in a12e50c, then re-resolved against main by the #351 author session as efc9473 (music-v351-10, math-v351). The interdiff is mechanical: only context moved by main and the required MATH_VERSION bump. Evidence re-captured on efc9473 with the same result. Implementation: with a profile in the backup, the restore dialog adds \"It also replaces the Musician profile on this device (what the app has learned about you) with the one in this backup.\" Main has no warning (BEFORE fails by design). The scenario restore-profile-warning FAILED before the fix and PASSES after it. Suite 74/0, cache gate OK (music-v351-9). Restore behavior is unchanged: it still replaces. Scope note for the operator: the Settings line \"Restore adds and overwrites - it never deletes.\" was left unchanged. CI on efc9473: green. NEEDS a fresh operator verdict on efc9473."
   },
   {
    "id": "348-verify-dock",
