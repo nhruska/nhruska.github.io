@@ -58,9 +58,9 @@
       ]
     },
     tune: {
-      primary: { sel: '#micBox', text: 'Pluck a string - the needle shows sharp or flat' },
+      primary: { sel: '#micBox', text: 'Start - the tuner walks every string, low to high; bring each one UP to the post' },
       secondary: [
-        { sel: '#tStrings', text: 'Or tap a letter for a reference tone' }
+        { sel: '#tStrings', text: 'Tap a string to jump to it - or, with the tuner off, to hear its tone' }
       ]
     }
   };
