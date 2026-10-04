@@ -1,5 +1,5 @@
 # Repo Command Center - nhruska/nhruska.github.io - Problem Solutions (agent-readable brief)
-Generated: 2026-10-03T14:20:26Z
+Generated: 2026-10-04T14:52:52Z
 Status: ok
 
 ## NOW
@@ -9,13 +9,11 @@ Status: ok
 - Queue NOW: **STORED 2026-07-10 (v136)**: full SDD loop closed - spark -> skeleton -> v0.1 -> operator reframe burst -> v0.2 -> "store it" -> songs.json (first operator-authored catalog song, library-scenario-proven). Taste verdicts encoded into songwriting-coach; next round = play-and-burst on feel
 - Queue NOW: **SHIPPED 2026-07-10 (PR #199, v133)**: every keyed surface spells letter-per-degree from `preferredTonicName` (bVII of C = Bb; A#-maj renders Bb-maj); token-vs-display split keeps packs/audio/storage canonical; 12 professor traps enforced as tests; PW pixel gates re-proven. Wave-2 residue queued below (S-KEYPICKER-FLATNAMES).
 - Queue NOW: CLOSED 2026-07-10
-- Open draft PR #361 (CI green): fix(check-cache-bump): skip pre-Math commits in the Math per-commit walk - https://github.com/nhruska/nhruska.github.io/pull/361
 - Open draft PR #360 (CI green): verify: adopt the verification runtime at V2 for the Music app - https://github.com/nhruska/nhruska.github.io/pull/360
 - Open draft PR #358 (CI green): docs: propose Thought-Ware method v0.1 (base of the #346/#347 stack) - https://github.com/nhruska/nhruska.github.io/pull/358
 - Open draft PR #357 (CI green): test(pw): salvage the setlist-scroll regression gate from #350 - https://github.com/nhruska/nhruska.github.io/pull/357
 - Open draft PR #356 (CI green): docs(plans): SBS merge plan for the 6 open PRs - https://github.com/nhruska/nhruska.github.io/pull/356
 - Open draft PR #351 (CI unknown): feat(profile): portable lifelong Musician Profile + VNext semantic model (unassessed everywhere, global musicianship, coach contract, Settings > Musician profile) - review-only - https://github.com/nhruska/nhruska.github.io/pull/351
-- Open draft PR #348 (CI green): feat(tuner): Guided Tune - string-by-string loop, runway, drone cancellation, tuning lab - https://github.com/nhruska/nhruska.github.io/pull/348
 - Open draft PR #347 (CI green): docs: enforce engineering-wiki lifecycle integrity - https://github.com/nhruska/nhruska.github.io/pull/347
 - Open draft PR #346 (CI green): docs: calibrate Thought-Ware public claims - https://github.com/nhruska/nhruska.github.io/pull/346
 
@@ -25,14 +23,14 @@ Status: ok
 - Vision CAPTURED: Vision Capture: Deterministic Adaptive Tutor (operator, 2026-07-05) - https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-tutor-deterministic-20260705.md
 
 ## Recent work products
+- #361 - fix(check-cache-bump): skip pre-Math commits in the Math per-commit walk (2026-10-03) - https://github.com/nhruska/nhruska.github.io/pull/361
 - #355 - Math app v1: timed workouts + skills path at /math/, landing lists 2 apps (2026-09-27) - https://github.com/nhruska/nhruska.github.io/pull/355
 - #353 - fix(setlist): stop rows flex-shrinking below content height on overflow (2026-09-17) - https://github.com/nhruska/nhruska.github.io/pull/353
 - #352 - Round 19: a new song raises the theater (scrimmed), and the dock stops eating tuner strings (2026-09-25) - https://github.com/nhruska/nhruska.github.io/pull/352
+- #348 - feat(tuner): Guided Tune - string-by-string loop, runway, drone cancellation, tuning lab (2026-10-03) - https://github.com/nhruska/nhruska.github.io/pull/348
 - #345 - docs: propose Thought-Ware Development method v0.1 (2026-09-13) - https://github.com/nhruska/nhruska.github.io/pull/345
 - #344 - Re-author the two video scenarios to the shipped PIP contract (2026-09-13) - https://github.com/nhruska/nhruska.github.io/pull/344
 - #343 - docs(artifacts): the UAT loop as a guided timeline, linked from the Evidence rail (2026-09-06) - https://github.com/nhruska/nhruska.github.io/pull/343
-- #342 - UX/UI polish sprint: SDD goalposts + five rounds of operator UAT (2026-09-05) - https://github.com/nhruska/nhruska.github.io/pull/342
-- #341 - Bundle capabilities.json into the agent-bundle export (2026-08-21) - https://github.com/nhruska/nhruska.github.io/pull/341
 
 ## Links
 - Repo Command Center: https://nhruska.github.io/docs/artifacts/cc/repo.html
@@ -45,6 +43,6 @@ Status: ok
 ## Conventions
 - Payload: docs/artifacts/cc/payload-repo.json
 - Regen: python3 scripts/command-center-gen.py (rewrites the payload AND this file together)
-- Suite: node test/run-all.js (4207 cases / 75 suites)
+- Suite: node test/run-all.js (4268 cases / 78 suites)
 - CACHE discipline: music/shared|play changes require a music/sw.js CACHE bump - scripts/check-cache-bump.sh
 - Public repo: payload + this brief carry public data only (no session-file content)

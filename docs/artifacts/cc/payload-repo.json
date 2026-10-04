@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-03T14:20:26Z",
+  "generatedAt": "2026-10-04T14:52:52Z",
   "generator": "command-center-gen.py@0.4.0 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,30 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-10-02T15:52:55Z",
-    "sha": "85b09488a39f517649f28853d424d7abd234e75c",
-    "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/85b09488a39f517649f28853d424d7abd234e75c"
+    "date": "2026-10-03T20:37:00Z",
+    "sha": "f4bbfcad10d97cca6a3f5dc1d76183707f81655d",
+    "subject": "fix(check-cache-bump): skip pre-Math commits in the Math per-commit walk (#361)",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/f4bbfcad10d97cca6a3f5dc1d76183707f81655d"
   },
   "commits": [
+    {
+      "date": "2026-10-03T20:37:00Z",
+      "sha": "f4bbfcad10d97cca6a3f5dc1d76183707f81655d",
+      "subject": "fix(check-cache-bump): skip pre-Math commits in the Math per-commit walk (#361)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/f4bbfcad10d97cca6a3f5dc1d76183707f81655d"
+    },
+    {
+      "date": "2026-10-03T20:34:50Z",
+      "sha": "45679c2c660839c043adfe104ccf1110ddceab5d",
+      "subject": "feat(tuner): Guided Tune - string-by-string loop, runway, drone cancellation, tuning lab (#348)",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/45679c2c660839c043adfe104ccf1110ddceab5d"
+    },
+    {
+      "date": "2026-10-03T14:20:34Z",
+      "sha": "d6b666c5adfd81e2fd2a31ad8119d2a58b334aff",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/d6b666c5adfd81e2fd2a31ad8119d2a58b334aff"
+    },
     {
       "date": "2026-10-02T15:52:55Z",
       "sha": "85b09488a39f517649f28853d424d7abd234e75c",
@@ -72,51 +90,9 @@
       "sha": "c46a08e0d536f7dce2fc9e4252ebfeea2a393c6a",
       "subject": "Round 19: a new song raises the theater (scrimmed), and the dock stops eating tuner strings (#352)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/c46a08e0d536f7dce2fc9e4252ebfeea2a393c6a"
-    },
-    {
-      "date": "2026-09-25T14:38:45Z",
-      "sha": "7f836726bf70697960a47b4c806acfca0050529b",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/7f836726bf70697960a47b4c806acfca0050529b"
-    },
-    {
-      "date": "2026-09-24T14:15:29Z",
-      "sha": "7258fe1c3903675a8d6a0075b210fa3f99d1f88e",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/7258fe1c3903675a8d6a0075b210fa3f99d1f88e"
-    },
-    {
-      "date": "2026-09-23T14:16:57Z",
-      "sha": "297a3c97812993ea01359e28364f9c31d8616886",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/297a3c97812993ea01359e28364f9c31d8616886"
     }
   ],
   "openPRs": [
-    {
-      "number": 361,
-      "title": "fix(check-cache-bump): skip pre-Math commits in the Math per-commit walk",
-      "branch": "claude/cache-gate-premath-skip",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/361",
-      "draft": true,
-      "ciState": "green",
-      "checks": [
-        {
-          "name": "preview",
-          "workflow": "PR preview link",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36361298218/job/108738884158"
-        },
-        {
-          "name": "unit",
-          "workflow": "tests",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36361298202/job/108738883807"
-        }
-      ]
-    },
     {
       "number": 360,
       "title": "verify: adopt the verification runtime at V2 for the Music app",
@@ -202,14 +178,14 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36361527860/job/108739513166"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37152092617/job/111287884739"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36361527823/job/108739512989"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37152092658/job/111287884939"
         }
       ]
     },
@@ -221,30 +197,6 @@
       "draft": true,
       "ciState": "unknown",
       "checks": []
-    },
-    {
-      "number": 348,
-      "title": "feat(tuner): Guided Tune - string-by-string loop, runway, drone cancellation, tuning lab",
-      "branch": "claude/music-tuner-enhancements-8bny49",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/348",
-      "draft": true,
-      "ciState": "green",
-      "checks": [
-        {
-          "name": "preview",
-          "workflow": "PR preview link",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36361344465/job/108739009721"
-        },
-        {
-          "name": "unit",
-          "workflow": "tests",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/36361344463/job/108739009661"
-        }
-      ]
     },
     {
       "number": 347,
@@ -297,6 +249,13 @@
   ],
   "recentMerges": [
     {
+      "createdAt": "2026-09-28T00:11:52Z",
+      "mergedAt": "2026-10-03T20:37:01Z",
+      "number": 361,
+      "title": "fix(check-cache-bump): skip pre-Math commits in the Math per-commit walk",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/361"
+    },
+    {
       "createdAt": "2026-09-25T04:35:26Z",
       "mergedAt": "2026-09-27T23:14:34Z",
       "number": 355,
@@ -316,6 +275,13 @@
       "number": 352,
       "title": "Round 19: a new song raises the theater (scrimmed), and the dock stops eating tuner strings",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/352"
+    },
+    {
+      "createdAt": "2026-09-12T03:28:57Z",
+      "mergedAt": "2026-10-03T20:34:50Z",
+      "number": 348,
+      "title": "feat(tuner): Guided Tune - string-by-string loop, runway, drone cancellation, tuning lab",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/348"
     },
     {
       "createdAt": "2026-09-06T15:01:39Z",
@@ -386,37 +352,23 @@
       "number": 335,
       "title": "docs: M-AGENT arc record + queue reconcile (session save)",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/335"
-    },
-    {
-      "createdAt": "2026-08-17T08:46:06Z",
-      "mergedAt": "2026-08-17T09:12:54Z",
-      "number": 334,
-      "title": "S18+S19: analytics-report artifact, SW cross-origin deadline, live-run eval fixes (M-AGENT wave 3)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/334"
-    },
-    {
-      "createdAt": "2026-08-17T06:27:09Z",
-      "mergedAt": "2026-08-17T07:41:41Z",
-      "number": 333,
-      "title": "S15+S16+S17: jam links open the real Studio, music-coach plugin with agent profiles, setup-doc import (M-AGENT wave 2)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/333"
     }
   ],
   "lastCiRun": {
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-10-03T14:20:21Z",
-    "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37129246256",
+    "runStartedAt": "2026-10-04T14:52:47Z",
+    "durationSeconds": 4,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37210893846",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 1,
+    "merged_count": 3,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
-    "typical_merge_hours": 9.28,
+    "typical_merge_hours": 24.27,
     "weekly": null
   },
   "deploy": {
@@ -426,8 +378,8 @@
       "sourceBranch": "main",
       "buildType": "legacy"
     },
-    "liveCacheVersion": "music-v355-4",
-    "localCacheVersion": "music-v355-4",
+    "liveCacheVersion": "music-v348-9",
+    "localCacheVersion": "music-v348-9",
     "cacheMatch": true
   },
   "missions": [
@@ -631,6 +583,11 @@
         "#": "S-SKILLS-STANDALONE",
         "Finding": "**SPEC'D 2026-09-03, awaiting operator answers (operator UAT batch 6: \"can't we merge skills and agent accordion... the skills export needs to act as standalone zip file... should describe itself without any additional prompting just by uploading the zip\").** Two accordions serve one job, and the job leaks across both - two exports, two mental models, and a Copy-starter-prompt step that is itself the tell that the bundle was not self-describing. Docs are fetched from public URLs, so a bundle handed to an offline agent is inert. Target: one accordion, one export, one import, ZERO prompt characters typed. The zip IS the interface - README.md + bundled AGENTS.md/capabilities.json + profile.json + skills/ + data/ + UPDATE.md, with one round-trip format serving all three update cases the operator named (one competency +1, porting external skills in, a fresh install corrected by a coaching session). Instructions stay viewable as a disclosure, never a step. Spec: docs/plans/design-skills-agent-merge-20260903.md. Two open questions for the operator (accordion name; whether data/ belongs in the skills zip or stays in Backup).",
         "Source": ""
+      },
+      {
+        "#": "S-TUNER-GOAL-FLOW",
+        "Finding": "**BUILT 2026-09-12 on PR [#348](https://github.com/nhruska/nhruska.github.io/pull/348) (v348-3), awaiting device UAT.** Operator answered all four forks in-session (tone on by default, one pulse on goal-hit, runway replaces needle + strobe, free mode kept as a chip). Shipped on the branch: `detectPitchNear` + `cancelDrone` (f0 + 5f0 - NOT 3f0, see tuner.js) + a sub-multiple guard so a wrong string reads nothing instead of a huge flat; `TuneFlow` (pure state machine, 19 tests); the guided UI (runway, progress row, Tone toggle, `Any string` chip, `Tuner._sim` hook); scenario `tune-guided.json` green on branch and proven RED on main; render-verified Pixel 5 + 1440 both themes, zero app errors. Original friction:  (operator friction: mic auto-recognition \"jumps around\", never eases from flat into tune; haptics a liability with the phone on the guitar; tone + mic together \"pegs to tuned\" when the drone is loud; wants one Start, lowest string first, auto-advance on goal, buttons still accepted; \"beat a Snark or scrap the needle\").** Root cause measured with `node tools/tuner-lab.js` against the real detector: (1) identification is the wrong job - with the target string KNOWN the search window excludes both octaves by construction, so a `detectPitchNear` read is cents-from-THIS-string with nothing to flip (1.4-1.8 c on low E across every harmonic balance); found and pinned the narrow-band gotcha in the current `detectPitch` (returns -1 inside a narrow band); (2) the speaker drone enters the mic and pulls the autocorrelation toward the drone - at 4x the string a -30 c string reads -10 c and a -8 c string shows GREEN - fixed by least-squares subtraction of the KNOWN drone (f0, 3f0, 5f0) before detection, restoring -27.4 / -6.3 c; (3) haptics fire on every sharp wobble. Design = Guided Tune: deterministic low-to-high loop, approach-from-flat runway to a goal post, sustained-arrival lock + landing, auto-advance, drone on with cancellation, one optional pulse on goal-hit, buttons as progress row that still retarget. Six-unit parallel plan + a recorded-instrument fixture harness (the CE lesson: every tuner constant was tuned on synthetic tones). Spec: [design-tuner-goal-flow-20260912.md](design-tuner-goal-flow-20260912.md)",
+        "Source": "operator friction 2026-09-12"
       },
       {
         "#": "S-SETTINGS-ACTIONROW",
@@ -954,8 +911,8 @@
     ]
   },
   "suite": {
-    "testFileCount": 75,
-    "testCaseCount": 4207,
+    "testFileCount": 78,
+    "testCaseCount": 4268,
     "testFailedCount": 0,
     "workflow": ".github/workflows/tests.yml",
     "runner": "node test/run-all.js"
