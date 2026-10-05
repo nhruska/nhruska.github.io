@@ -30,6 +30,9 @@
 # file math/sw.js's CORE list precaches (e.g. theme.js) as a Math asset too,
 # since Math serves those from its own cache the same way it serves math/*.
 #
+# On a DIRTY worktree (2026-10-05) "HEAD" below means a synthetic tip: HEAD
+# plus every uncommitted/untracked change - see the TIP block.
+#
 # Usage: scripts/check-cache-bump.sh [base-ref]   (default: origin/main)
 # Exit 0: no music/shared|play diff vs base (or CACHE was bumped alongside it
 #         AND the build-stamp pair moved with it), AND no math/ diff vs base
@@ -61,6 +64,47 @@ if ! git rev-parse --verify --quiet "$BASE" >/dev/null; then
   exit 1
 fi
 
+# ---------------------------------------------------------------------
+# TIP - the tree this script judges (2026-10-05). Comparing only
+# $BASE...HEAD gave a false green on a DIRTY worktree: an uncommitted
+# music/shared or math/ edit with no version bump passed, because HEAD did
+# not contain it - exactly when the verify runtime runs this before commit.
+# Dirty (tracked changes or untracked files not gitignored): TIP is a
+# synthetic commit of the full working tree whose parent is HEAD, so the
+# tip-vs-base diff, every extract_* read, and the per-commit walk
+# ($BASE..TIP) all see the pending change as the newest commit. Clean:
+# TIP is HEAD and behavior is unchanged.
+# Non-destructive by construction: the snapshot is staged into a TEMPORARY
+# index (a copy of the real one, via GIT_INDEX_FILE), never the real index,
+# stash list, or working tree; the commit object is unreferenced (gc'd).
+# ---------------------------------------------------------------------
+HEAD_SHA="$(git rev-parse HEAD)"
+TIP="$HEAD_SHA"
+SYNTHETIC_TIP=""
+# GIT_OPTIONAL_LOCKS=0: do not let `status` refresh/rewrite the real index.
+if [ -n "$(GIT_OPTIONAL_LOCKS=0 git status --porcelain --untracked-files=normal)" ]; then
+  TMP_INDEX="$(mktemp "${TMPDIR:-/tmp}/check-cache-bump-index.XXXXXX")"
+  trap 'rm -f "$TMP_INDEX"' EXIT
+  REAL_INDEX="$(git rev-parse --git-path index)"
+  if [ -f "$REAL_INDEX" ]; then cp "$REAL_INDEX" "$TMP_INDEX"; else rm -f "$TMP_INDEX"; fi
+  GIT_INDEX_FILE="$TMP_INDEX" git add -A
+  SYNTH_TREE="$(GIT_INDEX_FILE="$TMP_INDEX" git write-tree)"
+  TIP="$(GIT_AUTHOR_NAME=check-cache-bump GIT_AUTHOR_EMAIL=check-cache-bump@invalid \
+         GIT_COMMITTER_NAME=check-cache-bump GIT_COMMITTER_EMAIL=check-cache-bump@invalid \
+         git commit-tree "$SYNTH_TREE" -p HEAD -m 'check-cache-bump: synthetic tip (uncommitted working tree)')"
+  SYNTHETIC_TIP="$TIP"
+  echo "check-cache-bump: worktree is dirty - judging a synthetic tip $(git rev-parse --short "$TIP") (HEAD + uncommitted/untracked changes) so a pending edit cannot pass unbumped."
+fi
+
+# Human label for a walked commit: the synthetic tip has no meaningful sha.
+ref_label() {
+  if [ -n "$SYNTHETIC_TIP" ] && [ "$1" = "$SYNTHETIC_TIP" ]; then
+    echo "the uncommitted working tree"
+  else
+    git log -1 --format=%h "$1"
+  fi
+}
+
 extract_cache() {
   # $1 = git ref
   git show "$1:music/sw.js" 2>/dev/null | grep -oE "CACHE = '[^']+'" | head -1
@@ -75,7 +119,7 @@ check_music() {
   # 3-dot diff (vs the merge-base), matching the repo's own PR-diff-scope
   # convention: a direct 2-dot diff against a stale local base would false-
   # alarm on unrelated commits main picked up after this branch forked.
-  DIFF_FILES="$(git diff --name-only "$BASE"...HEAD -- music/shared music/play || true)"
+  DIFF_FILES="$(git diff --name-only "$BASE"..."$TIP" -- music/shared music/play || true)"
 
   if [ -z "$DIFF_FILES" ]; then
     echo "check-cache-bump: no music/shared or music/play changes vs $BASE - nothing to guard for Music."
@@ -83,7 +127,7 @@ check_music() {
   fi
 
   BASE_CACHE="$(extract_cache "$BASE")"
-  HEAD_CACHE="$(extract_cache HEAD)"
+  HEAD_CACHE="$(extract_cache "$TIP")"
 
   if [ -z "$BASE_CACHE" ] || [ -z "$HEAD_CACHE" ]; then
     echo "check-cache-bump: could not extract CACHE from music/sw.js at $BASE or HEAD - has the declaration shape changed?" >&2
@@ -120,8 +164,8 @@ check_music() {
   }
 
   HEAD_CACHE_VAL="$(printf '%s' "$HEAD_CACHE" | sed "s/CACHE = '//; s/'\$//")"
-  HEAD_STAMP_VER="$(extract_stamp_field HEAD VERSION)"
-  HEAD_STAMP_ISO="$(extract_stamp_field HEAD UPDATED_ISO)"
+  HEAD_STAMP_VER="$(extract_stamp_field "$TIP" VERSION)"
+  HEAD_STAMP_ISO="$(extract_stamp_field "$TIP" UPDATED_ISO)"
 
   if [ -z "$HEAD_STAMP_VER" ] || [ -z "$HEAD_STAMP_ISO" ]; then
     echo "check-cache-bump: FAIL - could not extract VERSION/UPDATED_ISO from $STAMP_PATH at HEAD - has the declaration shape changed (or the file gone missing)?" >&2
@@ -182,8 +226,8 @@ check_music() {
     # Reuse of the version shipped by the PREVIOUS asset-changing commit is the
     # bug shape. Whether it is fatal depends on whether it is still LIVE (below).
     if [ "$cur_cache" = "$PREV_CACHE" ]; then
-      if [ "$sha" != "$(git rev-parse HEAD)" ]; then
-        echo "check-cache-bump: WARN - $(git log -1 --format=%h "$sha") changed precached assets while reusing $cur_cache from $(git log -1 --format=%h "$PREV_REF"). A device that installed the preview at that commit was served the older build until the next bump." >&2
+      if [ "$sha" != "$TIP" ]; then
+        echo "check-cache-bump: WARN - $(ref_label "$sha") changed precached assets while reusing $cur_cache from $(git log -1 --format=%h "$PREV_REF"). A device that installed the preview at that commit was served the older build until the next bump." >&2
         WARNED=1
       fi
       TIP_REPEAT_OF="$PREV_REF"
@@ -202,7 +246,7 @@ check_music() {
     PREV_CACHE="$cur_cache"
     PREV_REF="$sha"
   done <<EOF
-$(git rev-list --reverse --no-merges "$BASE"..HEAD)
+$(git rev-list --reverse --no-merges "$BASE".."$TIP")
 EOF
 
   # FAIL only when the reuse is STILL LIVE - i.e. the newest asset-changing
@@ -212,7 +256,7 @@ EOF
   # commit already superseded is a WARN above, not a merge blocker - the author
   # cannot fix history without a force-push, and the tip is what devices fetch.
   if [ -n "$TIP_REPEAT_OF" ]; then
-    echo "check-cache-bump: FAIL - the newest asset-changing commit $(git log -1 --format=%h "$TIP_REF") ships $TIP_CACHE, which $( [ "$TIP_REPEAT_OF" = "an earlier commit on this branch" ] && echo "an earlier commit on this branch" || git log -1 --format=%h "$TIP_REPEAT_OF" ) already shipped." >&2
+    echo "check-cache-bump: FAIL - the newest asset-changing commit $(ref_label "$TIP_REF") ships $TIP_CACHE, which $( [ "$TIP_REPEAT_OF" = "an earlier commit on this branch" ] && echo "an earlier commit on this branch" || git log -1 --format=%h "$TIP_REPEAT_OF" ) already shipped." >&2
     echo "A device that installed this PR's preview keeps serving the EARLIER build under that same cache key - the fix reads as 'not working' on the phone (PR #306 cost two UAT rounds to exactly this)." >&2
     echo "Give this build its own version: music-v<PR#> for the first asset-changing commit, then -2, -3 ... for each later one (music/CLAUDE.md), and mirror it into $STAMP_PATH." >&2
     return 1
@@ -269,7 +313,7 @@ extract_math_version() {
 # the origin-wide caches.match()), so a stale copy there is exactly the
 # collision shape this script guards against, one origin over.
 math_precached_shared_files() {
-  git show "HEAD:math/sw.js" 2>/dev/null \
+  git show "$TIP:math/sw.js" 2>/dev/null \
     | grep -oE "'\.\./music/shared/[^']+'" \
     | sed -e "s/^'\.\.\///" -e "s/'\$//"
 }
@@ -283,7 +327,7 @@ check_math() {
   # in the walk below.
   MATH_SHARED="$(math_precached_shared_files | tr '\n' ' ')"
 
-  MATH_DIFF_FILES="$(git diff --name-only "$BASE"...HEAD -- math ':!math/CLAUDE.md' $MATH_SHARED || true)"
+  MATH_DIFF_FILES="$(git diff --name-only "$BASE"..."$TIP" -- math ':!math/CLAUDE.md' $MATH_SHARED || true)"
 
   if [ -z "$MATH_DIFF_FILES" ]; then
     echo "check-cache-bump: no math/ (excluding math/CLAUDE.md) or Math-precached music/shared changes vs $BASE - nothing to guard for Math."
@@ -296,7 +340,7 @@ check_math() {
   fi
 
   BASE_MATH_VERSION="$(extract_math_version "$BASE")"
-  HEAD_MATH_VERSION="$(extract_math_version HEAD)"
+  HEAD_MATH_VERSION="$(extract_math_version "$TIP")"
 
   if [ -z "$BASE_MATH_VERSION" ] || [ -z "$HEAD_MATH_VERSION" ]; then
     echo "check-cache-bump: could not extract MATH_VERSION from math/version.js at $BASE or HEAD - has the declaration shape changed?" >&2
@@ -348,8 +392,8 @@ check_math() {
       return 1
     fi
     if [ "$cur_version" = "$PREV_VERSION" ]; then
-      if [ "$sha" != "$(git rev-parse HEAD)" ]; then
-        echo "check-cache-bump: WARN - $(git log -1 --format=%h "$sha") changed Math-precached assets while reusing $cur_version from $(git log -1 --format=%h "$PREV_REF"). A device that installed the preview at that commit was served the older build until the next bump." >&2
+      if [ "$sha" != "$TIP" ]; then
+        echo "check-cache-bump: WARN - $(ref_label "$sha") changed Math-precached assets while reusing $cur_version from $(git log -1 --format=%h "$PREV_REF"). A device that installed the preview at that commit was served the older build until the next bump." >&2
         WARNED=1
       fi
       TIP_REPEAT_OF="$PREV_REF"
@@ -365,11 +409,11 @@ check_math() {
     PREV_VERSION="$cur_version"
     PREV_REF="$sha"
   done <<EOF
-$(git rev-list --reverse --no-merges "$BASE"..HEAD)
+$(git rev-list --reverse --no-merges "$BASE".."$TIP")
 EOF
 
   if [ -n "$TIP_REPEAT_OF" ]; then
-    echo "check-cache-bump: FAIL - the newest Math-asset-changing commit $(git log -1 --format=%h "$TIP_REF") ships $TIP_VERSION, which $( [ "$TIP_REPEAT_OF" = "an earlier commit on this branch" ] && echo "an earlier commit on this branch" || git log -1 --format=%h "$TIP_REPEAT_OF" ) already shipped." >&2
+    echo "check-cache-bump: FAIL - the newest Math-asset-changing commit $(ref_label "$TIP_REF") ships $TIP_VERSION, which $( [ "$TIP_REPEAT_OF" = "an earlier commit on this branch" ] && echo "an earlier commit on this branch" || git log -1 --format=%h "$TIP_REPEAT_OF" ) already shipped." >&2
     echo "A device that installed this PR's preview keeps serving the EARLIER Math build under that same version - give this build its own version: math-v<PR#> for the first Math-asset-changing commit, then -2, -3 ... for each later one (math/CLAUDE.md)." >&2
     return 1
   fi

@@ -332,4 +332,76 @@ test('Math: PASSES for a branch that forked BEFORE Math existed and merged main 
   assert.ok(/MATH_VERSION bumped/.test(r.out), r.out);
 });
 
+/* =====================================================================
+ * Dirty worktree (2026-10-05): the guard used to compare only BASE...HEAD,
+ * so an UNCOMMITTED asset edit with no version bump passed - a false green
+ * whenever the verify runtime ran it before committing. The script now
+ * snapshots the full working tree into a synthetic tip commit (parent HEAD)
+ * and checks that instead. These cases leave the edits UNCOMMITTED and also
+ * assert the run left the real stash list and `git status` untouched.
+ * ===================================================================== */
+
+function realState(repo) {
+  return {
+    stash: git(repo, ['stash', 'list']),
+    status: git(repo, ['status', '--porcelain', '--untracked-files=all'])
+  };
+}
+
+function runGuardDirty(repo) {
+  var before = realState(repo);
+  assert.ok(before.status.length > 0, 'fixture must actually be dirty');
+  var r = runGuard(repo);
+  var after = realState(repo);
+  assert.strictEqual(after.stash, before.stash, 'stash list changed');
+  assert.strictEqual(after.status, before.status, 'git status changed');
+  return r;
+}
+
+test('Dirty: FAILS an uncommitted music/shared edit with no CACHE bump', function () {
+  var repo = buildRepo([]);
+  touchAsset(repo, 'uncommitted edit');
+  var r = runGuardDirty(repo);
+  assert.strictEqual(r.code, 1, 'expected exit 1, got ' + r.code + '\n' + r.out);
+  assert.ok(/synthetic tip/.test(r.out), 'must say it used a synthetic tip: ' + r.out);
+});
+
+test('Dirty: PASSES the same edit plus an uncommitted CACHE + build-stamp bump', function () {
+  var repo = buildRepo([]);
+  writeBuild(repo, 'music-v400');
+  touchAsset(repo, 'uncommitted edit');
+  var r = runGuardDirty(repo);
+  assert.strictEqual(r.code, 0, 'expected exit 0, got ' + r.code + '\n' + r.out);
+});
+
+test('Dirty: FAILS an untracked new music/shared/*.js file with no bump', function () {
+  var repo = buildRepo([]);
+  fs.writeFileSync(path.join(repo, 'music', 'shared', 'brand-new.js'), '/* new */\n');
+  var r = runGuardDirty(repo);
+  assert.strictEqual(r.code, 1, 'expected exit 1, got ' + r.code + '\n' + r.out);
+});
+
+test('Dirty: FAILS an uncommitted math/ edit with no MATH_VERSION bump', function () {
+  var repo = buildMathRepo([]);
+  touchMathApp(repo, 'uncommitted math edit');
+  var r = runGuardDirty(repo);
+  assert.strictEqual(r.code, 1, 'expected exit 1, got ' + r.code + '\n' + r.out);
+  assert.ok(/MATH_VERSION is unchanged/.test(r.out), r.out);
+});
+
+test('Dirty: FAILS an uncommitted follow-up edit on top of a committed bump (per-commit walk sees the tip)', function () {
+  var repo = buildRepo([['music-v306', 'first build']]);
+  touchAsset(repo, 'uncommitted follow-up, same version');
+  var r = runGuardDirty(repo);
+  assert.strictEqual(r.code, 1, 'expected exit 1, got ' + r.code + '\n' + r.out);
+  assert.ok(/uncommitted working tree/.test(r.out), r.out);
+});
+
+test('Clean: no synthetic tip on a clean tree', function () {
+  var repo = buildRepo([['music-v306', 'first build']]);
+  var r = runGuard(repo);
+  assert.strictEqual(r.code, 0, 'expected exit 0, got ' + r.code + '\n' + r.out);
+  assert.ok(!/synthetic tip/.test(r.out), r.out);
+});
+
 run();
