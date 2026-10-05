@@ -56,6 +56,14 @@
     },
     {
       "action": "tap",
+      "selector": "[data-thmin]"
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "tap",
       "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major'] .li-lead"
     },
     {
