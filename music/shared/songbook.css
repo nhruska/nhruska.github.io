@@ -730,9 +730,20 @@ body.studioopen .tabbar{position:relative;z-index:55;}
    .tunerWrap is the single flex column inside it. Every direct child is
    fixed-size by default (flex:0 0 auto); the auto-tuner card (.tCard) is the
    hero and expands to absorb whatever vertical space is left, with the
-   reference-tone strings and the accent picker pinned below it. */
-#s-tune{height:100%;}
-.tunerWrap{display:flex;flex-direction:column;height:100%;min-height:0;}
+   reference-tone strings and the accent picker pinned below it.
+   FILL, NEVER CLAMP: the column is AT LEAST the view's height (min-height +
+   flex-grow), not exactly it. When the content fits (portrait, desktop), that
+   is the same one-screen layout. When it does not (landscape phone with the
+   mini-player up: ~119px left for a column whose strings alone need ~120px on
+   two guitar rows), the column grows and the .view scrolls - which is what makes
+   body.miniplayer's .view padding-bottom reservation work here like on every
+   other tab. A clamped height:100% box let the strings overflow INTO that
+   padding, under the fixed bar, with nothing to scroll. .screen.on is
+   display:block by default, so the flex column is scoped to #s-tune.on (the
+   #s-library pattern). */
+#s-tune{min-height:100%;}
+#s-tune.on{display:flex;flex-direction:column;}
+.tunerWrap{display:flex;flex-direction:column;flex:1 0 auto;}
 .tunerWrap > *{flex:0 0 auto;}
 .tunerWrap .sub{font-size:.74rem;color:var(--txt-dim);margin-bottom:8px;}
 .tCanvasWrap{background:var(--bg-2);border:1px solid var(--line);border-radius:var(--r-card);padding:10px;margin-bottom:6px;position:relative;overflow:hidden;}
@@ -752,10 +763,20 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 .tStr .hz{font-family:'Space Mono',monospace;font-size:.56rem;color:var(--txt-dim);white-space:nowrap;}
 /* Auto-tuner card is the Tune tab's hero: flex:1 lets it absorb whatever
    vertical space #tuneTuneRow / #tStrings / the accent picker don't need, so
-   the whole tab fills the viewport with no scroll. overflow-y:auto is a
-   safety net for very short viewports (landscape phone), not the normal
-   path. */
-.tCard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:11px;margin-top:9px;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow-y:auto;}
+   the whole tab fills the viewport with no scroll. It GROWS from a 180px
+   floor rather than shrinking from its content: the column is content-sized
+   (see #s-tune), so a shrinkable card would never shrink, and the floor is
+   what lets a tall-content column (desktop / the PIP dock reservation) still
+   fit on one screen with overflow-y:auto scrolling inside the card - the
+   same box main gave it. Below the floor the view scrolls instead of the
+   card collapsing to a sliver. */
+.tCard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);padding:11px;margin-top:9px;flex:1 0 180px;min-height:0;display:flex;flex-direction:column;overflow-y:auto;}
+/* Short landscape phone: nothing fits on one screen once the mini-player is up
+   (or even without it - ~200px of view), and the view scrolls either way, so
+   show the whole tuner card instead of a 180px window into it. */
+@media (orientation:landscape) and (max-height:560px){
+  .tCard{flex-basis:auto;}
+}
 .tCard h3{font-weight:700;font-size:.98rem;margin-bottom:5px;letter-spacing:-.01em;flex:0 0 auto;}
 .tCard p{font-size:.78rem;color:var(--txt-soft);line-height:1.55;margin-bottom:11px;}
 .tCard .row{display:flex;gap:8px;flex-wrap:wrap;}
