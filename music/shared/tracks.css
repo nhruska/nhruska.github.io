@@ -222,7 +222,13 @@
 .bt-player.vidopen .bt-st-media:not(.min):not(.hid){
   position:fixed;left:50%;transform:translateX(-50%);
   top:calc(env(safe-area-inset-top,0px) + 58px);
-  width:min(100vw - 20px, 540px, (100vh - 260px)*1.7778);z-index:96;
+  /* The height budget reads 100DVH, never 100vh: the bar + tabbar it must
+     clear live in the .app shell, which is 100dvh (songbook.css). On Android
+     Chrome 100vh is the LARGE viewport (URL bar retracted), so in a short
+     landscape viewport (~915x340) a 100vh budget grew the card past the bar
+     and over its transport - the operator's "video covers the controls".
+     Budget: 58 top + card + 24 handle + gap + the 140px bar/tabbar stack. */
+  width:min(100vw - 20px, 540px, (100dvh - 260px - env(safe-area-inset-top,0px))*1.7778);z-index:96;
   border:1px solid var(--accent-ink);border-radius:12px;overflow:hidden;
   background:var(--video-bg);box-shadow:0 12px 32px var(--shadow);transition:none;
   display:flex;flex-direction:column;
@@ -285,6 +291,17 @@
      tap-dead and the overlay goes right back to swallowing taps silently. */
   pointer-events:auto;cursor:pointer;
 }
+/* The scrim dims CONTENT, never the player's own chrome (operator UAT
+   2026-10, phone landscape: the theater "covers the mini-player's controls").
+   At z-94 it painted over the now-playing bar (z-60, same .bt-player stacking
+   context) and the tabbar (outside it), so pause / next / shuffle / a tab
+   switch all docked the video instead of acting - the transport that controls
+   the very video on screen was dead while it showed. The bar lifts above the
+   scrim (still under the card, which never overlaps it), and the tabbar takes
+   the same z-55 raise body.studioopen gives it (songbook.css) for exactly as
+   long as a scrimmed theater is up. The scrim itself stays full-viewport. */
+.bt-player.mini.vidopen .bt-st-head{z-index:95;}
+body:has(.bt-player.mini.vidopen) .tabbar{position:relative;z-index:55;}
 /* The park handle rides the PIP's edge only - it must never show under a
    scrimmed theater (the theater carries its own thmin/thdock handles). */
 .bt-player.mini.vidopen .bt-st-piphide{display:none;}
