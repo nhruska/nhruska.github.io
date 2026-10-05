@@ -1,6 +1,6 @@
 {
  "project": "nh-pages",
- "updated_at": "2026-10-04T23:42:27Z",
+ "updated_at": "2026-10-05T21:57:07Z",
  "gates": [
   {
    "id": "357-verify-setlist-gate",
@@ -62,7 +62,7 @@
     }
    ],
    "ci": "pass",
-   "limit": "Tooling-only PR. verify.py run --all on the head: verdict pass, 22 of 22 units."
+   "limit": "MERGED as 5aa39d2 by the operator (2026-10-05) from head 4a584a9, a later head than the gated 48ad1dc (updated before merge). Tooling-only PR. verify.py run --all on the gated head: verdict pass, 22 of 22 units."
   },
   {
    "id": "355-verify-music-unchanged",
