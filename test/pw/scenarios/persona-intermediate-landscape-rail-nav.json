@@ -1,0 +1,226 @@
+{
+  "name": "persona-intermediate-landscape-rail-nav",
+  "note": "Landscape audit (2026-10-05) Direction A, navigation. Sideways on a phone the header (69px) and bottom tab bar (67px) took 40% of a 340px screen while ~190px of each side was empty gutter. The rail moves navigation to the axis landscape has spare: the SAME .tabbar element becomes a 76px left rail (Songs / Compose / Tune, same order and labels, >=56px tall buttons), the Settings gear sits at the rail top, the brand + purpose line are gone, and the content column fills the screen from the rail to the right edge and top to bottom. Asserts at 915x340 and 740x320: rail geometry, order, hit-tests and tap floors; the view starts at the top with no bottom chrome; each rail tap switches screens without moving the rail; keyboard focus order is gear -> Songs -> Compose -> Tune (DOM order unchanged); Enter on the gear opens Settings and Escape closes it. Then 412x800 and 1280x800 keep the bottom tab bar, the header and the 540px column.",
+  "persona": "intermediate",
+  "dismissNotables": [
+    "firstrun",
+    "whynote",
+    "composeintro",
+    "transposetip",
+    "backup",
+    "scaletip",
+    "tunefirst",
+    "savebasics"
+  ],
+  "seed": {
+    "music.calloutsShown.v1": "{\"library\": 1, \"compose\": 1, \"tune\": 1}",
+    "music.offlineReadyCued.v1": "1"
+  },
+  "viewport": {
+    "width": 915,
+    "height": 340
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/index.html?p=ukulele-gcea"
+    },
+    {
+      "action": "wait",
+      "ms": 1200
+    },
+    {
+      "action": "resize",
+      "width": 915,
+      "height": 340
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "evalAssert",
+      "label": "915x340: the tab bar is a left rail (same buttons, same order, >=56px tall, live), the gear sits at the rail top, the header is gone and the column fills the rest of the screen top to bottom",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var T='915x340';var tb=document.querySelector('.tabbar'),t=tb.getBoundingClientRect(),v=document.getElementById('view').getBoundingClientRect();if(!(t.left<=0.5&&t.width<=100&&t.height>t.width))throw new Error(T+': the tab bar is not a left rail '+R(tb));var bs=[].slice.call(tb.querySelectorAll('button'));var lbl=bs.map(function(b){return b.textContent.trim().replace(/\\s+/g,' ');});if(lbl.join('|').indexOf('Songs')<0||!/Songs.*Compose.*Tune/.test(lbl.join('|')))throw new Error(T+': rail labels/order changed: '+lbl.join('|'));for(var i=1;i<bs.length;i++){if(!(bs[i].getBoundingClientRect().top>=bs[i-1].getBoundingClientRect().bottom-0.5))throw new Error(T+': rail buttons not stacked top-to-bottom in tab order');}bs.forEach(function(b){big(b,T+' rail '+b.textContent.trim(),44,56);hits(b,T+' rail '+b.textContent.trim());if(b.getBoundingClientRect().bottom>innerHeight+0.5)throw new Error(T+': rail button off-screen');});var g=document.getElementById('settingsBtn'),gr=g.getBoundingClientRect();big(g,T+' gear');hits(g,T+' gear');if(!(gr.right<=t.right+0.5&&gr.left>=-0.5&&gr.bottom<=bs[0].getBoundingClientRect().top+0.5))throw new Error(T+': the gear is not at the top of the rail '+R(g));if(shown(document.getElementById('ctxLine'))||shown(document.querySelector('.appbar .brand .nm')))throw new Error(T+': the portrait header (brand / purpose line) still shows');if(!(v.left>=t.right-0.5))throw new Error(T+': the view sits under the rail');if(v.top>0.5)throw new Error(T+': the view does not start at the top - header still takes '+Math.round(v.top)+'px');if(v.right<innerWidth-0.5||v.width<innerWidth-120)throw new Error(T+': the column does not fill the width '+R(document.getElementById('view')));if(v.bottom<innerHeight-0.5)throw new Error(T+': bottom chrome still takes '+Math.round(innerHeight-v.bottom)+'px');return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "rail-songs-915x340"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=compose]"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "915x340: rail tap -> compose screen on, rail button lit, rail unmoved",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var b=document.querySelector('.tabbar [data-tab=compose]');if(!document.getElementById('s-compose').classList.contains('on'))throw new Error('screen s-compose not shown');if(!b.classList.contains('on'))throw new Error('rail button not lit');var t=document.querySelector('.tabbar').getBoundingClientRect();if(!(t.left<=0.5&&t.width<=100))throw new Error('rail moved on tab switch');return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "rail-compose-915x340"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=tune]"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "915x340: rail tap -> tune screen on, rail button lit, rail unmoved",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var b=document.querySelector('.tabbar [data-tab=tune]');if(!document.getElementById('s-tune').classList.contains('on'))throw new Error('screen s-tune not shown');if(!b.classList.contains('on'))throw new Error('rail button not lit');var t=document.querySelector('.tabbar').getBoundingClientRect();if(!(t.left<=0.5&&t.width<=100))throw new Error('rail moved on tab switch');return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "rail-tune-915x340"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=library]"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "915x340: rail tap -> library screen on, rail button lit, rail unmoved",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var b=document.querySelector('.tabbar [data-tab=library]');if(!document.getElementById('s-library').classList.contains('on'))throw new Error('screen s-library not shown');if(!b.classList.contains('on'))throw new Error('rail button not lit');var t=document.querySelector('.tabbar').getBoundingClientRect();if(!(t.left<=0.5&&t.width<=100))throw new Error('rail moved on tab switch');return true;})()"
+    },
+    {
+      "action": "resize",
+      "width": 740,
+      "height": 320
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "evalAssert",
+      "label": "740x320: the tab bar is a left rail (same buttons, same order, >=56px tall, live), the gear sits at the rail top, the header is gone and the column fills the rest of the screen top to bottom",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var T='740x320';var tb=document.querySelector('.tabbar'),t=tb.getBoundingClientRect(),v=document.getElementById('view').getBoundingClientRect();if(!(t.left<=0.5&&t.width<=100&&t.height>t.width))throw new Error(T+': the tab bar is not a left rail '+R(tb));var bs=[].slice.call(tb.querySelectorAll('button'));var lbl=bs.map(function(b){return b.textContent.trim().replace(/\\s+/g,' ');});if(lbl.join('|').indexOf('Songs')<0||!/Songs.*Compose.*Tune/.test(lbl.join('|')))throw new Error(T+': rail labels/order changed: '+lbl.join('|'));for(var i=1;i<bs.length;i++){if(!(bs[i].getBoundingClientRect().top>=bs[i-1].getBoundingClientRect().bottom-0.5))throw new Error(T+': rail buttons not stacked top-to-bottom in tab order');}bs.forEach(function(b){big(b,T+' rail '+b.textContent.trim(),44,56);hits(b,T+' rail '+b.textContent.trim());if(b.getBoundingClientRect().bottom>innerHeight+0.5)throw new Error(T+': rail button off-screen');});var g=document.getElementById('settingsBtn'),gr=g.getBoundingClientRect();big(g,T+' gear');hits(g,T+' gear');if(!(gr.right<=t.right+0.5&&gr.left>=-0.5&&gr.bottom<=bs[0].getBoundingClientRect().top+0.5))throw new Error(T+': the gear is not at the top of the rail '+R(g));if(shown(document.getElementById('ctxLine'))||shown(document.querySelector('.appbar .brand .nm')))throw new Error(T+': the portrait header (brand / purpose line) still shows');if(!(v.left>=t.right-0.5))throw new Error(T+': the view sits under the rail');if(v.top>0.5)throw new Error(T+': the view does not start at the top - header still takes '+Math.round(v.top)+'px');if(v.right<innerWidth-0.5||v.width<innerWidth-120)throw new Error(T+': the column does not fill the width '+R(document.getElementById('view')));if(v.bottom<innerHeight-0.5)throw new Error(T+': bottom chrome still takes '+Math.round(innerHeight-v.bottom)+'px');return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "rail-songs-740x320"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=compose]"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "740x320: rail tap -> compose screen on, rail button lit, rail unmoved",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var b=document.querySelector('.tabbar [data-tab=compose]');if(!document.getElementById('s-compose').classList.contains('on'))throw new Error('screen s-compose not shown');if(!b.classList.contains('on'))throw new Error('rail button not lit');var t=document.querySelector('.tabbar').getBoundingClientRect();if(!(t.left<=0.5&&t.width<=100))throw new Error('rail moved on tab switch');return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "rail-compose-740x320"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=tune]"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "740x320: rail tap -> tune screen on, rail button lit, rail unmoved",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var b=document.querySelector('.tabbar [data-tab=tune]');if(!document.getElementById('s-tune').classList.contains('on'))throw new Error('screen s-tune not shown');if(!b.classList.contains('on'))throw new Error('rail button not lit');var t=document.querySelector('.tabbar').getBoundingClientRect();if(!(t.left<=0.5&&t.width<=100))throw new Error('rail moved on tab switch');return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "rail-tune-740x320"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=library]"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "740x320: rail tap -> library screen on, rail button lit, rail unmoved",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var b=document.querySelector('.tabbar [data-tab=library]');if(!document.getElementById('s-library').classList.contains('on'))throw new Error('screen s-library not shown');if(!b.classList.contains('on'))throw new Error('rail button not lit');var t=document.querySelector('.tabbar').getBoundingClientRect();if(!(t.left<=0.5&&t.width<=100))throw new Error('rail moved on tab switch');return true;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "keyboard order: the gear precedes Songs, Compose, Tune in the focus order (DOM order unchanged - no markup moved)",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var f=[].slice.call(document.querySelectorAll('button,a[href],input,select,[tabindex]')).filter(function(e){return e.tabIndex>=0&&!e.disabled;});var ix=['#settingsBtn','.tabbar [data-tab=library]','.tabbar [data-tab=compose]','.tabbar [data-tab=tune]'].map(function(s){return f.indexOf(document.querySelector(s));});for(var i=0;i<ix.length;i++){if(ix[i]<0)throw new Error('not focusable: #'+i);if(i&&!(ix[i]>ix[i-1]))throw new Error('focus order broken at #'+i+': '+ix.join(','));}document.getElementById('settingsBtn').focus();return document.activeElement===document.getElementById('settingsBtn');})()"
+    },
+    {
+      "action": "press",
+      "key": "Enter"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#setOv"
+    },
+    {
+      "action": "evalAssert",
+      "label": "Enter on the rail gear opens the Settings sheet (aria-expanded true)",
+      "js": "!document.getElementById('setOv').hidden&&document.getElementById('settingsBtn').getAttribute('aria-expanded')==='true'"
+    },
+    {
+      "action": "screenshot",
+      "name": "rail-settings-740x320"
+    },
+    {
+      "action": "press",
+      "key": "Escape"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "evalAssert",
+      "label": "Escape closes Settings",
+      "js": "document.getElementById('setOv').hidden||getComputedStyle(document.getElementById('setOv')).display==='none'"
+    },
+    {
+      "action": "resize",
+      "width": 412,
+      "height": 800
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "evalAssert",
+      "label": "412x800 (no regression): bottom tab bar, header with brand + gear on top, 540px column",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var tb=document.querySelector('.tabbar').getBoundingClientRect(),ab=document.querySelector('.appbar').getBoundingClientRect(),app=document.querySelector('.app').getBoundingClientRect();if(!(tb.width>tb.height&&tb.bottom>=innerHeight-1))throw new Error('412x800: tab bar is not at the bottom');if(!(ab.top<=0.5&&ab.width>tb.height&&shown(document.querySelector('.appbar .brand .nm'))))throw new Error('412x800: header changed');if(app.width>540.5)throw new Error('412x800: column widened');return true;})()"
+    },
+    {
+      "action": "resize",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "evalAssert",
+      "label": "1280x800 (no regression): bottom tab bar, header with brand + gear on top, 540px column",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var tb=document.querySelector('.tabbar').getBoundingClientRect(),ab=document.querySelector('.appbar').getBoundingClientRect(),app=document.querySelector('.app').getBoundingClientRect();if(!(tb.width>tb.height&&tb.bottom>=innerHeight-1))throw new Error('1280x800: tab bar is not at the bottom');if(!(ab.top<=0.5&&ab.width>tb.height&&shown(document.querySelector('.appbar .brand .nm'))))throw new Error('1280x800: header changed');if(app.width>540.5)throw new Error('1280x800: column widened');return true;})()"
+    }
+  ]
+}

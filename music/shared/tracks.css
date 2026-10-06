@@ -896,3 +896,49 @@
     .bt-st-t.mq{text-overflow:ellipsis;}
     .bt-st-tx2{display:none;}
   }
+
+/* =====================================================================
+ * LANDSCAPE PHONE - the player inside the rail shell (Direction A; the shell
+ * itself is the rail block at the end of songbook.css, same gate, which also
+ * defines --rail-w / --bar-h / --bar-b / --bar-res).
+ * ---------------------------------------------------------------------
+ * Kept as ONE block at the end of this file so the portrait rules above stay
+ * untouched (and a parallel edit to them merges cleanly).
+ * - The bar is ONE 52px row along the bottom of the content column: title,
+ *   the same transport in the same order, x, then progress + time inline.
+ *   Same controls, same slot in every landscape state - the "never changes
+ *   shape" contract holds per orientation.
+ * - The docked PIP rides INSIDE the bar's leading slot (the bar pads left to
+ *   clear it) instead of floating mid-screen over +Add / Start / Save. Its
+ *   whole face is the expand target (the thmax button stretched over it, so
+ *   the action stays a labelled, focusable button). The park tab is dropped
+ *   here: the bar title tap and the menu already park the video.
+ * - The theater is sized by HEIGHT: 16:9 in what is left above the bar
+ *   (~390x218 at 340px tall), centred over the content column, handles 44px
+ *   tall (a11y floor - they are the only skip/park/dock controls).
+ * - The bar lifts above the theater scrim, so play/pause/next stay live while
+ *   the video shows (the card never overlaps the bar).
+ * - The expanded Studio sheet sits beside the rail rather than under it.
+ * ===================================================================== */
+@media (orientation:landscape) and (max-height:560px) and (min-height:280px){
+  .bt-st-head{left:calc(var(--rail-w,76px) + 10px);right:calc(env(safe-area-inset-right,0px) + 10px);width:auto;max-width:none;margin:0;
+    bottom:var(--bar-b,8px);min-height:var(--bar-h,52px);flex-direction:row;align-items:center;gap:12px;padding:3px 10px;}
+  .bt-st-barrow{flex:3 1 0;min-width:0;}
+  .bt-st-progrow{flex:1 1 0;min-width:120px;}
+  body.pipdock .bt-st-head{padding-left:118px;}
+  .bt-st-media.min{left:calc(var(--rail-w,76px) + 14px);right:auto;bottom:calc(var(--bar-b,8px) + 3px);
+    width:100px;height:46px;max-height:46px;border-radius:8px;box-shadow:none;}
+  .bt-st-media.min .bt-st-thmax{position:absolute;inset:0;height:auto;z-index:2;border:0;
+    align-items:flex-start;justify-content:flex-end;padding:2px 6px;font-size:16px;
+    background:linear-gradient(to bottom left, rgba(0,0,0,.55), transparent 55%);color:rgba(255,255,255,.92);}
+  .bt-st-media.min + .bt-st-piphide{display:none;}
+  .bt-player.vidopen .bt-st-media:not(.min):not(.hid){
+    top:calc(env(safe-area-inset-top,0px) + 8px);
+    left:calc(var(--rail-w,76px) + (100vw - var(--rail-w,76px) - env(safe-area-inset-right,0px)) / 2);
+    width:min(100vw - var(--rail-w,76px) - env(safe-area-inset-right,0px) - 20px,
+      (100dvh - var(--bar-res,68px) - 54px - env(safe-area-inset-top,0px)) * 1.7778);}
+  .bt-player.vidopen .bt-st-media:not(.min):not(.hid) .bt-st-thmin{height:44px;}
+  .bt-player.vidopen .bt-st-media:not(.min):not(.hid) .bt-st-thdock{width:56px;height:44px;}
+  .bt-player.mini.vidopen .bt-st-head{z-index:95;}
+  .bt-player.studio:not(.mini){left:var(--rail-w,76px);}
+}
