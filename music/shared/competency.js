@@ -22,7 +22,8 @@
  * The portable document (schema "skill-competency-profile/v1"):
  *   { schema, skill, discipline:"music", updated:ISO,
  *     provenance:[{source, at}],
- *     competencies:[{id, name, desc, level:0-100, target, evidence_count, last_evidence}],
+ *     competencies:[{id, name, desc, level:0-100|null, target, evidence_count, last_evidence}],
+ *       // level null = UNASSESSED (never observed) - not 0, not beginner
  *     preferences?:[{id, statement, evidence_count, last_evidence}] }  // additive, optional
  * ===================================================================== */
 (function (root) {
@@ -206,12 +207,21 @@
 
   // The portable export document for one skill. Appends an export-event
   // provenance stamp; carries preferences only when present (absent-tolerant).
+  // UNASSESSED IS EXPLICIT in the interchange doc (M-MUSICIAN-PROFILE-VNEXT):
+  // a competency the app never observed (no evidence, ladder still at its
+  // internal 0 floor) exports as `level: null` - never a 0 a reader could
+  // mistake for "beginner". Storage keeps the 0 (the ladder's own floor);
+  // only the document another participant reads changes. mergeInto clamps a
+  // null back to 0 on import, so a round trip never moves a counter.
   function exportProfile(skillId, store) {
     var p = getProfile(skillId, store);
     if (!p) return null;
     var out = clone(p);
     out.schema = SCHEMA; out.discipline = 'music'; out.skill = skillId;
     out.updated = nowIso();
+    (Array.isArray(out.competencies) ? out.competencies : []).forEach(function (c) {
+      if (c && !(c.evidence_count > 0) && !(c.level > 0)) c.level = null;
+    });
     out.provenance = (Array.isArray(out.provenance) ? out.provenance : []).concat([{ source: EXPORT_SOURCE, at: nowIso() }]);
     if (out.preferences && !out.preferences.length) delete out.preferences; // omit an empty prefs array (clean doc)
     return JSON.stringify(out, null, 2);

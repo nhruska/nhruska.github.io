@@ -28,12 +28,12 @@
     },
     {
       "action": "waitFor",
-      "selector": ".agentDiscloseHead",
+      "selector": "#agentBlock .agentDiscloseHead",
       "timeoutMs": 8000
     },
     {
       "action": "tap",
-      "selector": ".agentDiscloseHead"
+      "selector": "#agentBlock .agentDiscloseHead"
     },
     {
       "action": "wait",

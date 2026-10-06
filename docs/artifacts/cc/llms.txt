@@ -1,5 +1,5 @@
 # Repo Command Center - nhruska/nhruska.github.io - Problem Solutions (agent-readable brief)
-Generated: 2026-10-05T18:34:39Z
+Generated: 2026-10-06T16:01:50Z
 Status: ok
 
 ## NOW
@@ -9,12 +9,14 @@ Status: ok
 - Queue NOW: **STORED 2026-07-10 (v136)**: full SDD loop closed - spark -> skeleton -> v0.1 -> operator reframe burst -> v0.2 -> "store it" -> songs.json (first operator-authored catalog song, library-scenario-proven). Taste verdicts encoded into songwriting-coach; next round = play-and-burst on feel
 - Queue NOW: **SHIPPED 2026-07-10 (PR #199, v133)**: every keyed surface spells letter-per-degree from `preferredTonicName` (bVII of C = Bb; A#-maj renders Bb-maj); token-vs-display split keeps packs/audio/storage canonical; 12 professor traps enforced as tests; PW pixel gates re-proven. Wave-2 residue queued below (S-KEYPICKER-FLATNAMES).
 - Queue NOW: CLOSED 2026-07-10
+- Open PR #371 (CI green): fix(theory): F major's B tile reads B, not Cb (music-v371) - https://github.com/nhruska/nhruska.github.io/pull/371
+- Open draft PR #370 (CI green): test(pw): bring 4 stale scenarios up to the shipped app - https://github.com/nhruska/nhruska.github.io/pull/370
+- Open draft PR #365 (CI green): cc: REST fallback so the session-start sweep sees open PRs; stop run-all dropping test summaries; mark #355 merged - https://github.com/nhruska/nhruska.github.io/pull/365
+- Open PR #364 (CI green): docs(plans): nh-pages Project handoff 2026-10-05 - https://github.com/nhruska/nhruska.github.io/pull/364
 - Open draft PR #362 (CI green): chore(claude): allow merge-resolution commands on PR branches in sprint sessions - https://github.com/nhruska/nhruska.github.io/pull/362
-- Open PR #358 (CI green): docs: propose Thought-Ware method v0.1 (base of the #346/#347 stack) - https://github.com/nhruska/nhruska.github.io/pull/358
 - Open draft PR #356 (CI green): docs(plans): SBS merge plan for the 6 open PRs - https://github.com/nhruska/nhruska.github.io/pull/356
-- Open draft PR #351 (CI green): feat(profile): portable lifelong Musician Profile + VNext semantic model (unassessed everywhere, global musicianship, coach contract, Settings > Musician profile) - review-only - https://github.com/nhruska/nhruska.github.io/pull/351
 - Open draft PR #347 (CI green): docs: enforce engineering-wiki lifecycle integrity - https://github.com/nhruska/nhruska.github.io/pull/347
-- Open draft PR #346 (CI green): docs: calibrate Thought-Ware public claims - https://github.com/nhruska/nhruska.github.io/pull/346
+- Open PR #346 (CI green): docs: calibrate Thought-Ware public claims - https://github.com/nhruska/nhruska.github.io/pull/346
 
 ## Open gaps / to-wire
 - Vision CAPTURED: Vision Capture: Command Center Hierarchy (operator, 2026-07-05) - https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-command-center-20260705.md
@@ -22,14 +24,14 @@ Status: ok
 - Vision CAPTURED: Vision Capture: Deterministic Adaptive Tutor (operator, 2026-07-05) - https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-tutor-deterministic-20260705.md
 
 ## Recent work products
+- #369 - feat(shell): landscape phones get a side rail and one-row player (music-v369) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/369
+- #368 - fix(player): video window never covers the mini-player controls or tab bar (music-v368) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/368
+- #367 - feat(tune): two-pane landscape Tune for every instrument, one screen, no scroll (music-v367) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/367
+- #366 - fix(tune): landscape mini-player no longer buries the bottom string row (music-v366) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/366
 - #363 - fix(check-cache-bump): judge uncommitted changes, not just HEAD (2026-10-05) - https://github.com/nhruska/nhruska.github.io/pull/363
 - #361 - fix(check-cache-bump): skip pre-Math commits in the Math per-commit walk (2026-10-03) - https://github.com/nhruska/nhruska.github.io/pull/361
 - #360 - verify: adopt the verification runtime at V2 for the Music app (2026-10-05) - https://github.com/nhruska/nhruska.github.io/pull/360
-- #357 - test(pw): salvage the setlist-scroll regression gate from #350 (2026-10-04) - https://github.com/nhruska/nhruska.github.io/pull/357
-- #355 - Math app v1: timed workouts + skills path at /math/, landing lists 2 apps (2026-09-27) - https://github.com/nhruska/nhruska.github.io/pull/355
-- #353 - fix(setlist): stop rows flex-shrinking below content height on overflow (2026-09-17) - https://github.com/nhruska/nhruska.github.io/pull/353
-- #352 - Round 19: a new song raises the theater (scrimmed), and the dock stops eating tuner strings (2026-09-25) - https://github.com/nhruska/nhruska.github.io/pull/352
-- #348 - feat(tuner): Guided Tune - string-by-string loop, runway, drone cancellation, tuning lab (2026-10-03) - https://github.com/nhruska/nhruska.github.io/pull/348
+- #358 - docs: propose Thought-Ware method v0.1 (base of the #346/#347 stack) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/358
 
 ## Links
 - Repo Command Center: https://nhruska.github.io/docs/artifacts/cc/repo.html
@@ -42,6 +44,6 @@ Status: ok
 ## Conventions
 - Payload: docs/artifacts/cc/payload-repo.json
 - Regen: python3 scripts/command-center-gen.py (rewrites the payload AND this file together)
-- Suite: node test/run-all.js (4274 cases / 78 suites)
+- Suite: node test/run-all.js (4339 cases / 81 suites)
 - CACHE discipline: music/shared|play changes require a music/sw.js CACHE bump - scripts/check-cache-bump.sh
 - Public repo: payload + this brief carry public data only (no session-file content)

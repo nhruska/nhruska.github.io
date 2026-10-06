@@ -107,7 +107,9 @@
         "test/toast.test.js",
         "test/nav-history-solo.test.js",
         "test/accordion.test.js",
-        "test/pw/scenarios/smoke-boot.json"
+        "test/pw/scenarios/smoke-boot.json",
+        "test/pw/scenarios/persona-intermediate-landscape-rail-nav.json",
+        "test/pw/scenarios/persona-intermediate-landscape-songs-list.json"
       ],
       "checks": [
         {
@@ -126,6 +128,18 @@
           "cmd": "PY=python3; python3 -c 'import playwright' 2>/dev/null || PY=\"$HOME/.claude/.venv/bin/python\"; \"$PY\" test/pw/run-scenario.py test/pw/scenarios/smoke-boot.json --base-url={url}",
           "needs_runtime": true,
           "timeout_s": 120
+        },
+        {
+          "id": "scenario-persona-intermediate-landscape-rail-nav",
+          "cmd": "PY=python3; python3 -c 'import playwright' 2>/dev/null || PY=\"$HOME/.claude/.venv/bin/python\"; \"$PY\" test/pw/run-scenario.py test/pw/scenarios/persona-intermediate-landscape-rail-nav.json --base-url={url}",
+          "needs_runtime": true,
+          "timeout_s": 300
+        },
+        {
+          "id": "scenario-persona-intermediate-landscape-songs-list",
+          "cmd": "PY=python3; python3 -c 'import playwright' 2>/dev/null || PY=\"$HOME/.claude/.venv/bin/python\"; \"$PY\" test/pw/run-scenario.py test/pw/scenarios/persona-intermediate-landscape-songs-list.json --base-url={url}",
+          "needs_runtime": true,
+          "timeout_s": 300
         }
       ],
       "probes": [
@@ -165,13 +179,27 @@
         "music/shared/tune-flow.js",
         "test/tune-flow.test.js",
         "test/tuner-gate.test.js",
-        "test/tuner-near.test.js"
+        "test/tuner-near.test.js",
+        "test/pw/scenarios/tune-landscape-miniplayer.json",
+        "test/pw/scenarios/tune-landscape-two-pane.json"
       ],
       "checks": [
         {
           "id": "unit",
           "cmd": "node test/tuner.test.js && node test/tuner-gate.test.js && node test/tuner-near.test.js && node test/tune-flow.test.js && node test/sound.test.js && node test/audio.test.js",
           "timeout_s": 120
+        },
+        {
+          "id": "scenario-tune-landscape-miniplayer",
+          "cmd": "PY=python3; python3 -c 'import playwright' 2>/dev/null || PY=\"$HOME/.claude/.venv/bin/python\"; \"$PY\" test/pw/run-scenario.py test/pw/scenarios/tune-landscape-miniplayer.json --base-url={url}",
+          "needs_runtime": true,
+          "timeout_s": 120
+        },
+        {
+          "id": "scenario-tune-landscape-two-pane",
+          "cmd": "PY=python3; python3 -c 'import playwright' 2>/dev/null || PY=\"$HOME/.claude/.venv/bin/python\"; \"$PY\" test/pw/run-scenario.py test/pw/scenarios/tune-landscape-two-pane.json --base-url={url}",
+          "needs_runtime": true,
+          "timeout_s": 300
         }
       ],
       "probes": [
@@ -320,7 +348,8 @@
         "test/yt-info.test.js",
         "test/playlist-import.test.js",
         "test/solo-scales.test.js",
-        "test/pw/scenarios/persona-beginner-studio.json"
+        "test/pw/scenarios/persona-beginner-studio.json",
+        "test/pw/scenarios/landscape-video-layers.json"
       ],
       "checks": [
         {
@@ -333,6 +362,12 @@
           "cmd": "PY=python3; python3 -c 'import playwright' 2>/dev/null || PY=\"$HOME/.claude/.venv/bin/python\"; \"$PY\" test/pw/run-scenario.py test/pw/scenarios/persona-beginner-studio.json --base-url={url}",
           "needs_runtime": true,
           "timeout_s": 120
+        },
+        {
+          "id": "scenario-landscape-video-layers",
+          "cmd": "PY=python3; python3 -c 'import playwright' 2>/dev/null || PY=\"$HOME/.claude/.venv/bin/python\"; \"$PY\" test/pw/run-scenario.py test/pw/scenarios/landscape-video-layers.json --base-url={url}",
+          "needs_runtime": true,
+          "timeout_s": 300
         }
       ]
     },
