@@ -177,21 +177,39 @@
       return L + accidentalFor(((pc0 + s) % 12) - NAT_PC[L]);
     });
   }
-  // Key-aware spelling of a single chord/note ROOT by its FUNCTION in the key: the
-  // letter is the key's diatonic letter at that scale-degree number (from the roman
-  // numeral), the accidental hits the actual pitch. So the bVII of C spells Bb (7th
-  // letter B, lowered), never A#. Falls back to canonical-sharp on unknown input.
-  function spellRootInKey(keyRoot, keyMode, noteRoot) {
+  // Key-aware spelling of a single chord/note ROOT by its FUNCTION in the key.
+  // A DIATONIC root takes the mode's own letter-per-degree (F# major's 7th is E#,
+  // F lydian's 4th is B). A CHROMATIC root starts from the RN_CHROM degree (the
+  // flat-degree convention: bVII of C spells Bb, never A#) but takes the other
+  // neighbouring letter when that needs FEWER accidentals - so F major's tritone
+  // is B (#IV), not Cb (bV), and Db major's D is D, not Ebb. Tie -> RN_CHROM.
+  // Returns { deg: 0-6 scale-degree letter index, name } or null on unknown input.
+  function rootDegreeInKey(keyRoot, keyMode, noteRoot) {
     var kp = pcOf(keyRoot), cp = pcOf(noteRoot);
-    if (kp < 0 || cp < 0) return spell(cp < 0 ? 0 : cp);
+    if (kp < 0 || cp < 0) return null;
     var kli = LETTERS7.indexOf(String(keyRoot).charAt(0).toUpperCase());
-    if (kli < 0) return spell(cp);
+    if (kli < 0) return null;
     var iv = ((cp - kp) % 12 + 12) % 12;
+    function at(deg) {
+      deg = ((deg % 7) + 7) % 7;
+      var L = LETTERS7[(kli + deg) % 7];
+      return { deg: deg, name: L + accidentalFor(cp - NAT_PC[L]) };
+    }
+    var di = MODES[modeKey(keyMode)].indexOf(iv);
+    if (di >= 0) return at(di);
     var NUM = { I: 0, II: 1, III: 2, IV: 3, V: 4, VI: 5, VII: 6 };
-    var deg = NUM[RN_CHROM[iv].replace(/^b/, '')];
-    if (deg == null) return spell(cp);
-    var L = LETTERS7[(kli + deg) % 7];
-    return L + accidentalFor(cp - NAT_PC[L]);
+    var best = at(NUM[RN_CHROM[iv].replace(/^b/, '')]);
+    [best.deg - 1, best.deg + 1].forEach(function (d) {
+      var alt = at(d);
+      if (alt.name.length < best.name.length) best = alt;
+    });
+    return best;
+  }
+  function spellRootInKey(keyRoot, keyMode, noteRoot) {
+    var r = rootDegreeInKey(keyRoot, keyMode, noteRoot);
+    if (r) return r.name;
+    var cp = pcOf(noteRoot);
+    return spell(cp < 0 ? 0 : cp);
   }
 
   // ---- key-aware render kernel ----------------------------------------------
@@ -258,6 +276,24 @@
   // routed through the preferred tonic name, so it composes with the naming policy.
   function noteInKey(keyRoot, keyMode, noteRoot) {
     return spellRootInKey(preferredTonicName(keyRoot, keyMode), keyMode, noteRoot);
+  }
+  // Roman numeral for a CHROMATIC chord that agrees with its noteInKey name: the
+  // degree is the spelled letter's, the accidental is relative to the MAJOR scale
+  // (the romanFor convention). B in F reads #IV beside "B"; Bb in C stays bVII.
+  // Display only - analysis keeps romanFor's fixed RN_CHROM table.
+  var RN7 = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
+  function chromaticRomanInKey(chord, keyRoot, keyMode) {
+    var c = chordParts(chord);
+    if (!c) return '';
+    var tonic = preferredTonicName(keyRoot, keyMode);
+    var r = rootDegreeInKey(tonic, keyMode, c.root);
+    if (!r) return '';
+    var iv = ((pcOf(c.root) - pcOf(tonic)) % 12 + 12) % 12;
+    var rn = accidentalFor(iv - MODES.ionian[r.deg]) + RN7[r.deg];
+    var q = suffixQuality(c.suffix);
+    if (q === 'min' || q === 'dim') rn = rn.toLowerCase();
+    if (q === 'dim') rn += '°'; else if (q === 'aug') rn += '+';
+    return rn;
   }
 
   /* ---- SVG wheel renderer (browser only; node -c'd, eyeballed) ---- */
@@ -435,6 +471,7 @@
     diatonicInKey: diatonicInKey,
     soloScaleInKey: soloScaleInKey,
     noteInKey: noteInKey,
+    chromaticRomanInKey: chromaticRomanInKey,
     scale: scale,
     scaleDegrees: scaleDegrees,
     modeChange: modeChange,

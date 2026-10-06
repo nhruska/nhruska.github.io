@@ -97,7 +97,11 @@ test('chordSpeller: NO double-transpose - F major at +4 spells the bVII as G, no
   assert.strictEqual(sk.key, 'A');
   var disp = Songbook.chordSpeller(sk.key, sk.mode);
   assert.strictEqual(disp('G'), 'G');                                      // correct
-  assert.notStrictEqual(disp('G'), Circle.noteInKey(Songbook.tpose(sk.key, st), 'major', 'G')); // != double-transpose result
+  // Discriminator: since NH-2 the double-transposed key (C# -> Db) no longer
+  // emits Abb for G (chromatic roots drop needless double flats), so G alone
+  // can't tell the two keys apart. A's leading tone still does: G# in A, Ab in Db.
+  assert.strictEqual(disp('G#'), 'G#');
+  assert.notStrictEqual(disp('G#'), Circle.noteInKey(Songbook.tpose(sk.key, st), 'major', 'G#')); // != double-transpose result
 });
 test('renderChordOnly / renderSheet: an optional display map threads through; without it the raw token renders (back-compat)', function () {
   var song = { seq: ['F', 'A#', 'C'], sheet: [['Verse', '[F] [A#] [C]']], key: 'F', mode: 'major' };

@@ -1,0 +1,214 @@
+{
+  "name": "video-window-clear",
+  "note": "OPERATOR UAT (phone, landscape ~915x340, 2026-10): with a song playing the round-19 THEATER floated in the middle of the screen over the mini-player's shuffle/prev/play-pause/next and the content above. CONTRACT: whatever video window is up (the new-song theater or the docked PIP), it NEVER covers the now-playing transport or the bottom tab bar, in landscape AND portrait, on every tab - the transport is how you pause the very video the window shows, and the tabs are how you leave. Two causes, both asserted here: (1) the theater's size budget read 100vh while the app shell (.app, songbook.css) and therefore the fixed bar+tabbar stack are laid out in 100dvh - on Android Chrome 100vh is the LARGE viewport (URL bar retracted), so in a short landscape viewport the card grew past the bar it was budgeted to clear (headless Chromium has no URL bar, so that half is pinned by the round-19 source test in test/tracks.test.js); (2) the round-19 scrim (.bt-st-scrim, z-94) painted over the bar (z-60) and the tabbar, so every transport tap and tab tap docked the video instead of acting - the scrim is the modal affordance for CONTENT, not for the player's own chrome. The scrim stays full-viewport (video-pip's contract); the bar and tabbar paint above it.",
+  "viewport": {
+    "width": 915,
+    "height": 340
+  },
+  "steps": [
+    {
+      "action": "waitFor",
+      "selector": "#songsList .listItem:has-text(\"Reggae Backing Track\") .li-body",
+      "timeoutMs": 8000
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Reggae Backing Track\") .li-body"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini.vidopen .bt-st-media",
+      "timeoutMs": 15000
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "install the shared clearance check (defines window.__vwc)",
+      "js": "(function(){window.__vwc=function(tab,state){var b=document.querySelector('.tabbar button[data-tab='+tab+']');if(!b)throw new Error('no tab '+tab);b.click();var p=document.querySelector('.bt-player');var m=document.querySelector('.bt-st-media');if(!p||!m)throw new Error('no player');if(state==='theater'&&!(p.classList.contains('mini')&&p.classList.contains('vidopen')&&!m.classList.contains('min')))throw new Error('expected the mini-player THEATER, got player='+p.className+' media='+m.className);if(state==='pip'&&!(p.classList.contains('mini')&&m.classList.contains('min')))throw new Error('expected the docked PIP, got player='+p.className+' media='+m.className);var mr=m.getBoundingClientRect();if(mr.width<60||mr.height<40)throw new Error('video window not shown: '+Math.round(mr.width)+'x'+Math.round(mr.height));function x(a,c){return a.left<c.right-0.5&&c.left<a.right-0.5&&a.top<c.bottom-0.5&&c.top<a.bottom-0.5;}function bx(r){return '('+Math.round(r.left)+','+Math.round(r.top)+' '+Math.round(r.width)+'x'+Math.round(r.height)+')';}var errs=[];var ctl=['[data-shuffle]','[data-npprev]','[data-nppp]','[data-npnext]','[data-minix]'];var tabs=Array.prototype.slice.call(document.querySelectorAll('.tabbar button'));if(tabs.length<3)errs.push('tabbar has '+tabs.length+' buttons');var tb=document.querySelector('.tabbar').getBoundingClientRect();if(x(mr,tb))errs.push('video '+bx(mr)+' overlaps tabbar '+bx(tb));var els=ctl.map(function(s){var e=document.querySelector('.bt-player.mini .bt-st-head '+s);if(!e)errs.push('missing control '+s);return e;}).filter(Boolean).concat(tabs);els.forEach(function(e){var r=e.getBoundingClientRect();if(r.width<10||r.height<10){errs.push((e.getAttribute('aria-label')||e.textContent.trim())+' not rendered');return;}if(x(mr,r))errs.push('video '+bx(mr)+' overlaps '+(e.getAttribute('aria-label')||e.textContent.trim())+' '+bx(r));var h=document.elementFromPoint(Math.round(r.left+r.width/2),Math.round(r.top+r.height/2));if(!h||!(h===e||e.contains(h)))errs.push((e.getAttribute('aria-label')||e.textContent.trim())+' hit-tests to '+(h?(h.tagName+'.'+h.className):'nothing'));});if(errs.length)throw new Error(window.innerWidth+'x'+window.innerHeight+' '+tab+' '+state+': '+errs.join(' | '));return true;};return true;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "915x340 Songs, theater: the video window clears the mini-player transport (shuffle/prev/play-pause/next/close) and the tab bar - no box overlap, and every control + tab hit-tests to ITSELF",
+      "js": "window.__vwc('library','theater')"
+    },
+    {
+      "action": "screenshot",
+      "name": "theater-songs-915x340"
+    },
+    {
+      "action": "evalAssert",
+      "label": "915x340 Tune, theater: the video window clears the mini-player transport (shuffle/prev/play-pause/next/close) and the tab bar - no box overlap, and every control + tab hit-tests to ITSELF",
+      "js": "window.__vwc('tune','theater')"
+    },
+    {
+      "action": "screenshot",
+      "name": "theater-tune-915x340"
+    },
+    {
+      "action": "resize",
+      "width": 844,
+      "height": 340,
+      "settleMs": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "844x340 Songs, theater: the video window clears the mini-player transport (shuffle/prev/play-pause/next/close) and the tab bar - no box overlap, and every control + tab hit-tests to ITSELF",
+      "js": "window.__vwc('library','theater')"
+    },
+    {
+      "action": "screenshot",
+      "name": "theater-songs-844x340"
+    },
+    {
+      "action": "evalAssert",
+      "label": "844x340 Tune, theater: the video window clears the mini-player transport (shuffle/prev/play-pause/next/close) and the tab bar - no box overlap, and every control + tab hit-tests to ITSELF",
+      "js": "window.__vwc('tune','theater')"
+    },
+    {
+      "action": "screenshot",
+      "name": "theater-tune-844x340"
+    },
+    {
+      "action": "resize",
+      "width": 740,
+      "height": 320,
+      "settleMs": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "740x320 Songs, theater: the video window clears the mini-player transport (shuffle/prev/play-pause/next/close) and the tab bar - no box overlap, and every control + tab hit-tests to ITSELF",
+      "js": "window.__vwc('library','theater')"
+    },
+    {
+      "action": "screenshot",
+      "name": "theater-songs-740x320"
+    },
+    {
+      "action": "evalAssert",
+      "label": "740x320 Tune, theater: the video window clears the mini-player transport (shuffle/prev/play-pause/next/close) and the tab bar - no box overlap, and every control + tab hit-tests to ITSELF",
+      "js": "window.__vwc('tune','theater')"
+    },
+    {
+      "action": "screenshot",
+      "name": "theater-tune-740x320"
+    },
+    {
+      "action": "resize",
+      "width": 412,
+      "height": 800,
+      "settleMs": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "412x800 Songs, theater: the video window clears the mini-player transport (shuffle/prev/play-pause/next/close) and the tab bar - no box overlap, and every control + tab hit-tests to ITSELF",
+      "js": "window.__vwc('library','theater')"
+    },
+    {
+      "action": "screenshot",
+      "name": "theater-songs-412x800"
+    },
+    {
+      "action": "evalAssert",
+      "label": "412x800 Tune, theater: the video window clears the mini-player transport (shuffle/prev/play-pause/next/close) and the tab bar - no box overlap, and every control + tab hit-tests to ITSELF",
+      "js": "window.__vwc('tune','theater')"
+    },
+    {
+      "action": "screenshot",
+      "name": "theater-tune-412x800"
+    },
+    {
+      "action": "resize",
+      "width": 375,
+      "height": 812,
+      "settleMs": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "375x812 Songs, theater: the video window clears the mini-player transport (shuffle/prev/play-pause/next/close) and the tab bar - no box overlap, and every control + tab hit-tests to ITSELF",
+      "js": "window.__vwc('library','theater')"
+    },
+    {
+      "action": "screenshot",
+      "name": "theater-songs-375x812"
+    },
+    {
+      "action": "evalAssert",
+      "label": "375x812 Tune, theater: the video window clears the mini-player transport (shuffle/prev/play-pause/next/close) and the tab bar - no box overlap, and every control + tab hit-tests to ITSELF",
+      "js": "window.__vwc('tune','theater')"
+    },
+    {
+      "action": "screenshot",
+      "name": "theater-tune-375x812"
+    },
+    {
+      "action": "evalAssert",
+      "label": "back to Songs",
+      "js": "(function(){document.querySelector('.tabbar button[data-tab=library]').click();return true;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "[data-vidscrim]"
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "evalAssert",
+      "label": "375x812 Songs, pip: the video window clears the mini-player transport (shuffle/prev/play-pause/next/close) and the tab bar - no box overlap, and every control + tab hit-tests to ITSELF",
+      "js": "window.__vwc('library','pip')"
+    },
+    {
+      "action": "evalAssert",
+      "label": "375x812 Tune, pip: the video window clears the mini-player transport (shuffle/prev/play-pause/next/close) and the tab bar - no box overlap, and every control + tab hit-tests to ITSELF",
+      "js": "window.__vwc('tune','pip')"
+    },
+    {
+      "action": "screenshot",
+      "name": "pip-tune-375x812"
+    },
+    {
+      "action": "resize",
+      "width": 915,
+      "height": 340,
+      "settleMs": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "915x340 Songs, pip: the video window clears the mini-player transport (shuffle/prev/play-pause/next/close) and the tab bar - no box overlap, and every control + tab hit-tests to ITSELF",
+      "js": "window.__vwc('library','pip')"
+    },
+    {
+      "action": "evalAssert",
+      "label": "915x340 Tune, pip: the video window clears the mini-player transport (shuffle/prev/play-pause/next/close) and the tab bar - no box overlap, and every control + tab hit-tests to ITSELF",
+      "js": "window.__vwc('tune','pip')"
+    },
+    {
+      "action": "screenshot",
+      "name": "pip-tune-915x340"
+    },
+    {
+      "action": "resize",
+      "width": 740,
+      "height": 320,
+      "settleMs": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "740x320 Songs, pip: the video window clears the mini-player transport (shuffle/prev/play-pause/next/close) and the tab bar - no box overlap, and every control + tab hit-tests to ITSELF",
+      "js": "window.__vwc('library','pip')"
+    },
+    {
+      "action": "evalAssert",
+      "label": "740x320 Tune, pip: the video window clears the mini-player transport (shuffle/prev/play-pause/next/close) and the tab bar - no box overlap, and every control + tab hit-tests to ITSELF",
+      "js": "window.__vwc('tune','pip')"
+    },
+    {
+      "action": "screenshot",
+      "name": "pip-tune-740x320"
+    }
+  ]
+}

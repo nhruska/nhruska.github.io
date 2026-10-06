@@ -1,6 +1,6 @@
 {
   "name": "video-pip",
-  "note": "EXPECTED RED pending an operator call (S-FIRSTSESSION-TAP-BLOCKED, 2026-09-03). This scenario's first assert pins 'a fresh device shows the video VISIBLE on a MINI player' as `vidopen` - the THEATER card. That card is position:fixed at top:58, 245px tall, z-96: placement sized for an OPEN sheet. On a mini player it pinned an iframe over the top ~300px of EVERY tab, so after any row-tap play the library, Compose and Tune silently ate taps there (measured: elementFromPoint over a Compose progression pick returned IFRAME). tracks.js now demotes a theater to the PIP dock when the player minimizes - which is what setVid's own stash comment always said minimize does, and the only resolution that keeps the video visible AND skippable AND off the page. The asserts here were NOT bent to agree: re-authoring this choreography changes a contract the operator owns, so it waits for his call. If he prefers the theater to stay, revert the one _setVid('pip', true) line in minimizeStudio and this goes green again. --- Rounds 9-16 (operator UAT 2026-08-10/13, 2026-09-02). ROUND 16 IS THE GOVERNING LAW (verbatim: \"don't auto hide yt video. I keep having to open it to skip after ads\"): THE APP NEVER HIDES THE VIDEO ON ITS OWN. A fresh open shows the video (theater) so YouTube's Skip Ads is reachable with no tap; there is no auto-minimize timer and no countdown at all. Round 15's intent (\"not show the video any other time\") survives as a REMEMBERED CHOICE - park it once and every later open is parked (music.vidPref.v1, additive), until you show it again. Why the reversal: twice an automatic hide trapped the operator inside an ad - a 7s wall-clock collapse (2026-07-31, mitigated to a 15s playback-anchored window), then round 15's open-PARKED default, which silently undid that mitigation. The ad boundary is undetectable cross-origin, so no timer can be tuned safely around it. Unchanged from rounds 9-15: the bar's LEFT zone toggles parked<->THEATER one tap each way (theater is where taps reach the embed - Skip lives there); the theater's bottom handle DISMISSES to parked with no intermediate docked step; the small docked PIP is OPT-IN via the theater strip's corner dock chip only. ONE element, the iframe never remounts (audio never dies). Plus: continuous playerState sync (the field rides every infoDelivery tick - pausing inside the embed must flip the bar within a second, missed onStateChange deltas notwithstanding), scrub with touch-action:none (without it the browser reclaims the touch for panning and kills the drag a few px in), and refocus honesty. Native requestPictureInPicture is unreachable for a cross-origin YT iframe - overlays by design.",
+  "note": "ROUND 19 CONTRACT (operator UAT 2026-09-17, verbatim: \"show the theatre view of the video when a new song starts - so I can shut off the skip button on the yt video\"). A NEW SONG RAISES THE THEATER, AND A SCRIM IS WHAT MAKES THAT HONEST. Round 18 (PR #342) docked a new song's video to the corner PIP because the theater - position:fixed top:58, 392x245, z-96, a placement sized for an OPEN sheet - sat over live-LOOKING content on a mini player and silently ate taps across the top ~300px of EVERY tab. That diagnosis was right about the SYMPTOM and wrong about the CAUSE: the defect was not the card, it was a modal surface with no modal affordance. The PIP is 152px wide, so YouTube's Skip inside it is ~4mm - the one job the operator wants the video for is impossible there, which is why he asked for the theater back. Round 19 keeps the theater AND adds the missing affordance: a full-viewport scrim (.bt-st-scrim, z-94, shown only on .bt-player.mini.vidopen) dims the app so the overlay ANNOUNCES itself, and a tap anywhere on it docks the video to the PIP. Nothing is on a timer; the operator dismisses. MEASURED at 412x915 (this is the contract): NEW SONG = player .vidopen + .mini, media bare at (10,58) 392x245, scrim 412x915 covering the viewport, NO preference written. SCRIM TAP = PIP, media .min 152x110 at (250,655), body.pipdock set, and STILL no preference written - docking is a THIS-SONG dismissal, not a standing choice, or the very next song would open docked and undo the whole ask after one tap. PARKED = player .vidhid, media .hid zero-box, pref 'hid'. PARKING IS THE ONE STANDING CHOICE AND IT WINS ON EVERY OPEN - round 16's law forbids the app HIDING the video unasked, not showing it, but overriding an explicit park every song would be its own trap. Round 17's ad-likely heuristic is RETIRED from the open path (adLikelyOpen stays in tracks-model, still unit-tested): the ad boundary is undetectable cross-origin, so it was always a guess, and the cost is asymmetric - guessing 'no ad' traps him inside one (three rounds have now shipped that trap), guessing 'ad' costs one tap on a scrim. ROUND 16 REMAINS THE GOVERNING LAW (verbatim: \"don't auto hide yt video. I keep having to open it to skip after ads\"): THE APP NEVER HIDES THE VIDEO ON ITS OWN. ONE element, the iframe never remounts (audio never dies). THE TAP-EATING GUARD BELOW IS STILL THE POINT OF THIS SCENARIO, RE-STATED NOT RELAXED: an IFRAME over the centre line is legitimate ONLY while a scrim announces it, and after one dismissing tap there must be ZERO iframe rows on EVERY tab. Delete the scrim CSS and the first half goes red; revert the dismissal and the second half does.",
   "viewport": {
     "width": 412,
     "height": 915
@@ -12,89 +12,49 @@
     },
     {
       "action": "waitFor",
-      "selector": ".bt-player.mini .bt-st-head",
+      "selector": ".bt-player.mini .bt-st-media",
       "timeoutMs": 15000
     },
     {
       "action": "evalAssert",
-      "label": "ROUND 16 - ROW-TAP PLAY on a FRESH device opens the video VISIBLE (theater): no stored preference, so the ad's Skip button is on screen without a tap. Supersedes round 15's always-PARKED open, which is what put every pre-roll behind a manual open.",
-      "js": "(function(){var p=document.querySelector('.bt-player');if(!p.classList.contains('vidopen')||p.classList.contains('vidhid'))return false;var m=document.querySelector('.bt-st-media');if(!m||m.classList.contains('hid')||m.classList.contains('min'))return false;var r=m.getBoundingClientRect();if(!(r.width>200&&r.height>100))return false;var f=m.querySelector('iframe');if(!f)return false;window.__pipFrame=f;return getComputedStyle(m).position==='fixed';})()"
-    },
-    {
-      "action": "screenshot",
-      "name": "visible-on-play"
-    },
-    {
-      "action": "tap",
-      "selector": "[data-thmin]"
-    },
-    {
-      "action": "wait",
-      "ms": 350
+      "label": "ROUND 19 - A NEW SONG RAISES THE THEATER on a mini player: the 392x245 card, not the 152x110 dock, because Skip is only a real tap target at theater size. A full-viewport SCRIM rides behind it (the affordance round 18 was missing). No preference is written - raising a default must not masquerade as a user choice.",
+      "js": "(function(){var p=document.querySelector('.bt-player');if(!p.classList.contains('mini'))return false;if(!p.classList.contains('vidopen')||p.classList.contains('vidhid'))return false;var m=document.querySelector('.bt-st-media');if(!m||m.classList.contains('min')||m.classList.contains('hid'))return false;if(getComputedStyle(m).position!=='fixed')return false;var r=m.getBoundingClientRect();if(!(Math.abs(r.width-392)<6&&r.top>40&&r.top<120&&r.height>200))return false;var sc=document.querySelector('.bt-st-scrim');if(!sc)return false;var q=sc.getBoundingClientRect();if(!(q.width>=window.innerWidth-1&&q.height>=window.innerHeight-1))return false;if(getComputedStyle(sc).pointerEvents==='none')return false;var f=m.querySelector('iframe');if(!f||!/\\/embed\\//.test(f.src))return false;window.__pipFrame=f;try{if(localStorage.getItem('music.vidPref.v1')!==null)return false;}catch(e){return false;}return true;})()"
     },
     {
       "action": "evalAssert",
-      "label": "PARK (theater down-arrow) -> the quiet state round 15 asked for is still one tap away: media zero-size but the SAME iframe mounted (audio alive), player wears .vidhid, the title wears the cue, and NO video chrome is visible (no PIP, no handles)",
-      "js": "(function(){var m=document.querySelector('.bt-st-media');if(!m||!m.classList.contains('hid'))return false;var r=m.getBoundingClientRect();if(!(r.width<2&&r.height<2))return false;var f=m.querySelector('iframe');if(!f)return false;if(f!==window.__pipFrame)return false;var p=document.querySelector('.bt-player');if(!p.classList.contains('vidhid')||p.classList.contains('vidopen'))return false;var cue=getComputedStyle(document.querySelector('.bt-st-t'),'::before').content;if(!cue||cue==='none')return false;var hidden=['[data-piphide]','[data-thmax]','[data-thmin]','[data-thdock]'].every(function(s){var e=document.querySelector(s);return !e||e.getBoundingClientRect().height===0;});return hidden;})()"
+      "label": "TAP-EATING GUARD, HALF ONE (round 19 re-statement): while the theater is up the IFRAME DOES cover the centre line - that is the point of it - but it is never SILENT: the scrim is rendered, full-viewport and hit-testable, so the app below is visibly a dimmed layer rather than live content that swallows taps.",
+      "js": "(function(){var rows=0;for(var y=60;y<=320;y+=20){var e=document.elementFromPoint(Math.round(window.innerWidth/2),y);if(e&&e.tagName==='IFRAME')rows++;}if(rows===0)return false;var sc=document.querySelector('.bt-st-scrim');if(!sc)return false;var q=sc.getBoundingClientRect();return q.width>=window.innerWidth-1&&q.height>=window.innerHeight-1;})()"
     },
     {
       "action": "screenshot",
-      "name": "parked-on-play"
+      "name": "theater-on-new-song"
     },
     {
       "action": "tap",
-      "selector": ".bt-player.mini .bt-st-t"
+      "selector": "[data-vidscrim]"
     },
     {
       "action": "wait",
-      "ms": 350
+      "ms": 450
     },
     {
       "action": "evalAssert",
-      "label": "LEFT-ZONE tap -> THEATER directly (the skip surface), floating over the library with the player STILL mini: fixed centered card, NO click-catcher (Skip is tappable here), same iframe, the park handle (bottom bar) AND the opt-in dock chip (strip corner) both on",
-      "js": "(function(){var p=document.querySelector('.bt-player');if(!p.classList.contains('vidopen')||!p.classList.contains('mini'))return false;var m=document.querySelector('.bt-st-media');if(!m||m.classList.contains('min')||m.classList.contains('hid'))return false;if(getComputedStyle(m).position!=='fixed')return false;var r=m.getBoundingClientRect();if(!(Math.abs(r.width-392)<3&&r.top>40&&r.top<120))return false;if(getComputedStyle(m,'::after').content!=='none')return false;if(m.querySelector('iframe')!==window.__pipFrame)return false;var h=document.querySelector('[data-thmin]');if(!h||h.getBoundingClientRect().height<20)return false;var dk=document.querySelector('[data-thdock]');if(!dk)return false;var dr=dk.getBoundingClientRect();return dr.height>20&&Math.abs(dr.right-r.right)<3;})()"
+      "label": "ONE TAP ANYWHERE ON THE SCRIM DOCKS IT: theater -> corner PIP 152x110, same iframe (audio never dies), body.pipdock set so views with bottom-pinned content reserve the corner. CRITICALLY the preference is STILL unwritten - docking is a this-song dismissal, and remembering it would make the next song open docked and quietly undo round 19.",
+      "js": "(function(){var p=document.querySelector('.bt-player');if(p.classList.contains('vidopen')||p.classList.contains('vidhid'))return false;var m=document.querySelector('.bt-st-media');if(!m||!m.classList.contains('min'))return false;var r=m.getBoundingClientRect();if(!(r.width>130&&r.width<170&&r.height>90&&r.height<120))return false;if(!(r.top>window.innerHeight*0.6&&r.left>window.innerWidth*0.5))return false;if(m.querySelector('iframe')!==window.__pipFrame)return false;if(!document.body.classList.contains('pipdock'))return false;var sc=document.querySelector('.bt-st-scrim');if(sc&&sc.getBoundingClientRect().width>0)return false;try{if(localStorage.getItem('music.vidPref.v1')!==null)return false;}catch(e){return false;}return true;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "TAP-EATING GUARD, HALF TWO (the defect round 18 found, still fixed): once dismissed, NOTHING covers the top of the page - elementFromPoint down the centre line from y=60 to y=320 returns the IFRAME on NO tab. Under the round-17 theater-on-mini contract this returned IFRAME across ~300px of every tab.",
+      "js": "(function(){function scan(){var bad=0;for(var y=60;y<=320;y+=20){var e=document.elementFromPoint(Math.round(window.innerWidth/2),y);if(e&&e.tagName==='IFRAME')bad++;}return bad;}if(scan())return false;var ok=true;['compose','tune','library'].forEach(function(t){var b=document.querySelector('.tabbar button[data-tab='+t+']');if(b){b.click();if(scan())ok=false;}});return ok;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "TUNER DOCK CLEARANCE (operator UAT 2026-09-17: the dock covered two tuner string buttons). The Tune tab pins its reference-tone strings to the bottom of a height:100% flex column, so unlike a scrolling view they can NEVER scroll clear of the fixed 152x110 dock. Every string must hit-test to ITSELF. Measured red before body.pipdock: E and A both returned .bt-st-media.",
+      "js": "(function(){var b=document.querySelector('.tabbar button[data-tab=tune]');if(b)b.click();var s=document.querySelectorAll('#tStrings .tStr');if(s.length<4)return false;var ok=true;Array.prototype.forEach.call(s,function(e){var r=e.getBoundingClientRect();if(r.width<10||r.height<10){ok=false;return;}var hit=document.elementFromPoint(Math.round(r.left+r.width/2),Math.round(r.top+r.height/2));if(!hit||!(hit===e||e.contains(hit)))ok=false;});var lib=document.querySelector('.tabbar button[data-tab=library]');if(lib)lib.click();return ok;})()"
     },
     {
       "action": "screenshot",
-      "name": "theater-over-library"
-    },
-    {
-      "action": "tap",
-      "selector": "[data-thmin]"
-    },
-    {
-      "action": "wait",
-      "ms": 300
-    },
-    {
-      "action": "evalAssert",
-      "label": "the theater's down-arrow DISMISSES to PARKED - no intermediate docked step (round 15 operator ask, verbatim), audio-alive iframe untouched, cue back on the title",
-      "js": "(function(){var m=document.querySelector('.bt-st-media');if(!m||!m.classList.contains('hid'))return false;if(m.classList.contains('min'))return false;var p=document.querySelector('.bt-player');if(!p.classList.contains('vidhid'))return false;var f=m.querySelector('iframe');if(f!==window.__pipFrame||!f.isConnected)return false;var cue=getComputedStyle(document.querySelector('.bt-st-t'),'::before').content;return cue&&cue!=='none';})()"
-    },
-    {
-      "action": "tap",
-      "selector": ".bt-player.mini .bt-st-t"
-    },
-    {
-      "action": "wait",
-      "ms": 300
-    },
-    {
-      "action": "tap",
-      "selector": "[data-thdock]"
-    },
-    {
-      "action": "wait",
-      "ms": 300
-    },
-    {
-      "action": "evalAssert",
-      "label": "OPT-IN dock: the strip's corner chip is the only way into the small PIP - docked above the bar, maximize bar on top, park tab flush on its left, same iframe",
-      "js": "(function(){var m=document.querySelector('.bt-st-media');if(!m||!m.classList.contains('min'))return false;var r=m.getBoundingClientRect();if(!(r.width>130&&r.width<170&&r.height>90&&r.height<120))return false;var bar=document.querySelector('.bt-st-head').getBoundingClientRect();if(!(r.bottom<=bar.top+2))return false;var tx=document.querySelector('[data-thmax]');if(!tx||tx.getBoundingClientRect().height<14)return false;var h=document.querySelector('[data-piphide]');if(!h)return false;var hr=h.getBoundingClientRect();if(!(hr.right<=r.left&&r.left-hr.right<3))return false;return m.querySelector('iframe')===window.__pipFrame;})()"
-    },
-    {
-      "action": "screenshot",
-      "name": "docked-pip"
+      "name": "docked-pip-tuner-clear"
     },
     {
       "action": "tap",
@@ -102,12 +62,46 @@
     },
     {
       "action": "wait",
-      "ms": 300
+      "ms": 450
     },
     {
       "action": "evalAssert",
-      "label": "the PIP's top bar maximizes back to theater (still no Studio switch)",
-      "js": "(function(){var p=document.querySelector('.bt-player');if(!p.classList.contains('vidopen')||!p.classList.contains('mini'))return false;var m=document.querySelector('.bt-st-media');return !!m&&!m.classList.contains('min')&&m.querySelector('iframe')===window.__pipFrame;})()"
+      "label": "the PIP's top bar still EXPANDS back to the theater - a dismissed video is one tap from the full-size skip surface if a later ad turns up mid-song. Unlike the scrim dismissal this IS a deliberate user act on the video layer, so it DOES write the preference ('theater'), and the scrim returns with the card.",
+      "js": "(function(){var p=document.querySelector('.bt-player');if(!p.classList.contains('vidopen')||!p.classList.contains('mini'))return false;var m=document.querySelector('.bt-st-media');if(!m||m.classList.contains('min')||m.classList.contains('hid'))return false;var r=m.getBoundingClientRect();if(!(Math.abs(r.width-392)<6&&r.top>40&&r.top<120&&r.height>200))return false;if(m.querySelector('iframe')!==window.__pipFrame)return false;if(document.body.classList.contains('pipdock'))return false;var sc=document.querySelector('.bt-st-scrim');if(!sc||sc.getBoundingClientRect().width<window.innerWidth-1)return false;var h=document.querySelector('[data-thmin]'),dk=document.querySelector('[data-thdock]');if(!h||h.getBoundingClientRect().height<14)return false;if(!dk||dk.getBoundingClientRect().height<14)return false;var vt=document.querySelector('[data-vidtoggle]');if(!vt||vt.textContent.trim()!=='Hide video')return false;return localStorage.getItem('music.vidPref.v1')==='theater';})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "theater-from-pip"
+    },
+    {
+      "action": "tap",
+      "selector": "[data-thmin]"
+    },
+    {
+      "action": "wait",
+      "ms": 350
+    },
+    {
+      "action": "evalAssert",
+      "label": "the theater's down-arrow PARKS it - no intermediate docked step (round 15 operator ask, verbatim). Media zero-box, player .vidhid, the SAME iframe still mounted (audio alive), the title wears the cue, no video chrome, and parking is remembered as a user act.",
+      "js": "(function(){var m=document.querySelector('.bt-st-media');if(!m||!m.classList.contains('hid')||m.classList.contains('min'))return false;var r=m.getBoundingClientRect();if(!(r.width<2&&r.height<2))return false;var f=m.querySelector('iframe');if(f!==window.__pipFrame||!f.isConnected)return false;var p=document.querySelector('.bt-player');if(!p.classList.contains('vidhid')||p.classList.contains('vidopen'))return false;var cue=getComputedStyle(document.querySelector('.bt-st-t'),'::before').content;if(!cue||cue==='none')return false;var hidden=['[data-piphide]','[data-thmax]','[data-thmin]','[data-thdock]'].every(function(s){var e=document.querySelector(s);return !e||e.getBoundingClientRect().height===0;});if(!hidden)return false;return localStorage.getItem('music.vidPref.v1')==='hid';})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "parked"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-player.mini .bt-st-t"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "LEFT-ZONE tap on a parked mini player goes straight back to the THEATER (the skip surface), not to the PIP - showing it again is a user act and is remembered as 'theater'.",
+      "js": "(function(){var p=document.querySelector('.bt-player');if(!p.classList.contains('vidopen')||!p.classList.contains('mini'))return false;var m=document.querySelector('.bt-st-media');if(!m||m.classList.contains('min')||m.classList.contains('hid'))return false;if(m.querySelector('iframe')!==window.__pipFrame)return false;return localStorage.getItem('music.vidPref.v1')==='theater';})()"
     },
     {
       "action": "tap",
@@ -115,7 +109,16 @@
     },
     {
       "action": "wait",
-      "ms": 300
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "OPT-IN dock: the theater strip's corner chip is the way into the small PIP - docked above the now-playing bar, maximize bar on top, park tab flush on its left, same iframe, remembered as 'pip'.",
+      "js": "(function(){var m=document.querySelector('.bt-st-media');if(!m||!m.classList.contains('min'))return false;var r=m.getBoundingClientRect();if(!(r.width>130&&r.width<170&&r.height>90&&r.height<120))return false;var bar=document.querySelector('.bt-st-head').getBoundingClientRect();if(!(r.bottom<=bar.top+2))return false;var tx=document.querySelector('[data-thmax]');if(!tx||tx.getBoundingClientRect().height<14)return false;var h=document.querySelector('[data-piphide]');if(!h)return false;var hr=h.getBoundingClientRect();if(!(hr.right<=r.left&&r.left-hr.right<3))return false;if(m.querySelector('iframe')!==window.__pipFrame)return false;return localStorage.getItem('music.vidPref.v1')==='pip';})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "docked-pip"
     },
     {
       "action": "tap",
@@ -123,12 +126,12 @@
     },
     {
       "action": "wait",
-      "ms": 300
+      "ms": 350
     },
     {
       "action": "evalAssert",
-      "label": "the PIP's flush left tab parks it - same end state as every other dismiss",
-      "js": "(function(){var m=document.querySelector('.bt-st-media');if(!m||!m.classList.contains('hid'))return false;var p=document.querySelector('.bt-player');return p.classList.contains('vidhid')&&m.querySelector('iframe')===window.__pipFrame;})()"
+      "label": "the PIP's flush left tab parks it - same end state as every other dismiss, same iframe, remembered as 'hid'.",
+      "js": "(function(){var m=document.querySelector('.bt-st-media');if(!m||!m.classList.contains('hid'))return false;var p=document.querySelector('.bt-player');if(!p.classList.contains('vidhid'))return false;if(m.querySelector('iframe')!==window.__pipFrame)return false;return localStorage.getItem('music.vidPref.v1')==='hid';})()"
     },
     {
       "action": "evalAssert",
@@ -156,7 +159,7 @@
     },
     {
       "action": "evalAssert",
-      "label": "the STUDIO DOOR (playing row's details chip) opens idempotently - same iframe, video STILL parked (the quiet default holds through navigation), menu offers Show video",
+      "label": "the STUDIO DOOR opens idempotently - same iframe, video STILL parked (the remembered choice holds through navigation), menu offers Show video",
       "js": "(function(){var m=document.querySelector('.bt-st-media');if(!m||!m.classList.contains('hid'))return false;if(m.querySelector('iframe')!==window.__pipFrame)return false;var vt=document.querySelector('[data-vidtoggle]');return !!vt&&vt.textContent.trim()==='Show video';})()"
     },
     {
@@ -165,24 +168,16 @@
     },
     {
       "action": "wait",
-      "ms": 350
+      "ms": 400
     },
     {
       "action": "evalAssert",
-      "label": "the left-zone toggle works in the open Studio too - theater floats over the sheet, menu flips to Hide video",
-      "js": "(function(){var p=document.querySelector('.bt-player');if(!p.classList.contains('vidopen')||p.classList.contains('mini'))return false;var m=document.querySelector('.bt-st-media');if(!m||m.classList.contains('min')||m.classList.contains('hid'))return false;if(m.querySelector('iframe')!==window.__pipFrame)return false;var vt=document.querySelector('[data-vidtoggle]');return !!vt&&vt.textContent.trim()==='Hide video';})()"
+      "label": "in the OPEN STUDIO the left-zone toggle gives the THEATER, not the PIP - the sheet is where the big card was sized to fit, so the full skip surface lives here",
+      "js": "(function(){var p=document.querySelector('.bt-player');if(!p.classList.contains('vidopen')||p.classList.contains('mini'))return false;var m=document.querySelector('.bt-st-media');if(!m||m.classList.contains('min')||m.classList.contains('hid'))return false;var r=m.getBoundingClientRect();if(!(Math.abs(r.width-392)<4&&r.height>200))return false;if(m.querySelector('iframe')!==window.__pipFrame)return false;var vt=document.querySelector('[data-vidtoggle]');return !!vt&&vt.textContent.trim()==='Hide video';})()"
     },
     {
       "action": "screenshot",
-      "name": "theater-over-studio"
-    },
-    {
-      "action": "tap",
-      "selector": "[data-thmin]"
-    },
-    {
-      "action": "wait",
-      "ms": 300
+      "name": "theater-in-studio"
     },
     {
       "action": "tap",
@@ -194,9 +189,17 @@
       "timeoutMs": 8000
     },
     {
+      "action": "wait",
+      "ms": 400
+    },
+    {
       "action": "evalAssert",
-      "label": "back to the library: the video stays PARKED through the whole trip (the quiet default is the resting state), iframe alive the entire time",
-      "js": "(function(){var m=document.querySelector('.bt-st-media');if(!m||!m.classList.contains('hid'))return false;var p=document.querySelector('.bt-player');if(!p.classList.contains('mini')||!p.classList.contains('vidhid'))return false;var f=m.querySelector('iframe');return f===window.__pipFrame&&f.isConnected;})()"
+      "label": "LEAVING THE STUDIO WITH THE THEATER OPEN DEMOTES IT TO THE PIP - this is the fix itself: the card sized for the sheet must not follow you onto the page. Same iframe (audio never dies), and the top of the page is clear again.",
+      "js": "(function(){var p=document.querySelector('.bt-player');if(!p.classList.contains('mini'))return false;var m=document.querySelector('.bt-st-media');if(!m||!m.classList.contains('min'))return false;var r=m.getBoundingClientRect();if(!(r.width>130&&r.width<170&&r.height>90&&r.height<120))return false;var f=m.querySelector('iframe');if(f!==window.__pipFrame||!f.isConnected)return false;for(var y=60;y<=320;y+=20){var e=document.elementFromPoint(Math.round(window.innerWidth/2),y);if(e&&e.tagName==='IFRAME')return false;}return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "demoted-on-leaving-studio"
     }
   ]
 }

@@ -106,8 +106,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "the Settings replay row is TIMELESS copy - it names the welcome intro, never a panel count",
-      "js": "(function(){var b=document.getElementById('replayTourBtn');if(!b)return false;var t=b.textContent;return /welcome intro/i.test(t) && !/panel|three|3-/i.test(t);})()"
+      "label": "the Settings replay action is TIMELESS copy - it names the intro tour (the shipped label, Replay the intro tour; #342 dropped the old welcome-intro subtitle), never a panel count",
+      "js": "(function(){var b=document.getElementById('replayTourBtn');if(!b)return false;var t=b.textContent;return /replay the intro tour/i.test(t) && !/panel|three|3-/i.test(t);})()"
     },
     {
       "action": "evalAssert",

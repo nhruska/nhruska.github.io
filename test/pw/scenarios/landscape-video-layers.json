@@ -1,0 +1,264 @@
+{
+  "name": "landscape-video-layers",
+  "note": "Landscape audit (2026-10-05) Direction A, video layers. On a 340px-tall landscape phone the theater card was a 142x105 postage stamp and its scrim (z-94) sat over the mini bar (z-60), so Shuffle/Prev/Play/Next all hit-tested to the scrim - the transport was dead while the video showed. The docked PIP (152x110 at bottom+150px, right:10px) floated mid-screen over +Add / Start / Save, with a 30px park tab beside it. Asserts at 915x340 and 740x320 on a fresh device (a new song opens the theater, round 19): the video is >=180px tall, clear of the bar and the rail, every bar transport control hit-tests to itself above the scrim and is >=44px, the theater handles are >=44px and live, the scrim still covers the viewport, and Pause on the bar pauses without docking. Docked, the PIP lives INSIDE the bar's leading slot: on Songs, Setlist and the two-pane Tune nothing of the video layer covers content or the bar's title/transport, and the PIP still expands to the theater.",
+  "viewport": {
+    "width": 915,
+    "height": 340
+  },
+  "seed": {
+    "music.calloutsShown.v1": "{\"library\": 1, \"compose\": 1, \"tune\": 1}",
+    "music.offlineReadyCued.v1": "1",
+    "music.notables.v1": "{\"guidanceask\": 1, \"backup\": 1, \"firstrun\": 1, \"composeintro\": 1, \"transposetip\": 1, \"whynote\": 1, \"scaletip\": 1, \"tunefirst\": 1, \"savebasics\": 1}",
+    "roadcase-guitar-standard.setlist.v1": "[\"k0\", \"k1\", \"k2\", \"k3\", \"k4\", \"k5\", \"k6\", \"k7\"]"
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/index.html?p=guitar-standard"
+    },
+    {
+      "action": "wait",
+      "ms": 1200
+    },
+    {
+      "action": "waitFor",
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major']",
+      "timeoutMs": 8000
+    },
+    {
+      "action": "tap",
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major'] .li-body"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 6000
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "resize",
+      "width": 915,
+      "height": 340
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "evalAssert",
+      "label": "fixture: a fresh device opens a new song in the theater (round 19) over the mini bar",
+      "js": "document.querySelector('.bt-player.mini.vidopen')!==null"
+    },
+    {
+      "action": "evalAssert",
+      "label": "915x340 theater: the video is >=180px tall (sized by height), clear of the bar and rail, the bar transport (shuffle/prev/play/next/close) hit-tests to itself ABOVE the scrim, the card handles are >=44px and live, the scrim still covers the viewport",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var T='915x340 theater';var p=document.querySelector('.bt-player');if(!p.classList.contains('vidopen')||!p.classList.contains('mini'))throw new Error(T+': fixture - theater is not up over a mini bar');var m=document.querySelector('.bt-st-media'),f=m.querySelector('.bt-st-frame'),mr=m.getBoundingClientRect(),fr=f.getBoundingClientRect(),b=bar(),br=b.getBoundingClientRect();if(fr.height<180)throw new Error(T+': the video is '+Math.round(fr.width)+'x'+Math.round(fr.height)+' - needs >=180px tall');if(mr.top<-0.5||mr.left<-0.5||mr.right>innerWidth+0.5)throw new Error(T+': card off-screen '+R(m));if(!apart(m,b))throw new Error(T+': the card '+R(m)+' overlaps the bar '+R(b));var rail=document.querySelector('.tabbar');if(!apart(m,rail))throw new Error(T+': the card overlaps the rail');['.bt-st-np-shuf','[data-npprev]','[data-nppp]','[data-npnext]','[data-minix]'].forEach(function(s){var e=b.querySelector(s);hits(e,T+' transport '+s);big(e,T+' transport '+s);});['[data-thmin]','[data-thdock]'].forEach(function(s){var e=m.querySelector(s);hits(e,T+' handle '+s);big(e,T+' handle '+s);});var sc=document.querySelector('.bt-st-scrim').getBoundingClientRect();if(sc.width<innerWidth-1||sc.height<innerHeight-1)throw new Error(T+': the scrim no longer covers the viewport');return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "theater-915x340"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-player.mini [data-nppp]"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "evalAssert",
+      "label": "915x340 theater: tapping Pause on the bar pauses (the transport is live) and does NOT dock the video",
+      "js": "document.querySelector('[data-nppp]').getAttribute('aria-label')==='Play'&&!!document.querySelector('.bt-player.mini.vidopen')"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-player.mini [data-nppp]"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "tap",
+      "selector": "[data-thdock]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "915x340 PIP on Songs: docked INSIDE the bar's leading slot, nothing of the video layer over content, +Add / Search & filter / segment / first rows live, bar title + transport live",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var T='915x340 pip songs';if(!document.body.classList.contains('pipdock'))throw new Error(T+': fixture - video is not docked');var m=document.querySelector('.bt-st-media.min'),b=bar();if(!inside(m,b,1))throw new Error(T+': the PIP '+R(m)+' floats outside the bar '+R(b)+' - it must dock INTO the bar, never over content');big(m,T+' PIP');var tx=m.querySelector('[data-thmax]');big(tx,T+' PIP expand button');hits(tx,T+' PIP expand button');var ph=document.querySelector('.bt-st-piphide');if(shown(ph)&&!inside(ph,b,1))throw new Error(T+': the park handle '+R(ph)+' floats over content');var id=b.querySelector('.bt-st-id');hits(id,T+' bar title');if(!apart(id,m))throw new Error(T+': the PIP covers the bar title');['.bt-st-np-shuf','[data-npprev]','[data-nppp]','[data-npnext]','[data-minix]'].forEach(function(s){var e=b.querySelector(s);hits(e,T+' transport '+s);});['#addBtn','#filterBtn','#songsSeg'].forEach(function(s){var e=document.querySelector(s);hits(e,T+' '+s);if(!apart(e,m))throw new Error(T+': the PIP covers '+s);});[].slice.call(document.querySelectorAll('#songsList .listItem')).slice(0,2).forEach(function(r,i){hits(r.querySelector('.li-body'),T+' row '+(i+1));}); return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "pip-songs-915x340"
+    },
+    {
+      "action": "tap",
+      "selector": "#segSet"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "evalAssert",
+      "label": "915x340 PIP on Setlist: Start / Clear are never under the video",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var T='915x340 pip setlist';if(!document.body.classList.contains('pipdock'))throw new Error(T+': fixture - video is not docked');var m=document.querySelector('.bt-st-media.min'),b=bar();if(!inside(m,b,1))throw new Error(T+': the PIP '+R(m)+' floats outside the bar '+R(b)+' - it must dock INTO the bar, never over content');big(m,T+' PIP');var tx=m.querySelector('[data-thmax]');big(tx,T+' PIP expand button');hits(tx,T+' PIP expand button');var ph=document.querySelector('.bt-st-piphide');if(shown(ph)&&!inside(ph,b,1))throw new Error(T+': the park handle '+R(ph)+' floats over content');var id=b.querySelector('.bt-st-id');hits(id,T+' bar title');if(!apart(id,m))throw new Error(T+': the PIP covers the bar title');['.bt-st-np-shuf','[data-npprev]','[data-nppp]','[data-npnext]','[data-minix]'].forEach(function(s){var e=b.querySelector(s);hits(e,T+' transport '+s);});['#performBtn','#setClear'].forEach(function(s){var e=document.querySelector(s);if(shown(e)){hits(e,T+' '+s);if(!apart(e,m))throw new Error(T+': the PIP covers '+s);}}); return true;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#segJams"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=tune]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "915x340 PIP on Tune: still two-pane, no scroll, every string + Start + Tone live, >=44px and clear of the video",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var T='915x340 pip tune';if(!document.body.classList.contains('pipdock'))throw new Error(T+': fixture - video is not docked');var m=document.querySelector('.bt-st-media.min'),b=bar();if(!inside(m,b,1))throw new Error(T+': the PIP '+R(m)+' floats outside the bar '+R(b)+' - it must dock INTO the bar, never over content');big(m,T+' PIP');var tx=m.querySelector('[data-thmax]');big(tx,T+' PIP expand button');hits(tx,T+' PIP expand button');var ph=document.querySelector('.bt-st-piphide');if(shown(ph)&&!inside(ph,b,1))throw new Error(T+': the park handle '+R(ph)+' floats over content');var id=b.querySelector('.bt-st-id');hits(id,T+' bar title');if(!apart(id,m))throw new Error(T+': the PIP covers the bar title');['.bt-st-np-shuf','[data-npprev]','[data-nppp]','[data-npnext]','[data-minix]'].forEach(function(s){var e=b.querySelector(s);hits(e,T+' transport '+s);});var c=document.querySelector('.tCard').getBoundingClientRect(),st=document.getElementById('tStrings').getBoundingClientRect();if(!(c.right<=st.left+0.5))throw new Error(T+': Tune is not two-pane with the PIP docked');var v=document.getElementById('view');if(v.scrollHeight>v.clientHeight+1)throw new Error(T+': Tune scrolls with the PIP docked');[].slice.call(document.querySelectorAll('#tStrings .tStr')).concat([document.getElementById('micToggle'),document.getElementById('toneToggle')]).forEach(function(e){hits(e,T+' '+N(e));big(e,T+' '+N(e));if(!apart(e,m))throw new Error(T+': the PIP covers '+N(e));}); return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "pip-tune-915x340"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=library]"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "resize",
+      "width": 740,
+      "height": 320
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-st-media.min"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "740x320 theater: the video is >=180px tall (sized by height), clear of the bar and rail, the bar transport (shuffle/prev/play/next/close) hit-tests to itself ABOVE the scrim, the card handles are >=44px and live, the scrim still covers the viewport",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var T='740x320 theater';var p=document.querySelector('.bt-player');if(!p.classList.contains('vidopen')||!p.classList.contains('mini'))throw new Error(T+': fixture - theater is not up over a mini bar');var m=document.querySelector('.bt-st-media'),f=m.querySelector('.bt-st-frame'),mr=m.getBoundingClientRect(),fr=f.getBoundingClientRect(),b=bar(),br=b.getBoundingClientRect();if(fr.height<180)throw new Error(T+': the video is '+Math.round(fr.width)+'x'+Math.round(fr.height)+' - needs >=180px tall');if(mr.top<-0.5||mr.left<-0.5||mr.right>innerWidth+0.5)throw new Error(T+': card off-screen '+R(m));if(!apart(m,b))throw new Error(T+': the card '+R(m)+' overlaps the bar '+R(b));var rail=document.querySelector('.tabbar');if(!apart(m,rail))throw new Error(T+': the card overlaps the rail');['.bt-st-np-shuf','[data-npprev]','[data-nppp]','[data-npnext]','[data-minix]'].forEach(function(s){var e=b.querySelector(s);hits(e,T+' transport '+s);big(e,T+' transport '+s);});['[data-thmin]','[data-thdock]'].forEach(function(s){var e=m.querySelector(s);hits(e,T+' handle '+s);big(e,T+' handle '+s);});var sc=document.querySelector('.bt-st-scrim').getBoundingClientRect();if(sc.width<innerWidth-1||sc.height<innerHeight-1)throw new Error(T+': the scrim no longer covers the viewport');return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "theater-740x320"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-player.mini [data-nppp]"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "evalAssert",
+      "label": "740x320 theater: tapping Pause on the bar pauses (the transport is live) and does NOT dock the video",
+      "js": "document.querySelector('[data-nppp]').getAttribute('aria-label')==='Play'&&!!document.querySelector('.bt-player.mini.vidopen')"
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-player.mini [data-nppp]"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "tap",
+      "selector": "[data-thdock]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "740x320 PIP on Songs: docked INSIDE the bar's leading slot, nothing of the video layer over content, +Add / Search & filter / segment / first rows live, bar title + transport live",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var T='740x320 pip songs';if(!document.body.classList.contains('pipdock'))throw new Error(T+': fixture - video is not docked');var m=document.querySelector('.bt-st-media.min'),b=bar();if(!inside(m,b,1))throw new Error(T+': the PIP '+R(m)+' floats outside the bar '+R(b)+' - it must dock INTO the bar, never over content');big(m,T+' PIP');var tx=m.querySelector('[data-thmax]');big(tx,T+' PIP expand button');hits(tx,T+' PIP expand button');var ph=document.querySelector('.bt-st-piphide');if(shown(ph)&&!inside(ph,b,1))throw new Error(T+': the park handle '+R(ph)+' floats over content');var id=b.querySelector('.bt-st-id');hits(id,T+' bar title');if(!apart(id,m))throw new Error(T+': the PIP covers the bar title');['.bt-st-np-shuf','[data-npprev]','[data-nppp]','[data-npnext]','[data-minix]'].forEach(function(s){var e=b.querySelector(s);hits(e,T+' transport '+s);});['#addBtn','#filterBtn','#songsSeg'].forEach(function(s){var e=document.querySelector(s);hits(e,T+' '+s);if(!apart(e,m))throw new Error(T+': the PIP covers '+s);});[].slice.call(document.querySelectorAll('#songsList .listItem')).slice(0,2).forEach(function(r,i){hits(r.querySelector('.li-body'),T+' row '+(i+1));}); return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "pip-songs-740x320"
+    },
+    {
+      "action": "tap",
+      "selector": "#segSet"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "evalAssert",
+      "label": "740x320 PIP on Setlist: Start / Clear are never under the video",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var T='740x320 pip setlist';if(!document.body.classList.contains('pipdock'))throw new Error(T+': fixture - video is not docked');var m=document.querySelector('.bt-st-media.min'),b=bar();if(!inside(m,b,1))throw new Error(T+': the PIP '+R(m)+' floats outside the bar '+R(b)+' - it must dock INTO the bar, never over content');big(m,T+' PIP');var tx=m.querySelector('[data-thmax]');big(tx,T+' PIP expand button');hits(tx,T+' PIP expand button');var ph=document.querySelector('.bt-st-piphide');if(shown(ph)&&!inside(ph,b,1))throw new Error(T+': the park handle '+R(ph)+' floats over content');var id=b.querySelector('.bt-st-id');hits(id,T+' bar title');if(!apart(id,m))throw new Error(T+': the PIP covers the bar title');['.bt-st-np-shuf','[data-npprev]','[data-nppp]','[data-npnext]','[data-minix]'].forEach(function(s){var e=b.querySelector(s);hits(e,T+' transport '+s);});['#performBtn','#setClear'].forEach(function(s){var e=document.querySelector(s);if(shown(e)){hits(e,T+' '+s);if(!apart(e,m))throw new Error(T+': the PIP covers '+s);}}); return true;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#segJams"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=tune]"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "740x320 PIP on Tune: still two-pane, no scroll, every string + Start + Tone live, >=44px and clear of the video",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var T='740x320 pip tune';if(!document.body.classList.contains('pipdock'))throw new Error(T+': fixture - video is not docked');var m=document.querySelector('.bt-st-media.min'),b=bar();if(!inside(m,b,1))throw new Error(T+': the PIP '+R(m)+' floats outside the bar '+R(b)+' - it must dock INTO the bar, never over content');big(m,T+' PIP');var tx=m.querySelector('[data-thmax]');big(tx,T+' PIP expand button');hits(tx,T+' PIP expand button');var ph=document.querySelector('.bt-st-piphide');if(shown(ph)&&!inside(ph,b,1))throw new Error(T+': the park handle '+R(ph)+' floats over content');var id=b.querySelector('.bt-st-id');hits(id,T+' bar title');if(!apart(id,m))throw new Error(T+': the PIP covers the bar title');['.bt-st-np-shuf','[data-npprev]','[data-nppp]','[data-npnext]','[data-minix]'].forEach(function(s){var e=b.querySelector(s);hits(e,T+' transport '+s);});var c=document.querySelector('.tCard').getBoundingClientRect(),st=document.getElementById('tStrings').getBoundingClientRect();if(!(c.right<=st.left+0.5))throw new Error(T+': Tune is not two-pane with the PIP docked');var v=document.getElementById('view');if(v.scrollHeight>v.clientHeight+1)throw new Error(T+': Tune scrolls with the PIP docked');[].slice.call(document.querySelectorAll('#tStrings .tStr')).concat([document.getElementById('micToggle'),document.getElementById('toneToggle')]).forEach(function(e){hits(e,T+' '+N(e));big(e,T+' '+N(e));if(!apart(e,m))throw new Error(T+': the PIP covers '+N(e));}); return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "pip-tune-740x320"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=library]"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
+      "selector": ".bt-st-media.min"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "tapping the docked PIP still expands to the theater (the skip surface is one tap away)",
+      "js": "!!document.querySelector('.bt-player.mini.vidopen')&&!document.body.classList.contains('pipdock')"
+    }
+  ]
+}

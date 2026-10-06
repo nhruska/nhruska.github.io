@@ -56,6 +56,14 @@
     },
     {
       "action": "tap",
+      "selector": "[data-thmin]"
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "tap",
       "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major'] .li-lead"
     },
     {
@@ -144,8 +152,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "landscape: the bar keeps its ONE slot above the tabbar (centered 540 card, sheet above it)",
-      "js": "(function(){var h=document.querySelector('.bt-player.studio .bt-st-head');var tab=document.querySelector('.tabbar');if(!h||!tab)return false;var r=h.getBoundingClientRect(),tr=tab.getBoundingClientRect();return r.bottom<=tr.top+1&&r.height>=44&&r.width<=542;})()"
+      "label": "landscape: the bar keeps its ONE slot and clears the tab bar - above the bottom tab bar in the portrait shell (centered 540 card), beside the left rail in the landscape rail shell (#369)",
+      "js": "(function(){var h=document.querySelector('.bt-player.studio .bt-st-head');var tab=document.querySelector('.tabbar');if(!h||!tab)return false;var r=h.getBoundingClientRect(),tr=tab.getBoundingClientRect();var above=r.bottom<=tr.top+1&&r.width<=542;var beside=r.left>=tr.right-1;return (above||beside)&&r.height>=44;})()"
     },
     {
       "action": "screenshot",

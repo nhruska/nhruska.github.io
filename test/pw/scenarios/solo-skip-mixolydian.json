@@ -1,6 +1,6 @@
 {
   "name": "solo-skip-mixolydian",
-  "description": "MERGE GATE for the progression-aware picker + FORK-4 removal: build C-F-A# (I-IV-bVII) in C major, Solo -> Skip; the Studio must default to Mixolydian with Mixolydian+Dorian chips present and the b7 spelled KEY-AWARE as Bb (never A#) in the notes line.",
+  "description": "MERGE GATE for the progression-aware picker + FORK-4 removal: in an explicitly STATED C major (a picked key - the D-KEY-FOLLOW defaulted C would re-infer C-F-Bb as F major V-I-IV, #281), build C-F-Bb (I-IV-bVII; the palette spells the bVII by role as Bb since #199), Solo -> Skip; the Studio must default to Mixolydian with Mixolydian+Dorian chips present and the b7 spelled KEY-AWARE as Bb (never A#) in the notes line.",
   "url": "/music/play/",
   "steps": [
     {
@@ -15,6 +15,33 @@
       "action": "tapIfVisible",
       "text": "I know some chords",
       "scope": "#guidanceAskSlot"
+    },
+    {
+      "action": "tap",
+      "selector": "#keyPickerCompact"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#keyRoots"
+    },
+    {
+      "action": "tapText",
+      "text": "C",
+      "scope": "#keyRoots"
+    },
+    {
+      "action": "tapText",
+      "text": "C",
+      "scope": "#keyRoots"
+    },
+    {
+      "action": "tap",
+      "selector": "#keyPickerCompact"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".composeWrap.keyOpen",
+      "state": "hidden"
     },
     {
       "action": "tapText",
@@ -35,7 +62,12 @@
     },
     {
       "action": "tapChord",
-      "name": "A#"
+      "name": "Bb"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the STATED key holds: C F Bb stays in C Maj (I IV bVII), not re-inferred to F (V I IV)",
+      "js": "(function(){var c=document.getElementById('keyPickerCompact');return !!c && /C\\s*Maj/i.test(c.textContent);})()"
     },
     {
       "action": "waitFor",

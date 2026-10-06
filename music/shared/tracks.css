@@ -222,7 +222,13 @@
 .bt-player.vidopen .bt-st-media:not(.min):not(.hid){
   position:fixed;left:50%;transform:translateX(-50%);
   top:calc(env(safe-area-inset-top,0px) + 58px);
-  width:min(100vw - 20px, 540px, (100vh - 260px)*1.7778);z-index:96;
+  /* The height budget reads 100DVH, never 100vh: the bar + tabbar it must
+     clear live in the .app shell, which is 100dvh (songbook.css). On Android
+     Chrome 100vh is the LARGE viewport (URL bar retracted), so in a short
+     landscape viewport (~915x340) a 100vh budget grew the card past the bar
+     and over its transport - the operator's "video covers the controls".
+     Budget: 58 top + card + 24 handle + gap + the 140px bar/tabbar stack. */
+  width:min(100vw - 20px, 540px, (100dvh - 260px - env(safe-area-inset-top,0px))*1.7778);z-index:96;
   border:1px solid var(--accent-ink);border-radius:12px;overflow:hidden;
   background:var(--video-bg);box-shadow:0 12px 32px var(--shadow);transition:none;
   display:flex;flex-direction:column;
@@ -260,6 +266,45 @@
 /* Round 10 .hid: the video parked INTO the bar title - a zero-size clip (NEVER
    display:none, audio must keep playing), untouchable until restored. */
 .bt-st-media.hid{position:fixed;width:0;height:0;max-height:0;border:0;box-shadow:none;pointer-events:none;overflow:hidden;}
+/* ROUND 19 - THE THEATER'S SCRIM (operator UAT 2026-09-17: "show the theatre
+   view of the video when a new song starts - so I can shut off the skip button
+   on the yt video").
+   A new song now opens its theater even though the player is MINI, which is the
+   exact geometry #342 removed. What made that a defect was NOT the card - it was
+   a 245px opaque overlay floating over live-LOOKING content with no modal
+   affordance, so the app read as tappable while every tap died in the iframe's
+   layer. The scrim is the missing affordance: it dims the app (visibility of
+   system status - this is a layer, not the page) and it makes the whole viewport
+   the dismiss target, so docking costs one tap anywhere instead of hunting a
+   24px handle. z-index sits BETWEEN the app and the theater card (96), so the
+   card and its handles stay above it.
+   Shown ONLY when a theater has no sheet behind it (.mini.vidopen). In the open
+   Studio the sheet is already the backdrop - a second scrim there would be
+   double-dimming. */
+.bt-st-scrim{display:none;}
+.bt-player.mini.vidopen .bt-st-scrim{
+  display:block;position:fixed;inset:0;z-index:94;
+  border:0;padding:0;margin:0;-webkit-appearance:none;appearance:none;
+  background:rgba(0,0,0,.42);
+  /* LOAD-BEARING, same trap the PIP + park handle hit: the mini player
+     container disables pointer events broadly, so without this the scrim is
+     tap-dead and the overlay goes right back to swallowing taps silently. */
+  pointer-events:auto;cursor:pointer;
+}
+/* The scrim dims CONTENT, never the player's own chrome (operator UAT
+   2026-10, phone landscape: the theater "covers the mini-player's controls").
+   At z-94 it painted over the now-playing bar (z-60, same .bt-player stacking
+   context) and the tabbar (outside it), so pause / next / shuffle / a tab
+   switch all docked the video instead of acting - the transport that controls
+   the very video on screen was dead while it showed. The bar lifts above the
+   scrim (still under the card, which never overlaps it), and the tabbar takes
+   the same z-55 raise body.studioopen gives it (songbook.css) for exactly as
+   long as a scrimmed theater is up. The scrim itself stays full-viewport. */
+.bt-player.mini.vidopen .bt-st-head{z-index:95;}
+body:has(.bt-player.mini.vidopen) .tabbar{position:relative;z-index:55;}
+/* The park handle rides the PIP's edge only - it must never show under a
+   scrimmed theater (the theater carries its own thmin/thdock handles). */
+.bt-player.mini.vidopen .bt-st-piphide{display:none;}
 /* Round 10: the park handle stuck to the PIP's LEFT edge (operator ask) - a
    slim vertical tab, chevron pointing down INTO the bar. GEOMETRY PAIR with
    .bt-st-media.min above: right = PIP right (10px) + PIP width (152px) + 6px
@@ -816,7 +861,9 @@
   /* flex/max-width/border/overflow neutralize the landscape two-pane split
      rules leaking into the (invisible) stage shell. */
   .bt-player.mini .bt-st-stage{flex:0 0 auto;min-width:0;max-width:none;border-right:0;overflow:visible;}
-  .bt-player.mini .bt-st-stage > :not(.bt-st-media):not(.bt-st-piphide){display:none;}
+  /* round 19: the scrim is a stage child too, and it is the ONE piece of mini
+     chrome that must survive - it is what makes a kept theater honest. */
+  .bt-player.mini .bt-st-stage > :not(.bt-st-media):not(.bt-st-piphide):not(.bt-st-scrim){display:none;}
   /* An EXPANDED video still collapses to clipped audio when the whole Studio
    minimizes (unchanged); a PIP'd video keeps its fixed overlay - the :not
    scope keeps the old clip off it. */
@@ -866,3 +913,49 @@
     .bt-st-t.mq{text-overflow:ellipsis;}
     .bt-st-tx2{display:none;}
   }
+
+/* =====================================================================
+ * LANDSCAPE PHONE - the player inside the rail shell (Direction A; the shell
+ * itself is the rail block at the end of songbook.css, same gate, which also
+ * defines --rail-w / --bar-h / --bar-b / --bar-res).
+ * ---------------------------------------------------------------------
+ * Kept as ONE block at the end of this file so the portrait rules above stay
+ * untouched (and a parallel edit to them merges cleanly).
+ * - The bar is ONE 52px row along the bottom of the content column: title,
+ *   the same transport in the same order, x, then progress + time inline.
+ *   Same controls, same slot in every landscape state - the "never changes
+ *   shape" contract holds per orientation.
+ * - The docked PIP rides INSIDE the bar's leading slot (the bar pads left to
+ *   clear it) instead of floating mid-screen over +Add / Start / Save. Its
+ *   whole face is the expand target (the thmax button stretched over it, so
+ *   the action stays a labelled, focusable button). The park tab is dropped
+ *   here: the bar title tap and the menu already park the video.
+ * - The theater is sized by HEIGHT: 16:9 in what is left above the bar
+ *   (~390x218 at 340px tall), centred over the content column, handles 44px
+ *   tall (a11y floor - they are the only skip/park/dock controls).
+ * - The bar lifts above the theater scrim, so play/pause/next stay live while
+ *   the video shows (the card never overlaps the bar).
+ * - The expanded Studio sheet sits beside the rail rather than under it.
+ * ===================================================================== */
+@media (orientation:landscape) and (max-height:560px) and (min-height:280px){
+  .bt-st-head{left:calc(var(--rail-w,76px) + 10px);right:calc(env(safe-area-inset-right,0px) + 10px);width:auto;max-width:none;margin:0;
+    bottom:var(--bar-b,8px);min-height:var(--bar-h,52px);flex-direction:row;align-items:center;gap:12px;padding:3px 10px;}
+  .bt-st-barrow{flex:3 1 0;min-width:0;}
+  .bt-st-progrow{flex:1 1 0;min-width:120px;}
+  body.pipdock .bt-st-head{padding-left:118px;}
+  .bt-st-media.min{left:calc(var(--rail-w,76px) + 14px);right:auto;bottom:calc(var(--bar-b,8px) + 3px);
+    width:100px;height:46px;max-height:46px;border-radius:8px;box-shadow:none;}
+  .bt-st-media.min .bt-st-thmax{position:absolute;inset:0;height:auto;z-index:2;border:0;
+    align-items:flex-start;justify-content:flex-end;padding:2px 6px;font-size:16px;
+    background:linear-gradient(to bottom left, rgba(0,0,0,.55), transparent 55%);color:rgba(255,255,255,.92);}
+  .bt-st-media.min + .bt-st-piphide{display:none;}
+  .bt-player.vidopen .bt-st-media:not(.min):not(.hid){
+    top:calc(env(safe-area-inset-top,0px) + 8px);
+    left:calc(var(--rail-w,76px) + (100vw - var(--rail-w,76px) - env(safe-area-inset-right,0px)) / 2);
+    width:min(100vw - var(--rail-w,76px) - env(safe-area-inset-right,0px) - 20px,
+      (100dvh - var(--bar-res,68px) - 54px - env(safe-area-inset-top,0px)) * 1.7778);}
+  .bt-player.vidopen .bt-st-media:not(.min):not(.hid) .bt-st-thmin{height:44px;}
+  .bt-player.vidopen .bt-st-media:not(.min):not(.hid) .bt-st-thdock{width:56px;height:44px;}
+  .bt-player.mini.vidopen .bt-st-head{z-index:95;}
+  .bt-player.studio:not(.mini){left:var(--rail-w,76px);}
+}

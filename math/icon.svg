@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Math">
+  <rect width="512" height="512" rx="112" fill="#0d0f12"/>
+  <g fill="#5eead4">
+    <!-- plus (top-left) -->
+    <rect x="136" y="166" width="80" height="20" rx="10"/>
+    <rect x="166" y="136" width="20" height="80" rx="10"/>
+    <!-- minus (top-right) -->
+    <rect x="296" y="166" width="80" height="20" rx="10"/>
+    <!-- times (bottom-left) -->
+    <rect x="131" y="326" width="90" height="20" rx="10" transform="rotate(45 176 336)"/>
+    <rect x="131" y="326" width="90" height="20" rx="10" transform="rotate(-45 176 336)"/>
+    <!-- divide (bottom-right) -->
+    <rect x="296" y="326" width="80" height="20" rx="10"/>
+    <circle cx="336" cy="300" r="12"/>
+    <circle cx="336" cy="372" r="12"/>
+  </g>
+</svg>

@@ -52,6 +52,14 @@
     },
     {
       "action": "tap",
+      "selector": "[data-vidscrim]"
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "tap",
       "selector": "#filterBtn"
     },
     {
