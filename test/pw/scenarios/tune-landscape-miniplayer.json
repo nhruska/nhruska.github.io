@@ -1,0 +1,112 @@
+{
+  "name": "tune-landscape-miniplayer",
+  "note": "Operator bug 2026-10-05: on a landscape phone, with the mini-player bar up, the Tune tab's bottom string row sat UNDER the bar - untappable, and no scroll could bring it out. Cause: #s-tune/.tunerWrap were clamped to exactly height:100% of the view (#82's no-scroll contract), while the mini-player (#323) reserves its space as .view padding-bottom - which only protects content that participates in the view's scroll. At 812x375 the bar leaves ~119px for a column whose minimum is ~200px (6 guitar strings wrap to two rows), so the column overflowed its clamped box into the padding the bar covers, and the scroller never grew. Asserts: in landscape (812x375, 915x412) the user can scroll the bottom string row fully clear of the bar and every bottom-row button hit-tests to itself at its centre and corners; the tuner card is not crushed into a scroll sliver; portrait 375x812 still fits on one screen with the strings above the bar and no scroll. The video is seeded parked ('hid') so the state under test is the plain bar, not the PIP dock. RED on main: the view's scrollHeight == clientHeight, so the second string row stays under the bar.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "seed": {
+    "music.vidPref.v1": "hid"
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/index.html?p=guitar-standard"
+    },
+    {
+      "action": "wait",
+      "ms": 1200
+    },
+    {
+      "action": "waitFor",
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major']",
+      "timeoutMs": 8000
+    },
+    {
+      "action": "tap",
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major'] .li-body"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 6000
+    },
+    {
+      "action": "evalAssert",
+      "label": "fixture: plain mini bar (video parked, no theater scrim, no PIP dock)",
+      "js": "document.body.classList.contains('miniplayer')&&!document.body.classList.contains('pipdock')&&!document.querySelector('.bt-player.vidopen')"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=tune]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#tStrings .tStr"
+    },
+    {
+      "action": "assertCount",
+      "selector": "#tStrings .tStr",
+      "min": 6
+    },
+    {
+      "action": "resize",
+      "width": 812,
+      "height": 375
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "812x375 landscape: the bottom string row scrolls fully clear of the mini bar and every bottom-row button hit-tests to itself (centre + corners)",
+      "js": "(function(){var v=document.getElementById('view');var bar=document.querySelector('.bt-player.mini .bt-st-head').getBoundingClientRect();var ss=[].slice.call(document.querySelectorAll('#tStrings .tStr'));var low=ss[ss.length-1].getBoundingClientRect();v.scrollTo({top:v.scrollTop+Math.max(0,low.bottom-(bar.top-8)),behavior:'instant'});var vt=v.getBoundingClientRect().top;var lowTop=ss[ss.length-1].getBoundingClientRect().top;return ss.filter(function(e){return Math.abs(e.getBoundingClientRect().top-lowTop)<1;}).every(function(e){var b=e.getBoundingClientRect();if(b.top<vt-0.5||b.bottom>bar.top+0.5)return false;if(!(b.bottom<=bar.top||b.right<=bar.left||b.left>=bar.right))return false;return [[b.left+b.width/2,b.top+b.height/2],[b.left+4,b.top+4],[b.right-4,b.top+4],[b.left+4,b.bottom-4],[b.right-4,b.bottom-4]].every(function(p){var h=document.elementFromPoint(p[0],p[1]);return !!h&&e.contains(h);});});})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "812x375 landscape: the tuner card keeps its natural height (not crushed into a scroll sliver)",
+      "js": "(function(){var c=document.querySelector('.tCard');return c.getBoundingClientRect().height>=c.scrollHeight-1&&c.getBoundingClientRect().height>=80;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "landscape-812-strings-clear"
+    },
+    {
+      "action": "resize",
+      "width": 915,
+      "height": 412
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "915x412 landscape: the bottom string row scrolls fully clear of the mini bar and every bottom-row button hit-tests to itself (centre + corners)",
+      "js": "(function(){var v=document.getElementById('view');var bar=document.querySelector('.bt-player.mini .bt-st-head').getBoundingClientRect();var ss=[].slice.call(document.querySelectorAll('#tStrings .tStr'));var low=ss[ss.length-1].getBoundingClientRect();v.scrollTo({top:v.scrollTop+Math.max(0,low.bottom-(bar.top-8)),behavior:'instant'});var vt=v.getBoundingClientRect().top;var lowTop=ss[ss.length-1].getBoundingClientRect().top;return ss.filter(function(e){return Math.abs(e.getBoundingClientRect().top-lowTop)<1;}).every(function(e){var b=e.getBoundingClientRect();if(b.top<vt-0.5||b.bottom>bar.top+0.5)return false;if(!(b.bottom<=bar.top||b.right<=bar.left||b.left>=bar.right))return false;return [[b.left+b.width/2,b.top+b.height/2],[b.left+4,b.top+4],[b.right-4,b.top+4],[b.left+4,b.bottom-4],[b.right-4,b.bottom-4]].every(function(p){var h=document.elementFromPoint(p[0],p[1]);return !!h&&e.contains(h);});});})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "landscape-915-strings-clear"
+    },
+    {
+      "action": "resize",
+      "width": 375,
+      "height": 812
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "375x812 portrait (no regression): one screen - no view scroll, the tuner card fills the leftover height, and every string sits above the bar and hit-tests to itself",
+      "js": "(function(){var v=document.getElementById('view');v.scrollTo({top:0,behavior:'instant'});if(v.scrollHeight>v.clientHeight+1)return false;var bar=document.querySelector('.bt-player.mini .bt-st-head').getBoundingClientRect();var c=document.querySelector('.tCard').getBoundingClientRect();if(c.height<200)return false;return [].slice.call(document.querySelectorAll('#tStrings .tStr')).every(function(e){var b=e.getBoundingClientRect();if(b.bottom>bar.top+0.5)return false;var h=document.elementFromPoint(b.left+b.width/2,b.top+b.height/2);return !!h&&e.contains(h);});})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "portrait-375"
+    }
+  ]
+}
