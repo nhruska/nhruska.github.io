@@ -178,6 +178,9 @@
     // browser: circle.js loaded before us sets global.Circle; Node tests: the UMD
     // `global` is this module's exports, so fall back to require.
     var C = global.Circle || (typeof module !== 'undefined' && typeof require === 'function' ? require('./circle.js') : null);
+    // NH-2: a keyed chromatic chord's numeral follows its key-aware NAME (B in F
+    // reads #IV, matching the "B" label); romanFor stays the keyless fallback.
+    if (C && C.chromaticRomanInKey) return C.chromaticRomanInKey(chord, root, mk);
     return (C && C.romanFor) ? C.romanFor(chord, root) : '';
   }
   // The suggestion chip-row merge, pure and testable: filter the

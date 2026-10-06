@@ -1,0 +1,92 @@
+{
+  "name": "compose-all-f-major-b",
+  "note": "NH-2 (2026-10-06): in F major the All palette's B tile read 'Cb' (the tritone was always spelled as a lowered 5th). Keyed to F, the Major filter shows B, never Cb, and the flat-side tiles still read Bb/Eb.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 900
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"compose\"]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "tapIfVisible",
+      "text": "I know some chords",
+      "scope": "#guidanceAskSlot"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#keyPickerCompact"
+    },
+    {
+      "action": "tap",
+      "selector": "#keyPickerCompact"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tapText",
+      "text": "F",
+      "scope": "#keyRoots"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "key chip reads F",
+      "js": "/^F(?!#)/.test(((document.getElementById('keyPickerCompact')||{}).textContent||'').trim())"
+    },
+    {
+      "action": "tap",
+      "selector": "#keyPickerCompact"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tapText",
+      "text": "All",
+      "scope": "#catChips"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tapIfVisible",
+      "text": "Major",
+      "scope": ".catTabRow"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "All/Major grid shows B and Bb, never Cb",
+      "js": "(function(){var t=(document.getElementById('buildGrid')||{}).textContent||'';return t.indexOf('Cb')<0 && /(^|[^A-G])B(?![b#])/.test(t) && t.indexOf('Bb')>=0})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "f-major-all-b"
+    }
+  ]
+}

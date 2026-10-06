@@ -145,4 +145,67 @@ test('professor traps 1-10 + 12: the regime-B acceptance table holds', function 
   assert.strictEqual(Circle.noteInKey('F#', 'major', 'F') + 'dim', 'E#dim');       // 12 (display never leaks Fdim)
 });
 
+// ---- NH-2: chromatic roots never take a needless Cb/Fb/E#/B# or double
+// accidental. Root cause: spellRootInKey always used the flat-degree letter
+// from RN_CHROM (the tritone read bV), so F major's B tile spelled Cb (C
+// lowered) instead of B (#IV), and flat keys got Ebb/Bbb. Diatonic notes keep
+// their letter-per-degree spelling (F# major's E# stays); a chromatic root
+// takes whichever neighbouring letter needs FEWER accidentals, tie -> the
+// existing flat-degree convention.
+var ROOTS12 = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+var PC = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+function pcName(n) {
+  var v = PC[n.charAt(0)];
+  n.slice(1).split('').forEach(function (a) { v += a === '#' ? 1 : -1; });
+  return ((v % 12) + 12) % 12;
+}
+test('NH-2: F major spells the B root as B, not Cb', function () {
+  assert.strictEqual(Circle.noteInKey('F', 'major', 'B'), 'B');
+  assert.strictEqual(Circle.noteInKey('F', 'major', 'B') + 'm', 'Bm');
+});
+test('NH-2: flat keys spell chromatic roots without double flats (Db major D/E/G/A/B)', function () {
+  assert.deepStrictEqual(['D', 'E', 'G', 'A', 'B'].map(function (n) { return Circle.noteInKey('C#', 'major', n); }),
+    ['D', 'E', 'G', 'A', 'B']);
+  assert.strictEqual(Circle.noteInKey('A#', 'major', 'E'), 'E');   // Bb major: not Fb
+  assert.strictEqual(Circle.noteInKey('D#', 'major', 'A'), 'A');   // Eb major: not Bbb
+});
+test('NH-2: ties keep the flat-degree convention (no churn on already-clean keys)', function () {
+  assert.strictEqual(Circle.noteInKey('C', 'major', 'A#'), 'Bb');  // bVII
+  assert.strictEqual(Circle.noteInKey('C', 'major', 'F#'), 'Gb');  // bV, tie with F#
+  assert.strictEqual(Circle.noteInKey('C', 'major', 'G#'), 'Ab');  // bVI
+  assert.strictEqual(Circle.noteInKey('D', 'minor', 'F#'), 'F#');  // major III, tie with Gb
+  assert.strictEqual(Circle.noteInKey('F#', 'major', 'F'), 'E#');  // diatonic vii keeps its letter
+});
+test('NH-2: diatonic roots match scaleInKey in every mode (incl. lydian #4)', function () {
+  ['major', 'minor', 'mixolydian', 'dorian', 'lydian', 'phrygian', 'locrian'].forEach(function (m) {
+    ROOTS12.forEach(function (k) {
+      Circle.scaleInKey(k, m).forEach(function (name) {
+        assert.strictEqual(Circle.noteInKey(k, m, ROOTS12[pcName(name)]), name, k + ' ' + m + ' ' + name);
+      });
+    });
+  });
+  assert.strictEqual(Circle.noteInKey('F', 'lydian', 'B'), 'B');
+});
+test('NH-2 sweep: no chromatic root in any key/mode needs a double accidental or a Cb/Fb/E#/B#', function () {
+  ['major', 'minor', 'mixolydian', 'dorian', 'lydian', 'phrygian', 'locrian'].forEach(function (m) {
+    ROOTS12.forEach(function (k) {
+      var dia = Circle.scaleInKey(k, m);
+      ROOTS12.forEach(function (n) {
+        var s = Circle.noteInKey(k, m, n);
+        assert.strictEqual(pcName(s), pcName(n), k + ' ' + m + ': ' + n + ' -> ' + s + ' changed pitch');
+        if (dia.indexOf(s) >= 0) return;               // diatonic: letter-per-degree governs
+        assert.ok(!/##|bb|^(Cb|Fb|E#|B#)$/.test(s), k + ' ' + m + ': chromatic ' + n + ' -> ' + s);
+      });
+    });
+  });
+});
+test('NH-2: the Compose roman beside a chromatic chord agrees with its spelled name', function () {
+  var T = require('../music/shared/theory.js');
+  assert.strictEqual(T.romanInKey('B', 'F', 'Major'), '#IV');     // reads B, so #IV not bV
+  assert.strictEqual(T.romanInKey('Bm', 'F', 'Major'), '#iv');
+  assert.strictEqual(T.romanInKey('F#', 'C', 'Major'), 'bV');     // tie -> Gb -> bV unchanged
+  assert.strictEqual(T.romanInKey('A#', 'C', 'Major'), 'bVII');   // unchanged
+  assert.strictEqual(T.romanInKey('D', 'C#', 'Major'), '#I');     // Db major: D, not Ebb (bII)
+});
+
 run();
