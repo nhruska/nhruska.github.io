@@ -23,6 +23,7 @@
  *   GuidanceLevel.get() -> 'beginner' | 'intermediate' | 'advanced' | null
  *       null = unset OR a corrupt/foreign stored value (both mean the ask
  *       has not been answered yet).
+ *   GuidanceLevel.at()  -> ISO stamp of the last set() | null (see AT_KEY)
  *   GuidanceLevel.set(value)
  *       Persists value ONLY if it is exactly one of LEVELS; anything else
  *       is a silent no-op. Every caller is a fixed-vocabulary tap (an
@@ -33,6 +34,13 @@
   'use strict';
 
   var KEY = 'music.guidanceLevel.v1';
+  // WHEN the level was tapped (ISO), additive sibling key (M-MUSICIAN-PROFILE-
+  // VNEXT): the profile carries the level as a self-report ASSESSMENT, and an
+  // assessment's `at` is when the claim was made - not when it was exported.
+  // Without it a coach's later, better-grounded claim could lose to a tap
+  // re-stamped at export time. Absent on older devices -> null (caller falls
+  // back to its own clock, the pre-VNext behaviour).
+  var AT_KEY = 'music.guidanceLevel.at.v1';
   var LEVELS = ['beginner', 'intermediate', 'advanced'];
 
   // Bare `localStorage` so this runs unmodified in the browser; Node tests
@@ -57,10 +65,16 @@
     if (LEVELS.indexOf(value) < 0) return; // fixed vocabulary only - never persists garbage
     var store = defaultStore();
     if (!store) return;
-    try { store.setItem(KEY, value); } catch (e) { /* quota / private mode - app still runs */ }
+    try { store.setItem(KEY, value); store.setItem(AT_KEY, new Date().toISOString()); } catch (e) { /* quota / private mode - app still runs */ }
+  }
+  // ISO stamp of the last set(), or null (never set here / older build / blocked).
+  function at() {
+    var store = defaultStore();
+    if (!store) return null;
+    try { var v = store.getItem(AT_KEY); return (typeof v === 'string' && !isNaN(Date.parse(v))) ? v : null; } catch (e) { return null; }
   }
 
-  var API = { KEY: KEY, LEVELS: LEVELS, get: get, set: set };
+  var API = { KEY: KEY, AT_KEY: AT_KEY, LEVELS: LEVELS, get: get, set: set, at: at };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   if (root) root.GuidanceLevel = API;
 
