@@ -778,85 +778,63 @@ body.studioopen .tabbar{position:relative;z-index:55;}
   .tCard{flex-basis:auto;}
 }
 /* LANDSCAPE PHONE = TWO PANES, ONE SCREEN (operator decision 2026-10-05).
-   Sideways, the stacked 540px column cannot fit: app bar + tab bar + mini bar
-   leave ~110px of a 320px-tall screen, so #366's column scrolled and the
-   strings sat one scroll away. The fix is width, not scroll: on Tune the view
-   spans the whole screen and splits - the tuner (cents line, note + runway,
-   Start/Tone + mode chips) on the left, the strings on the right - and the
-   mini bar docks under the strings pane, so the tuner pane gets the view's
-   full height and the strings sit above the bar. Nothing scrolls.
-   - The app bar and tab bar keep their 540px column, so the shell does not
-     jump when switching tabs; only the view widens.
-   - The card title and the strings caption hide here (the app bar's purpose
-     line already says "Start, then bring each string up to the post"); copy
-     is unchanged in portrait/desktop.
-   - Every control keeps its >=44px box; Start drops 56 -> 48px (still above
-     the floor) to buy the runway its full 72px. The note sits beside the
-     runway and the cents line runs one line above both (ellipsis only if a
-     740px-wide phone cannot fit the idle hint), so the tuner pane is three
-     rows: cents / note + runway / Start, Tone, mode chips.
-   - The strings are a grid that fills the pane (the landscape audit's
-     grid): 4 strings/courses 2x2 (ukulele, mandolin, mandola), 5 as 3+2
-     (banjo), 6 as 3x2 (guitar), 7-8 as 4x2 - same :has() count detect as
-     the portrait rule. The panes split ~1.1:1, strings pane >=340px so the
-     mini bar's title stays readable.
-   - The mini bar's slot is a grid ROW (--tp-res) under the strings, not .view
-     padding: the strings stretch into whatever the tuning-preset row and the
-     bar leave, so they can never slide under it.
+   Sideways, the stacked column cannot fit, so the extra room landscape has -
+   width - is spent instead: the tuner card on the left, the strings on the
+   right, nothing scrolls. It lives inside the landscape RAIL shell (Direction
+   A, end of this file: left rail instead of header + bottom tab bar, one-row
+   mini bar along the bottom of the content column), so the panes get the
+   view's full height minus the bar's .view reservation - the same reservation
+   every other tab uses, which keeps the bar ONE shape in landscape.
+   - The card title and the strings caption hide here (the rail names the tab;
+     the idle hint lives in the cents line); copy is unchanged in
+     portrait/desktop.
+   - Tuner pane, four rows, primary action at the bottom in thumb reach on a
+     propped phone: mode chips / cents line / note beside the 72px runway /
+     Start + Tone. Every control keeps its >=44px box.
+   - The strings are a grid that fills the pane (the landscape audit's grid):
+     4 strings/courses 2x2 (ukulele, mandolin, mandola), 5 as 3+2 (banjo), 6
+     as 3x2 (guitar), 7-8 as 4x2 - same :has() count detect as the portrait
+     rule. With the header and tab bar gone a grid row never drops near the
+     44px floor (>=95px at 320px tall with the bar and a tuning-preset row),
+     so #367's one-row fallback is retired.
+   - The docked video PIP rides INSIDE the bar in the rail shell, so the split
+     holds with it docked too (#367 had to fall back to the scrolling column).
    - The tuning lab (?tunerlab=1, a power tool) goes BELOW Start in the tuner
      pane, which scrolls on its own: the everyday screen (runway + Start +
-     strings) is untouched, the sliders are one in-pane scroll away, and the
-     strings pane never moves.
-   - The docked video PIP (body.pipdock, a 152x110 overlay at the right edge)
-     keeps #366's scrolling column: no split can keep both panes clear of it.
-   Scoped by :has(#s-tune.on), so the other tabs keep the 540px column.
-   --tp-r is the strings pane width, shared by the grid column and the fixed
-   mini bar so the bar sits exactly under the pane. */
+     strings) is untouched and the strings pane never moves.
+   Same gate as the rail (min-height:280px included), so the split and the
+   rail always come together. */
 @media (orientation:landscape) and (max-height:560px) and (min-height:280px){
-  body:not(.pipdock):has(#s-tune.on){--tp-pl:max(14px, env(safe-area-inset-left,0px));--tp-pr:max(14px, env(safe-area-inset-right,0px));--tp-gap:12px;
-    --tp-r:max(340px, calc((100vw - var(--tp-pl) - var(--tp-pr) - var(--tp-gap)) / 2.1));}
-  body.miniplayer:not(.pipdock):has(#s-tune.on){--tp-res:74px;}
-  body:not(.pipdock):has(#s-tune.on) .app{max-width:none;}
-  body:not(.pipdock):has(#s-tune.on) .appbar,
-  body:not(.pipdock):has(#s-tune.on) .tabbar{width:100%;max-width:540px;margin-left:auto;margin-right:auto;}
-  body:not(.pipdock):has(#s-tune.on) .view{padding:6px var(--tp-pr) 6px var(--tp-pl);}
-  body:not(.pipdock):has(#s-tune.on) #s-tune{height:100%;min-height:0;}
-  body:not(.pipdock):has(#s-tune.on) .tunerWrap{flex:1 1 0;min-height:0;display:grid;
-    grid-template-columns:minmax(0,1fr) var(--tp-r);grid-template-rows:auto minmax(0,1fr) var(--tp-res,0px);
-    grid-template-areas:"card tune" "card str" "card .";column-gap:var(--tp-gap);align-items:start;}
-  body:not(.pipdock):has(#s-tune.on) .tCard{grid-area:card;align-self:stretch;margin:0;padding:6px 10px;}
-  body:not(.pipdock):has(#s-tune.on) .tCard h3,
-  body:not(.pipdock):has(#s-tune.on) .refSub,
-  body:not(.pipdock):has(#s-tune.on) .tuneTuneRow .sub{display:none;}
-  body:not(.pipdock):has(#s-tune.on) .tuneTuneRow{grid-area:tune;}
-  body:not(.pipdock):has(#s-tune.on) .tuneTuneRow .chipScrollWrap{margin-bottom:6px;}
-  body:not(.pipdock):has(#s-tune.on) .tStrings{grid-area:str;margin:0;align-self:stretch;display:grid;gap:6px;
+  body:has(#s-tune.on) .view{padding-top:6px;padding-bottom:6px;}
+  body.miniplayer:has(#s-tune.on) .view{padding-bottom:var(--bar-res);}
+  body:has(#s-tune.on) #s-tune{height:100%;min-height:0;}
+  body:has(#s-tune.on) .tunerWrap{flex:1 1 0;min-height:0;display:grid;
+    grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);
+    grid-template-areas:"card tune" "card str";column-gap:12px;align-items:start;}
+  body:has(#s-tune.on) .tCard{grid-area:card;align-self:stretch;margin:0;padding:6px 10px;}
+  body:has(#s-tune.on) .tCard h3,
+  body:has(#s-tune.on) .refSub,
+  body:has(#s-tune.on) .tuneTuneRow .sub{display:none;}
+  body:has(#s-tune.on) .tuneTuneRow{grid-area:tune;}
+  body:has(#s-tune.on) .tuneTuneRow .chipScrollWrap{margin-bottom:6px;}
+  body:has(#s-tune.on) .tStrings{grid-area:str;margin:0;align-self:stretch;display:grid;gap:6px;
     grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(44px,1fr);}
-  body:not(.pipdock):has(#s-tune.on) .tStrings:has(.tStr:nth-child(5)){grid-template-columns:repeat(3,minmax(0,1fr));}
-  body:not(.pipdock):has(#s-tune.on) .tStrings:has(.tStr:nth-child(7)){grid-template-columns:repeat(4,minmax(0,1fr));}
-  body:not(.pipdock):has(#s-tune.on) .tStr{min-height:44px;}
-  /* ...unless that grid would squeeze its rows toward the 44px floor: with the
-     mini bar up on a <=335px-tall screen, or with a tuning-preset row above
-     it, the strings go to ONE row capped at 76px - taller, wider-than-44
-     buttons beat two 45px rows. */
-  body:not(.pipdock):has(#s-tune.on) .tunerWrap:has(#tuneTuneRow:not([style*="none"])) .tStrings{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);grid-auto-rows:auto;max-height:76px;}
-  body:not(.pipdock):has(#s-tune.on) .micBox{display:grid;margin:0;column-gap:10px;row-gap:6px;
-    grid-template-columns:auto minmax(0,1fr) auto;align-content:safe center;
-    grid-template-areas:"cents cents cents" "note rw rw" "acts acts modes" "lab lab lab";}
-  body:not(.pipdock):has(#s-tune.on) .micBox > .micCents{grid-area:cents;font-size:.66rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  body:not(.pipdock):has(#s-tune.on) .micBox > .micNote{grid-area:note;align-self:center;min-width:64px;margin:0;}
-  body:not(.pipdock):has(#s-tune.on) .micBox > .runway,
-  body:not(.pipdock):has(#s-tune.on) .micBox > .micMeter{grid-area:rw;margin:0 2px;}
-  body:not(.pipdock):has(#s-tune.on) .micBox > .micActions{grid-area:acts;margin:0;}
-  body:not(.pipdock):has(#s-tune.on) .micBox > .micModes{grid-area:modes;margin:0;align-self:center;}
-  body:not(.pipdock):has(#s-tune.on) .micBox > #labSlot{grid-area:lab;}
-  body:not(.pipdock):has(#s-tune.on) .micBox > .micMsg{grid-column:1 / -1;}
-  body:not(.pipdock):has(#s-tune.on) #micToggle{min-height:48px;flex:1 1 0;}
-  body:not(.pipdock):has(#s-tune.on) #toneToggle{flex:0 1 auto;}
-  body:not(.pipdock):has(#s-tune.on) .bt-player.mini .bt-st-head{left:auto;right:var(--tp-pr);width:var(--tp-r);max-width:none;margin:0;}
-}
-@media (orientation:landscape) and (max-height:335px) and (min-height:280px){
-  body.miniplayer:not(.pipdock):has(#s-tune.on) .tStrings{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);grid-auto-rows:auto;max-height:76px;}
+  body:has(#s-tune.on) .tStrings:has(.tStr:nth-child(5)){grid-template-columns:repeat(3,minmax(0,1fr));}
+  body:has(#s-tune.on) .tStrings:has(.tStr:nth-child(7)){grid-template-columns:repeat(4,minmax(0,1fr));}
+  body:has(#s-tune.on) .tStr{min-height:44px;}
+  body:has(#s-tune.on) .micBox{display:grid;margin:0;column-gap:10px;row-gap:6px;
+    grid-template-columns:auto minmax(0,1fr);align-content:safe center;
+    grid-template-areas:"modes modes" "cents cents" "note rw" "acts acts" "lab lab";}
+  body:has(#s-tune.on) .micBox > .micCents{grid-area:cents;font-size:.66rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  body:has(#s-tune.on) .micBox > .micNote{grid-area:note;align-self:center;min-width:64px;margin:0;}
+  body:has(#s-tune.on) .micBox > .runway,
+  body:has(#s-tune.on) .micBox > .micMeter{grid-area:rw;margin:0 2px;}
+  body:has(#s-tune.on) .micBox > .micActions{grid-area:acts;margin:0;}
+  body:has(#s-tune.on) .micBox > .micModes{grid-area:modes;margin:0;}
+  body:has(#s-tune.on) .micBox > #labSlot{grid-area:lab;}
+  body:has(#s-tune.on) .micBox > .micMsg{grid-column:1 / -1;}
+  body:has(#s-tune.on) #micToggle{flex:1 1 0;}
+  body:has(#s-tune.on) #toneToggle{flex:0 1 auto;}
 }
 .tCard h3{font-weight:700;font-size:.98rem;margin-bottom:5px;letter-spacing:-.01em;flex:0 0 auto;}
 .tCard p{font-size:.78rem;color:var(--txt-soft);line-height:1.55;margin-bottom:11px;}
@@ -2298,3 +2276,60 @@ body.miniplayer .view{padding-bottom:104px;} /* two-row bar (batch 7) */
    no other view pins content into that corner. */
 body.pipdock #s-tune .tunerWrap{padding-bottom:162px;}
 body.miniplayer .toast{bottom:calc(max(env(safe-area-inset-bottom,0px), 8px) + 132px);}
+
+/* =====================================================================
+ * LANDSCAPE PHONE SHELL - "Direction A: side rail + compact chrome"
+ * (landscape audit 2026-10-05; Nik picks between directions, Rail is the
+ * recommended default).
+ * ---------------------------------------------------------------------
+ * Sideways on a stand, height is the scarce axis and width is free - yet the
+ * portrait shell spent 136 of 340px on a header + bottom tab bar and left
+ * ~190px of empty gutter on each side of a 540px column. With the mini bar up
+ * the Songs list was 0px. So in landscape the chrome moves to the axis that
+ * has room:
+ * - The SAME .tabbar element becomes a 76px left rail (same buttons, order
+ *   and labels; >=56px tall targets). The gear (#settingsBtn) sits at the
+ *   rail top; the brand, tab pill and purpose line go - the lit rail button
+ *   already answers "where am I". The offline pill stays, under the gear.
+ *   DOM order is untouched, so keyboard focus still runs gear -> view ->
+ *   tabs.
+ * - The view fills the rest of the screen, top to bottom, rail to edge.
+ * - The mini bar is ONE 52px row along the bottom of the content column
+ *   (tracks.css, same gate): the .view reservation drops 104 -> --bar-res.
+ * - Songs: the view switcher and its row controls (Search & filter + Add, or
+ *   the setlist's Clear + Start) share one row; the list gets the rest.
+ * Same gate as the two-pane Tune (min-height:280px included) so the split
+ * and the rail always come together. Portrait and desktop never match it.
+ * ===================================================================== */
+@media (orientation:landscape) and (max-height:560px) and (min-height:280px){
+  :root{--rail-w:calc(76px + env(safe-area-inset-left,0px));--bar-h:52px;
+    --bar-b:calc(env(safe-area-inset-bottom,0px) + 8px);--bar-res:calc(var(--bar-h) + var(--bar-b) + 8px);}
+  .app{display:grid;grid-template-columns:var(--rail-w) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);max-width:none;margin:0;}
+  .appbar{grid-column:1;grid-row:1;display:flex;flex-direction:column;align-items:center;gap:6px;
+    padding:max(env(safe-area-inset-top,0px), 10px) 6px 8px calc(6px + env(safe-area-inset-left,0px));
+    border-bottom:0;border-right:1px solid var(--line);background:var(--bg-2);backdrop-filter:none;-webkit-backdrop-filter:none;}
+  .appbar .brand{order:2;}
+  .appbar .brand .nm,.appbar .tabPill,.appbar .tabPurpose{display:none;}
+  .tabbar{grid-column:1;grid-row:2;flex-direction:column;justify-content:flex-start;gap:6px;min-height:0;overflow-y:auto;
+    padding:0 6px var(--tabbar-pb) calc(6px + env(safe-area-inset-left,0px));border-top:0;border-right:1px solid var(--line);}
+  .tabbar button{flex:0 0 auto;min-height:56px;justify-content:center;}
+  .tabbar button.on{margin-bottom:0;padding-bottom:6px;}
+  .view{grid-column:2;grid-row:1 / span 2;padding:10px max(14px, env(safe-area-inset-right,0px)) 10px 14px;}
+  body.miniplayer .view{padding-bottom:var(--bar-res);}
+  /* The PIP docks inside the bar here (tracks.css), so Tune no longer
+     reserves the portrait dock's 162px. */
+  body.pipdock #s-tune .tunerWrap{padding-bottom:0;}
+  .toast{left:calc(var(--rail-w) + (100vw - var(--rail-w)) / 2);bottom:calc(var(--bar-b) + 8px);}
+  body.miniplayer .toast{bottom:calc(var(--bar-res) + 4px);}
+  /* Songs: switcher + row controls on ONE row, the list below. #segAllChrome
+     dissolves into the grid (display:contents) so its filter sheet can open
+     full-width under the row instead of stretching the right column. */
+  #s-library.on{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr);column-gap:8px;}
+  #s-library > *{grid-column:1 / -1;}
+  #s-library > #songsSeg{grid-column:1;grid-row:1;}
+  #s-library > #segAllChrome:not([hidden]){display:contents;}
+  #segAllChrome .filterBar{grid-column:2;grid-row:1;margin-bottom:4px;}
+  #segAllChrome .filterSheet{grid-column:1 / -1;grid-row:2;}
+  #s-library > #setHead{grid-column:2;grid-row:1;}
+  #s-library > #libSongs,#s-library > #libSet{grid-row:3;}
+}
