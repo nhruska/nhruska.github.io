@@ -777,6 +777,87 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 @media (orientation:landscape) and (max-height:560px){
   .tCard{flex-basis:auto;}
 }
+/* LANDSCAPE PHONE = TWO PANES, ONE SCREEN (operator decision 2026-10-05).
+   Sideways, the stacked 540px column cannot fit: app bar + tab bar + mini bar
+   leave ~110px of a 320px-tall screen, so #366's column scrolled and the
+   strings sat one scroll away. The fix is width, not scroll: on Tune the view
+   spans the whole screen and splits - the tuner (cents line, note + runway,
+   Start/Tone + mode chips) on the left, the strings on the right - and the
+   mini bar docks under the strings pane, so the tuner pane gets the view's
+   full height and the strings sit above the bar. Nothing scrolls.
+   - The app bar and tab bar keep their 540px column, so the shell does not
+     jump when switching tabs; only the view widens.
+   - The card title and the strings caption hide here (the app bar's purpose
+     line already says "Start, then bring each string up to the post"); copy
+     is unchanged in portrait/desktop.
+   - Every control keeps its >=44px box; Start drops 56 -> 48px (still above
+     the floor) to buy the runway its full 72px. The note sits beside the
+     runway and the cents line runs one line above both (ellipsis only if a
+     740px-wide phone cannot fit the idle hint), so the tuner pane is three
+     rows: cents / note + runway / Start, Tone, mode chips.
+   - The strings are a grid that fills the pane (the landscape audit's
+     grid): 4 strings/courses 2x2 (ukulele, mandolin, mandola), 5 as 3+2
+     (banjo), 6 as 3x2 (guitar), 7-8 as 4x2 - same :has() count detect as
+     the portrait rule. The panes split ~1.1:1, strings pane >=340px so the
+     mini bar's title stays readable.
+   - The mini bar's slot is a grid ROW (--tp-res) under the strings, not .view
+     padding: the strings stretch into whatever the tuning-preset row and the
+     bar leave, so they can never slide under it.
+   - The tuning lab (?tunerlab=1, a power tool) goes BELOW Start in the tuner
+     pane, which scrolls on its own: the everyday screen (runway + Start +
+     strings) is untouched, the sliders are one in-pane scroll away, and the
+     strings pane never moves.
+   - The docked video PIP (body.pipdock, a 152x110 overlay at the right edge)
+     keeps #366's scrolling column: no split can keep both panes clear of it.
+   Scoped by :has(#s-tune.on), so the other tabs keep the 540px column.
+   --tp-r is the strings pane width, shared by the grid column and the fixed
+   mini bar so the bar sits exactly under the pane. */
+@media (orientation:landscape) and (max-height:560px) and (min-height:280px){
+  body:not(.pipdock):has(#s-tune.on){--tp-pl:max(14px, env(safe-area-inset-left,0px));--tp-pr:max(14px, env(safe-area-inset-right,0px));--tp-gap:12px;
+    --tp-r:max(340px, calc((100vw - var(--tp-pl) - var(--tp-pr) - var(--tp-gap)) / 2.1));}
+  body.miniplayer:not(.pipdock):has(#s-tune.on){--tp-res:74px;}
+  body:not(.pipdock):has(#s-tune.on) .app{max-width:none;}
+  body:not(.pipdock):has(#s-tune.on) .appbar,
+  body:not(.pipdock):has(#s-tune.on) .tabbar{width:100%;max-width:540px;margin-left:auto;margin-right:auto;}
+  body:not(.pipdock):has(#s-tune.on) .view{padding:6px var(--tp-pr) 6px var(--tp-pl);}
+  body:not(.pipdock):has(#s-tune.on) #s-tune{height:100%;min-height:0;}
+  body:not(.pipdock):has(#s-tune.on) .tunerWrap{flex:1 1 0;min-height:0;display:grid;
+    grid-template-columns:minmax(0,1fr) var(--tp-r);grid-template-rows:auto minmax(0,1fr) var(--tp-res,0px);
+    grid-template-areas:"card tune" "card str" "card .";column-gap:var(--tp-gap);align-items:start;}
+  body:not(.pipdock):has(#s-tune.on) .tCard{grid-area:card;align-self:stretch;margin:0;padding:6px 10px;}
+  body:not(.pipdock):has(#s-tune.on) .tCard h3,
+  body:not(.pipdock):has(#s-tune.on) .refSub,
+  body:not(.pipdock):has(#s-tune.on) .tuneTuneRow .sub{display:none;}
+  body:not(.pipdock):has(#s-tune.on) .tuneTuneRow{grid-area:tune;}
+  body:not(.pipdock):has(#s-tune.on) .tuneTuneRow .chipScrollWrap{margin-bottom:6px;}
+  body:not(.pipdock):has(#s-tune.on) .tStrings{grid-area:str;margin:0;align-self:stretch;display:grid;gap:6px;
+    grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(44px,1fr);}
+  body:not(.pipdock):has(#s-tune.on) .tStrings:has(.tStr:nth-child(5)){grid-template-columns:repeat(3,minmax(0,1fr));}
+  body:not(.pipdock):has(#s-tune.on) .tStrings:has(.tStr:nth-child(7)){grid-template-columns:repeat(4,minmax(0,1fr));}
+  body:not(.pipdock):has(#s-tune.on) .tStr{min-height:44px;}
+  /* ...unless that grid would squeeze its rows toward the 44px floor: with the
+     mini bar up on a <=335px-tall screen, or with a tuning-preset row above
+     it, the strings go to ONE row capped at 76px - taller, wider-than-44
+     buttons beat two 45px rows. */
+  body:not(.pipdock):has(#s-tune.on) .tunerWrap:has(#tuneTuneRow:not([style*="none"])) .tStrings{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);grid-auto-rows:auto;max-height:76px;}
+  body:not(.pipdock):has(#s-tune.on) .micBox{display:grid;margin:0;column-gap:10px;row-gap:6px;
+    grid-template-columns:auto minmax(0,1fr) auto;align-content:safe center;
+    grid-template-areas:"cents cents cents" "note rw rw" "acts acts modes" "lab lab lab";}
+  body:not(.pipdock):has(#s-tune.on) .micBox > .micCents{grid-area:cents;font-size:.66rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  body:not(.pipdock):has(#s-tune.on) .micBox > .micNote{grid-area:note;align-self:center;min-width:64px;margin:0;}
+  body:not(.pipdock):has(#s-tune.on) .micBox > .runway,
+  body:not(.pipdock):has(#s-tune.on) .micBox > .micMeter{grid-area:rw;margin:0 2px;}
+  body:not(.pipdock):has(#s-tune.on) .micBox > .micActions{grid-area:acts;margin:0;}
+  body:not(.pipdock):has(#s-tune.on) .micBox > .micModes{grid-area:modes;margin:0;align-self:center;}
+  body:not(.pipdock):has(#s-tune.on) .micBox > #labSlot{grid-area:lab;}
+  body:not(.pipdock):has(#s-tune.on) .micBox > .micMsg{grid-column:1 / -1;}
+  body:not(.pipdock):has(#s-tune.on) #micToggle{min-height:48px;flex:1 1 0;}
+  body:not(.pipdock):has(#s-tune.on) #toneToggle{flex:0 1 auto;}
+  body:not(.pipdock):has(#s-tune.on) .bt-player.mini .bt-st-head{left:auto;right:var(--tp-pr);width:var(--tp-r);max-width:none;margin:0;}
+}
+@media (orientation:landscape) and (max-height:335px) and (min-height:280px){
+  body.miniplayer:not(.pipdock):has(#s-tune.on) .tStrings{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);grid-auto-rows:auto;max-height:76px;}
+}
 .tCard h3{font-weight:700;font-size:.98rem;margin-bottom:5px;letter-spacing:-.01em;flex:0 0 auto;}
 .tCard p{font-size:.78rem;color:var(--txt-soft);line-height:1.55;margin-bottom:11px;}
 .tCard .row{display:flex;gap:8px;flex-wrap:wrap;}

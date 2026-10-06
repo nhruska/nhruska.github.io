@@ -166,7 +166,8 @@
         "test/tune-flow.test.js",
         "test/tuner-gate.test.js",
         "test/tuner-near.test.js",
-        "test/pw/scenarios/tune-landscape-miniplayer.json"
+        "test/pw/scenarios/tune-landscape-miniplayer.json",
+        "test/pw/scenarios/tune-landscape-two-pane.json"
       ],
       "checks": [
         {
@@ -179,6 +180,12 @@
           "cmd": "PY=python3; python3 -c 'import playwright' 2>/dev/null || PY=\"$HOME/.claude/.venv/bin/python\"; \"$PY\" test/pw/run-scenario.py test/pw/scenarios/tune-landscape-miniplayer.json --base-url={url}",
           "needs_runtime": true,
           "timeout_s": 120
+        },
+        {
+          "id": "scenario-tune-landscape-two-pane",
+          "cmd": "PY=python3; python3 -c 'import playwright' 2>/dev/null || PY=\"$HOME/.claude/.venv/bin/python\"; \"$PY\" test/pw/run-scenario.py test/pw/scenarios/tune-landscape-two-pane.json --base-url={url}",
+          "needs_runtime": true,
+          "timeout_s": 300
         }
       ],
       "probes": [
