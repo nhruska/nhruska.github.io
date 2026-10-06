@@ -8,7 +8,9 @@ Service-worker caching strategy, the CACHE-bump discipline, and offline degradat
 
 ## Worker + lifecycle [STABLE]
 
-music/sw.js lives at /music/ so its scope covers play/ + shared/ + backing-tracks/. Install: `caches.open(CACHE).addAll(CORE)` + skipWaiting (a failed CORE fetch fails the whole install). Activate: delete every cache except the current CACHE name + clients.claim.
+music/sw.js lives at /music/ so its scope covers play/ + shared/ + backing-tracks/. Install: `caches.open(CACHE).addAll(CORE)` + skipWaiting (a failed CORE fetch fails the whole install). Activate: delete every cache whose name starts with `music-` and differs from the current CACHE name, then clients.claim.
+
+**Cache-family isolation (added with the `math/` sibling app, docs/plans/goal-math-app-v1-20260925.md):** the site root now hosts a second PWA at `/math/` with its own service worker (`math/sw.js`) and its own `math-` cache family, on the SAME origin. Activate used to delete every OTHER cache on the origin - harmless while Music was the only app, but it would silently wipe Math's offline install the moment both existed. Both workers now scope their activate-time deletion to their own prefix only (`k.indexOf('music-') === 0` / `k.indexOf('math-') === 0`); [test/math-sw.test.js](../../../test/math-sw.test.js) guards both directions. **Lookups are isolated too:** both workers read through their OWN cache (`fromCache` = `caches.open(CACHE).then(c => c.match(...))`), never the origin-wide `caches.match`, which searches every cache oldest-first. Both apps cache `music/shared/*`, so the global lookup let offline Math boot on a returning user's pre-`PALETTE` `theme.js` from Music's old cache (and the reverse after a Music release). The same test fails if either worker calls `caches.match(`.
 
 ## CORE precache [STABLE]
 

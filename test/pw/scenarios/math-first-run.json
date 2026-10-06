@@ -1,0 +1,84 @@
+{
+  "name": "math-first-run",
+  "description": "Math app first run (goal-math-app-v1 + v1.1): a fresh device opens on 'Who's playing?'; naming a player lands on the SKILL PATH with Addition to 10 up next and Race on screen, all 12 skills open; Custom keeps the kid add/subtract default; the player's colour is the accent.",
+  "url": "/math/",
+  "firstRun": true,
+  "steps": [
+    {
+      "action": "assertVisible",
+      "selector": "#pfName"
+    },
+    {
+      "action": "evalAssert",
+      "label": "first-run sheet is titled Who's playing?",
+      "js": "document.getElementById('playersTitle').textContent.indexOf('playing')>0"
+    },
+    {
+      "action": "evalAssert",
+      "label": "type a name",
+      "js": "(function(){var n=document.getElementById('pfName');n.value='Ava';return true;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#playersOv [data-color='#fb3b5c']"
+    },
+    {
+      "action": "evalAssert",
+      "label": "typed name survives a colour pick",
+      "js": "document.getElementById('pfName').value==='Ava'"
+    },
+    {
+      "action": "tap",
+      "selector": "#playersOv [data-act='save']"
+    },
+    {
+      "action": "assertHidden",
+      "selector": "#playersOv"
+    },
+    {
+      "action": "evalAssert",
+      "label": "player chip shows Ava and the profile is stored",
+      "js": "document.getElementById('playerName').textContent==='Ava'&&JSON.parse(localStorage.getItem('math.profiles.v1')).list[0].name==='Ava'"
+    },
+    {
+      "action": "evalAssert",
+      "label": "accent follows the player's colour (Ruby)",
+      "js": "getComputedStyle(document.documentElement).getPropertyValue('--accent').trim().toLowerCase()==='#fb3b5c'"
+    },
+    {
+      "action": "evalAssert",
+      "label": "home is the skill path: Addition to 10 is up next, 0 stars",
+      "js": "document.getElementById('scrPath').classList.contains('on')&&document.querySelector('#nextCard .mNextName').textContent==='Addition to 10'&&/Up next/i.test(document.querySelector('#nextCard .mNextTag').textContent)&&document.querySelectorAll('#nextCard .mStars .on').length===0"
+    },
+    {
+      "action": "assertInViewport",
+      "selector": "#nextCard [data-go=\"race\"]"
+    },
+    {
+      "action": "evalAssert",
+      "label": "all 12 skills are listed and open (no locks)",
+      "js": "document.querySelectorAll('#pathList .mSkill').length===12&&!document.querySelector('#pathList [disabled]')"
+    },
+    {
+      "action": "screenshot",
+      "name": "math-first-run-path"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"setup\"]"
+    },
+    {
+      "action": "evalAssert",
+      "label": "Custom keeps the kid default: add/sub on, tables hidden",
+      "js": "!document.getElementById('addSec').hidden&&document.getElementById('mulSec').hidden&&document.querySelectorAll('#opChips .chip.on').length===2"
+    },
+    {
+      "action": "assertInViewport",
+      "selector": "#startBtn"
+    },
+    {
+      "action": "screenshot",
+      "name": "math-first-run"
+    }
+  ]
+}

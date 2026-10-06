@@ -401,8 +401,23 @@ body.studioopen .tabbar{position:relative;z-index:55;}
  * fixed and is revealed as .li-inner slides off it - the underlay is never
  * itself part of the moving layer. touch-action:pan-y lets the browser keep
  * native (fast, uncontested) vertical list-scrolling; only X-axis pointer
- * movement is left for wireSetlistDrag's own directional lock to claim. */
-.listItem.swipeable{background:transparent;border:0;padding:0;overflow:hidden;}
+ * movement is left for wireSetlistDrag's own directional lock to claim.
+ * flex-shrink:0 (UAT 2026-09-17, "setlist rows get stuck with a set height
+ * switching tabs"): #setBody is itself a flex COLUMN (songbook.css above)
+ * with a bounded height (overflow-y:auto), so its row children are flex
+ * items. Per the flexbox spec, a flex item's automatic minimum main size
+ * collapses to 0 when its own `overflow` isn't `visible` - and this rule
+ * sets overflow:hidden. Once the setlist grows past what fits on screen,
+ * that 0-floor let every row get flex-SHRUNK (not scrolled) to fit, and
+ * overflow:hidden then clipped the now-too-tall content - rows looked
+ * "stuck" at a smaller height with overlapping text. It was never about
+ * switching tabs or a stale render; a fresh render with enough songs to
+ * overflow showed it immediately (repro: any setlist over ~7 short rows on
+ * a phone viewport). Plain All/Jams rows never had `overflow:hidden`, so
+ * they never hit this floor and always scrolled correctly, which is why
+ * only the Setlist view was affected. flex-shrink:0 pins each row to its
+ * own content height so #setBody scrolls instead of squeezing rows. */
+.listItem.swipeable{background:transparent;border:0;padding:0;overflow:hidden;flex-shrink:0;}
 /* flex:1 1 auto is load-bearing: .li-inner is the outer .listItem's (still
  * display:flex, row axis) ONE in-flow flex item - without an explicit grow
  * it hugs its own content width instead of filling the row, leaving the
@@ -774,23 +789,59 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 .micMeter.locked{animation:lockPulse .34s ease;}
 .micMeter.sharp{box-shadow:0 0 0 2px var(--bad) inset;border-radius:8px;}
 @keyframes lockPulse{0%{transform:scale(1)}45%{transform:scale(1.05)}100%{transform:scale(1)}}
-/* strobe: the classic "stands still = in tune" display. Stripes drift left
-   when flat / right when sharp (speed ∝ how far off), freeze + glow green when
-   locked. Far easier to land than chasing a needle. */
-.strobe{position:relative;height:30px;margin:10px 2px 4px;border-radius:8px;overflow:hidden;
-  border:1px solid var(--line);background:var(--bg-2);}
-.strobeInner{position:absolute;top:0;bottom:0;left:-40px;right:-40px;will-change:transform;
-  background:repeating-linear-gradient(90deg,var(--txt-soft) 0 10px,transparent 10px 20px);opacity:.45;}
-.strobe.sharp .strobeInner{background:repeating-linear-gradient(90deg,var(--bad) 0 10px,transparent 10px 20px);opacity:.7;}
-.strobe.locked{border-color:var(--good);box-shadow:0 0 14px rgba(94,234,212,.45);}
-.strobe.locked .strobeInner{background:repeating-linear-gradient(90deg,var(--good) 0 10px,transparent 10px 20px);opacity:.9;}
-/* the caption sits ON TOP of the moving stripe pattern - a dark backdrop band
-   keeps it legible in stopped/drifting/locked states alike without touching
-   the stripe/status colours themselves (those stay fixed per the tuner-trust
-   rule; only the label's own readability changes here). */
-.strobeLbl{position:absolute;left:0;right:0;bottom:0;text-align:center;font-size:.56rem;
-  letter-spacing:.04em;color:var(--txt-soft);font-family:'Space Mono',monospace;pointer-events:none;
-  padding:3px 4px 2px;background:var(--label-scrim);}
+/* Guided Tune runway (S-TUNER-GOAL-FLOW, 2026-09-12): the approach-from-flat
+   instrument. Flat is the long left stretch, the goal POST sits at 60%, the
+   short right stretch is overshoot (sharp). The puck travels toward the post
+   as the peg tightens; a sustained arrival fills the hold bar under the post,
+   then the post lights and the puck snaps in. Status colours FIXED (tuner
+   trust rule): amber = coming up, green = there, red = overshot. */
+.runway{position:relative;height:72px;margin:10px 2px 6px;}
+.runway .rwTrack{position:absolute;top:30px;left:0;right:0;height:4px;border-radius:2px;opacity:.5;
+  background:linear-gradient(90deg,var(--warn) 0%,var(--warn) 50%,var(--good) 58%,var(--good) 62%,var(--bad) 72%,var(--bad) 100%);}
+.runway .rwPost{position:absolute;top:6px;left:60%;width:12px;height:50px;transform:translateX(-50%);border-radius:6px;background:var(--good);opacity:.22;transition:opacity .2s,box-shadow .2s;pointer-events:none;}
+.runway.arriving .rwPost{opacity:.55;}
+.runway.landed .rwPost{opacity:1;box-shadow:0 0 22px 4px rgba(94,234,212,.6);animation:lockPulse .34s ease;}
+.runway .rwHold{position:absolute;bottom:0;left:60%;height:3px;width:0;transform:translateX(-50%);border-radius:2px;background:var(--good);transition:width .1s linear;}
+/* motion is eased in JS (tune-flow.js smoothing) - keep CSS off `left` so the two don't fight + trail */
+.runway .rwPuck{position:absolute;top:12px;left:0;width:16px;height:40px;border-radius:8px;background:var(--warn);transform:translateX(-50%);will-change:left;transition:background .15s,box-shadow .15s;box-shadow:0 2px 8px rgba(0,0,0,.35);}
+.runway.sharp .rwPuck{background:var(--bad);}
+.runway.landed .rwPuck{background:var(--good);box-shadow:0 0 14px rgba(94,234,212,.7);}
+.runway .fl,.runway .sh{position:absolute;top:52px;font-size:.66rem;line-height:1.2;color:var(--txt-dim);font-weight:600;}
+.runway .fl{left:0;}.runway .sh{right:0;}
+.runway.waiting .rwPuck{opacity:.35;}
+/* Guided-mode string row = the progress row: the current target is lit (same
+   look as a droning reference tone - it IS droning), a landed string wears a
+   green check. Still tappable: a tap retargets the flow. */
+.tStr.cur{background:var(--accent-deep);border-color:var(--accent-ink);box-shadow:0 0 24px rgba(94,234,212,.22);}
+.tStr.done .n{color:var(--good);}
+.tStr.done .hz::before{content:"\2713 ";color:var(--good);}
+/* Tuning lab (?tunerlab=1): four plain sliders right under the runway, cold
+   to hot with the shipped default at 50, so the puck and the knobs share one
+   screen. The Tune tab scrolls while the lab is present (a power tool, not
+   the everyday layout). The live + last-pluck lines are the report-back
+   handles (screenshot them). */
+#s-tune.labOn{height:auto;overflow-y:auto;}
+#s-tune.labOn .tunerWrap{height:auto;}
+#s-tune.labOn .tCard{flex:0 0 auto;overflow:visible;}
+#s-tune.labOn .micModes{display:none;}
+.tunerLab{margin:2px 0 10px;padding:6px 8px 4px;border:1px dashed var(--line-strong);border-radius:12px;font-size:.78rem;}
+.labLive,.labTry{font-family:'Space Mono',monospace;font-size:.64rem;color:var(--txt);line-height:1.5;}
+.labTry{color:var(--txt-soft);margin-bottom:4px;}
+.labLine{font-family:'Space Mono',monospace;font-size:.56rem;color:var(--txt-dim);margin:6px 0 2px;white-space:pre-wrap;word-break:break-word;line-height:1.4;user-select:all;-webkit-user-select:all;}
+.labRow{padding:3px 0 1px;}
+.labHead{display:flex;justify-content:space-between;align-items:baseline;}
+.labLbl{color:var(--txt);font-weight:600;font-size:.8rem;}
+.labVal{font-family:'Space Mono',monospace;color:var(--txt-soft);font-size:.7rem;}
+.labRow input[type=range]{display:block;width:100%;min-height:30px;margin:0;accent-color:var(--accent);}
+.labEnds{display:flex;justify-content:space-between;font-size:.6rem;color:var(--txt-dim);margin-top:-2px;}
+/* The Tone toggle is a STATE, not an action: accent ink + border when on so
+   'Tone: on' can never be read as 'tap to turn the tone on'. */
+.micActions .btn.ghost.on{border-color:var(--accent);color:var(--accent-ink);background:var(--accent-deep);}
+.labStay{display:flex;gap:8px;align-items:flex-start;font-size:.72rem;color:var(--txt-soft);margin:6px 0 2px;line-height:1.35;}
+.labStay input{margin-top:2px;width:18px;height:18px;accent-color:var(--accent);flex:0 0 auto;}
+.micModes{display:flex;gap:6px;margin:0 0 6px;}
+.micActions{display:flex;gap:8px;}
+.micActions .btn{flex:1 1 auto;}
 /* motion is eased in JS (tuner.js) - keep CSS off `left` so the two don't fight + trail */
 .micMeter .needle{position:absolute;top:6px;left:50%;width:3px;height:42px;border-radius:2px;background:var(--bad);transform:translateX(-50%);transition:background .2s;will-change:left;}
 .micMeter .fl,.micMeter .sh{position:absolute;top:46px;font-size:.66rem;color:var(--txt-dim);font-weight:600;}
@@ -1836,11 +1887,16 @@ footer{display:none;}
  * ===================================================================== */
 .skillsPanel .skillsImportRow{margin-top:10px;}
 .skillRow{border:1px solid var(--line);border-radius:var(--r-card);background:var(--surface);margin-top:10px;overflow:hidden;}
-.skillHead{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:44px;padding:11px 13px;background:transparent;border:0;color:var(--txt);font-family:inherit;font-weight:700;font-size:1rem;cursor:pointer;text-align:left;transition:background .15s;}
+.skillHead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:2px 10px;width:100%;min-height:44px;padding:11px 13px;background:transparent;border:0;color:var(--txt);font-family:inherit;font-weight:700;font-size:1rem;cursor:pointer;text-align:left;transition:background .15s;}
 .skillHead:active{background:var(--surface-2);}
 .skillHead[aria-expanded="true"]{border-bottom:1px solid var(--line);}
-.skillName{flex:1;min-width:0;overflow-wrap:break-word;}
-.skillMeta{flex:0 0 auto;font-family:'Space Mono',monospace;font-size:.74rem;color:var(--txt-dim);font-weight:400;}
+/* UAT 2026-10-04 (392px): the status was flex:0 0 auto - it never shrank or
+   wrapped - so a long one ("not yet assessed - 1 observed in the app") crushed
+   the name to one letter per line. The head wraps instead: the name keeps a
+   9rem basis, and a status that does not fit beside it drops below, where it
+   may itself wrap. Guarded by test/pw/scenarios/profile-row-layout.json. */
+.skillName{flex:1 1 9rem;min-width:0;overflow-wrap:break-word;}
+.skillMeta{flex:0 1 auto;min-width:0;max-width:100%;overflow-wrap:anywhere;font-family:'Space Mono',monospace;font-size:.74rem;color:var(--txt-dim);font-weight:400;}
 .skillDetail{padding:6px 13px 12px;}
 .skillDetail[hidden]{display:none;}
 .compRow{display:grid;grid-template-columns:1fr;gap:3px;padding:8px 0;border-top:1px solid var(--line);}
@@ -1850,6 +1906,14 @@ footer{display:none;}
 .compBarFill{height:100%;background:var(--accent);border-radius:6px 0 0 6px;transition:width .3s ease;}
 .compMeta{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--txt-dim);}
 .skillPref{margin-top:8px;font-size:.8rem;color:var(--txt-soft);line-height:1.4;}
+/* M-MUSICIAN-PROFILE-VNEXT: the headline ("what kind of musician am I?") - one
+   short line per group, read before any row is opened; and the area subhead
+   inside the Musicianship row (Ear / Harmony / ...). Both compose the existing
+   type scale; neither is a new control. */
+.profileHead{margin-top:10px;}
+.profileLine{margin:0 0 4px;font-size:.88rem;font-weight:700;color:var(--txt);line-height:1.35;}
+.compArea{margin:10px 0 0;font-family:'Space Mono',monospace;font-size:.7rem;letter-spacing:.04em;text-transform:uppercase;color:var(--txt-dim);}
+.skillGoals .planLink{margin-top:6px;}
 .skillActs{margin-top:12px;display:flex;}
 .skillExport{flex:0 0 auto;min-height:44px;}
 
@@ -2067,7 +2131,7 @@ footer{display:none;}
 .prefEx .chord,.prefEx .bigC{transform:scale(.82);}
 .prefEx .suggChip{margin:0;cursor:default;}
 .themeSeg{display:flex;gap:6px;background:var(--bg-2);border:1px solid var(--line);border-radius:11px;padding:4px;}
-.thSeg{flex:1;padding:9px 8px;border:0;background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.85rem;border-radius:8px;cursor:pointer;transition:background .15s,color .15s;}
+.thSeg{flex:1;min-height:44px;padding:9px 8px;border:0;background:transparent;color:var(--txt-soft);font-family:inherit;font-weight:600;font-size:.85rem;border-radius:8px;cursor:pointer;transition:background .15s,color .15s;}
 .thSeg.on{background:var(--accent);color:var(--on-accent);}
 .thSeg:active{transform:scale(.97);}
 .setSummary{margin:0;display:flex;flex-direction:column;gap:5px;}
@@ -2119,4 +2183,16 @@ footer{display:none;}
 /* While the mini bar is up, the scrollers keep their last rows reachable above
    it, and the toast rides above the bar instead of colliding with it. */
 body.miniplayer .view{padding-bottom:104px;} /* two-row bar (batch 7) */
+/* ROUND 19: the docked PIP is position:fixed 152x110 at bottom+150px, so it
+   covers a corner NO amount of scrolling can move content out of. For a
+   scrolling view that is the accepted PIP trade (scroll and the row clears it);
+   for the Tune tab it is a DEAD TARGET, because .tunerWrap is a height:100%
+   flex column whose reference-tone strings are PINNED to the bottom and can
+   never scroll clear. Measured at 412x915 before this rule: the E and A string
+   buttons both returned .bt-st-media from elementFromPoint at their centres -
+   two of four strings untappable while anything was playing.
+   Reserve the dock's full height (110px + its 150px offset, less the 104px the
+   bar already reserves) so the strings sit ABOVE it. Scoped to the Tune tab:
+   no other view pins content into that corner. */
+body.pipdock #s-tune .tunerWrap{padding-bottom:162px;}
 body.miniplayer .toast{bottom:calc(max(env(safe-area-inset-bottom,0px), 8px) + 132px);}

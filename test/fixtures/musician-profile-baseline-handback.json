@@ -1,0 +1,479 @@
+{
+  "schema": "musician-profile/v1",
+  "updated": "2026-09-13T12:00:00.000Z",
+  "participants": [
+    {
+      "id": "agent:music-coach",
+      "name": "Music coach",
+      "understands": [
+        "competencies",
+        "assessments",
+        "evidence",
+        "goals",
+        "plan"
+      ],
+      "last_seen": "2026-09-13T12:00:00.000Z"
+    }
+  ],
+  "provenance": [
+    {
+      "source": "agent:music-coach",
+      "at": "2026-09-13T12:00:00.000Z",
+      "action": "baseline-interview"
+    }
+  ],
+  "competencies": [
+    {
+      "id": "bass/groove-pocket",
+      "name": "Groove and pocket",
+      "desc": "Lock a bass line into the drums.",
+      "branch": [
+        "instrument",
+        "strings",
+        "bass"
+      ],
+      "source": "agent:music-coach"
+    },
+    {
+      "id": "bass/walking-lines",
+      "name": "Walking lines",
+      "desc": "Connect chord tones through a progression.",
+      "branch": [
+        "instrument",
+        "strings",
+        "bass"
+      ],
+      "source": "agent:music-coach"
+    },
+    {
+      "id": "piano/voicings",
+      "name": "Voicings",
+      "desc": "Voice chords across both hands.",
+      "branch": [
+        "instrument",
+        "keys",
+        "piano"
+      ],
+      "source": "agent:music-coach"
+    },
+    {
+      "id": "kalimba/c-major-17",
+      "name": "17-key C-major layout",
+      "desc": "Play melodies on the 17-key C-major kalimba.",
+      "branch": [
+        "instrument",
+        "lamellophone",
+        "kalimba"
+      ],
+      "source": "agent:music-coach"
+    },
+    {
+      "id": "mandolin/chord-shapes",
+      "name": "Chord shapes",
+      "desc": "Common mandolin shapes.",
+      "branch": [
+        "instrument",
+        "strings",
+        "mandolin"
+      ],
+      "source": "agent:music-coach"
+    }
+  ],
+  "assessments": [
+    {
+      "id": "as:agent:music-coach:musicianship.tonal-orientation",
+      "competency": "musicianship/tonal-orientation",
+      "value": "advanced",
+      "scale": "band-3",
+      "method": "interview",
+      "modality": "perform",
+      "confidence": "high",
+      "at": "2026-09-13T12:00:00.000Z",
+      "source": "agent:music-coach",
+      "evidence": [
+        "ev:agent:music-coach:baseline-interview"
+      ]
+    },
+    {
+      "id": "as:agent:music-coach:musicianship.functional-harmony",
+      "competency": "musicianship/functional-harmony",
+      "value": "advanced",
+      "scale": "band-3",
+      "method": "interview",
+      "modality": "perform",
+      "confidence": "high",
+      "at": "2026-09-13T12:00:00.000Z",
+      "source": "agent:music-coach",
+      "evidence": [
+        "ev:agent:music-coach:baseline-interview"
+      ]
+    },
+    {
+      "id": "as:agent:music-coach:musicianship.ear-instrument-mapping",
+      "competency": "musicianship/ear-instrument-mapping",
+      "value": "advanced",
+      "scale": "band-3",
+      "method": "interview",
+      "modality": "perform",
+      "confidence": "high",
+      "at": "2026-09-13T12:00:00.000Z",
+      "source": "agent:music-coach",
+      "evidence": [
+        "ev:agent:music-coach:baseline-interview"
+      ]
+    },
+    {
+      "id": "as:agent:music-coach:musicianship.harmony-aware-improvisation",
+      "competency": "musicianship/harmony-aware-improvisation",
+      "value": "advanced",
+      "scale": "band-3",
+      "method": "interview",
+      "modality": "perform",
+      "confidence": "high",
+      "at": "2026-09-13T12:00:00.000Z",
+      "source": "agent:music-coach",
+      "evidence": [
+        "ev:agent:music-coach:baseline-interview"
+      ]
+    },
+    {
+      "id": "as:agent:music-coach:musicianship.modal-fluency",
+      "competency": "musicianship/modal-fluency",
+      "value": "advanced",
+      "scale": "band-3",
+      "method": "interview",
+      "modality": "perform",
+      "confidence": "medium",
+      "at": "2026-09-13T12:00:00.000Z",
+      "source": "agent:music-coach",
+      "evidence": [
+        "ev:agent:music-coach:baseline-interview"
+      ]
+    },
+    {
+      "id": "as:agent:music-coach:musicianship.phrase-development",
+      "competency": "musicianship/phrase-development",
+      "value": "advanced",
+      "scale": "band-3",
+      "method": "interview",
+      "modality": "perform",
+      "confidence": "high",
+      "at": "2026-09-13T12:00:00.000Z",
+      "source": "agent:music-coach",
+      "evidence": [
+        "ev:agent:music-coach:baseline-interview"
+      ]
+    },
+    {
+      "id": "as:agent:music-coach:musicianship.tension-release",
+      "competency": "musicianship/tension-release",
+      "value": "advanced",
+      "scale": "band-3",
+      "method": "interview",
+      "modality": "perform",
+      "confidence": "high",
+      "at": "2026-09-13T12:00:00.000Z",
+      "source": "agent:music-coach",
+      "evidence": [
+        "ev:agent:music-coach:baseline-interview"
+      ]
+    },
+    {
+      "id": "as:agent:music-coach:musicianship.improvisational-architecture",
+      "competency": "musicianship/improvisational-architecture",
+      "value": "advanced",
+      "scale": "band-3",
+      "method": "interview",
+      "modality": "perform",
+      "confidence": "high",
+      "at": "2026-09-13T12:00:00.000Z",
+      "source": "agent:music-coach",
+      "evidence": [
+        "ev:agent:music-coach:baseline-interview"
+      ]
+    },
+    {
+      "id": "as:agent:music-coach:musicianship.rhythmic-feel",
+      "competency": "musicianship/rhythmic-feel",
+      "value": "advanced",
+      "scale": "band-3",
+      "method": "interview",
+      "modality": "perform",
+      "confidence": "high",
+      "at": "2026-09-13T12:00:00.000Z",
+      "source": "agent:music-coach",
+      "evidence": [
+        "ev:agent:music-coach:baseline-interview"
+      ]
+    },
+    {
+      "id": "as:agent:music-coach:musicianship.expressive-resolution",
+      "competency": "musicianship/expressive-resolution",
+      "value": "advanced",
+      "scale": "band-3",
+      "method": "interview",
+      "modality": "perform",
+      "confidence": "high",
+      "at": "2026-09-13T12:00:00.000Z",
+      "source": "agent:music-coach",
+      "evidence": [
+        "ev:agent:music-coach:baseline-interview"
+      ]
+    },
+    {
+      "id": "as:agent:music-coach:musicianship.cross-instrument-transfer",
+      "competency": "musicianship/cross-instrument-transfer",
+      "value": "advanced",
+      "scale": "band-3",
+      "method": "interview",
+      "modality": "perform",
+      "confidence": "high",
+      "at": "2026-09-13T12:00:00.000Z",
+      "source": "agent:music-coach",
+      "evidence": [
+        "ev:agent:music-coach:baseline-interview"
+      ]
+    },
+    {
+      "id": "as:agent:music-coach:stringed-instrument.movable-fretboard-fluency",
+      "competency": "stringed-instrument/movable-fretboard-fluency",
+      "value": "advanced",
+      "scale": "band-3",
+      "method": "interview",
+      "modality": "perform",
+      "confidence": "high",
+      "at": "2026-09-13T12:00:00.000Z",
+      "source": "agent:music-coach",
+      "evidence": [
+        "ev:agent:music-coach:baseline-interview"
+      ]
+    },
+    {
+      "id": "as:agent:music-coach:stringed-instrument.triad-inversions",
+      "competency": "stringed-instrument/triad-inversions",
+      "value": "advanced",
+      "scale": "band-3",
+      "method": "interview",
+      "modality": "perform",
+      "confidence": "high",
+      "at": "2026-09-13T12:00:00.000Z",
+      "source": "agent:music-coach",
+      "evidence": [
+        "ev:agent:music-coach:baseline-interview"
+      ]
+    },
+    {
+      "id": "as:agent:music-coach:stringed-instrument.chord-scale-overlay",
+      "competency": "stringed-instrument/chord-scale-overlay",
+      "value": "advanced",
+      "scale": "band-3",
+      "method": "interview",
+      "modality": "perform",
+      "confidence": "high",
+      "at": "2026-09-13T12:00:00.000Z",
+      "source": "agent:music-coach",
+      "evidence": [
+        "ev:agent:music-coach:baseline-interview"
+      ]
+    },
+    {
+      "id": "as:agent:music-coach:stringed-instrument",
+      "competency": "stringed-instrument",
+      "value": "advanced",
+      "scale": "band-3",
+      "method": "interview",
+      "modality": "perform",
+      "confidence": "high",
+      "at": "2026-09-13T12:00:00.000Z",
+      "source": "agent:music-coach",
+      "evidence": [
+        "ev:agent:music-coach:baseline-interview"
+      ]
+    },
+    {
+      "id": "as:agent:music-coach:bass.groove-pocket",
+      "competency": "bass/groove-pocket",
+      "value": "advanced",
+      "scale": "band-3",
+      "method": "interview",
+      "modality": "perform",
+      "confidence": "high",
+      "at": "2026-09-13T12:00:00.000Z",
+      "source": "agent:music-coach",
+      "evidence": [
+        "ev:agent:music-coach:baseline-interview"
+      ]
+    },
+    {
+      "id": "as:agent:music-coach:bass.walking-lines",
+      "competency": "bass/walking-lines",
+      "value": "advanced",
+      "scale": "band-3",
+      "method": "interview",
+      "modality": "perform",
+      "confidence": "medium",
+      "at": "2026-09-13T12:00:00.000Z",
+      "source": "agent:music-coach",
+      "evidence": [
+        "ev:agent:music-coach:baseline-interview"
+      ]
+    },
+    {
+      "id": "as:agent:music-coach:guitar",
+      "competency": "guitar",
+      "value": "advanced",
+      "scale": "band-3",
+      "method": "interview",
+      "modality": "perform",
+      "confidence": "medium",
+      "at": "2026-09-13T12:00:00.000Z",
+      "source": "agent:music-coach",
+      "evidence": [
+        "ev:agent:music-coach:baseline-interview"
+      ]
+    },
+    {
+      "id": "as:agent:music-coach:piano.voicings",
+      "competency": "piano/voicings",
+      "value": "intermediate",
+      "scale": "band-3",
+      "method": "interview",
+      "modality": "perform",
+      "confidence": "low",
+      "at": "2026-09-13T12:00:00.000Z",
+      "source": "agent:music-coach",
+      "evidence": [
+        "ev:agent:music-coach:baseline-interview"
+      ]
+    },
+    {
+      "id": "as:agent:music-coach:kalimba.c-major-17",
+      "competency": "kalimba/c-major-17",
+      "value": "intermediate",
+      "scale": "band-3",
+      "method": "interview",
+      "modality": "perform",
+      "confidence": "medium",
+      "at": "2026-09-13T12:00:00.000Z",
+      "source": "agent:music-coach",
+      "evidence": [
+        "ev:agent:music-coach:baseline-interview"
+      ]
+    },
+    {
+      "id": "as:agent:music-coach:ukulele",
+      "competency": "ukulele",
+      "value": "beginner",
+      "scale": "band-3",
+      "method": "interview",
+      "modality": "perform",
+      "confidence": "high",
+      "at": "2026-09-13T12:00:00.000Z",
+      "source": "agent:music-coach",
+      "evidence": [
+        "ev:agent:music-coach:baseline-interview"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "ev:agent:music-coach:baseline-interview",
+      "at": "2026-09-13T12:00:00.000Z",
+      "source": "agent:music-coach",
+      "kind": "interview",
+      "modality": "unspecified",
+      "competencies": [
+        "musicianship/tonal-orientation",
+        "musicianship/functional-harmony",
+        "musicianship/ear-instrument-mapping",
+        "musicianship/harmony-aware-improvisation",
+        "musicianship/modal-fluency",
+        "musicianship/phrase-development",
+        "musicianship/tension-release",
+        "musicianship/improvisational-architecture",
+        "musicianship/rhythmic-feel",
+        "musicianship/expressive-resolution",
+        "musicianship/cross-instrument-transfer"
+      ],
+      "data": {
+        "questions": 14,
+        "summary": "Guided baseline interview; the musician described 28 years of bass, guitar since age 9, piano from 7, kalimba, and improvisational practice over backing tracks."
+      }
+    },
+    {
+      "id": "ev:agent:music-coach:clip1",
+      "at": "2026-09-13T12:00:00.000Z",
+      "source": "agent:music-coach",
+      "kind": "artifact",
+      "modality": "unspecified",
+      "competencies": [
+        "musicianship/harmony-aware-improvisation"
+      ],
+      "data": {
+        "filename": "solo-over-backing.m4a",
+        "analyzed": false
+      }
+    }
+  ],
+  "goals": [
+    {
+      "id": "goal:agent:music-coach:1",
+      "statement": "Bring the improvising I do on bass and guitar onto the ukulele",
+      "competencies": [
+        "musicianship/cross-instrument-transfer",
+        "ukulele/uke-open-chords"
+      ],
+      "status": "active",
+      "created": "2026-09-13T12:00:00.000Z",
+      "updated": "2026-09-13T12:00:00.000Z",
+      "source": "human"
+    }
+  ],
+  "plan": {
+    "updated": "2026-09-13T12:00:00.000Z",
+    "steward": "agent:music-coach",
+    "focus": "Ukulele mechanics under the musicianship you already have",
+    "items": [
+      {
+        "id": "pl:1",
+        "kind": "activity",
+        "statement": "Walk C-F-G-Am as triad inversions up the ukulele neck",
+        "competencies": [
+          "stringed-instrument/triad-inversions",
+          "ukulele/uke-open-chords"
+        ],
+        "goal": "goal:agent:music-coach:1",
+        "status": "doing",
+        "deep_link": "https://nhruska.github.io/music/play/triad-inversions.html",
+        "updated": "2026-09-13T12:00:00.000Z"
+      },
+      {
+        "id": "pl:2",
+        "kind": "edge",
+        "statement": "Chunking on the offbeat - the one uke-specific technique your other strings never asked for",
+        "competencies": [
+          "ukulele/uke-chunking"
+        ],
+        "goal": "goal:agent:music-coach:1",
+        "status": "todo",
+        "updated": "2026-09-13T12:00:00.000Z"
+      },
+      {
+        "id": "pl:3",
+        "kind": "activity",
+        "statement": "Jam Am-F-C-G and sing the phrase before you play it",
+        "competencies": [
+          "musicianship/ear-instrument-mapping"
+        ],
+        "status": "todo",
+        "deep_link": "https://nhruska.github.io/music/play/?jam=Am,F,C,G&key=Am&name=Transfer%20loop",
+        "updated": "2026-09-13T12:00:00.000Z"
+      }
+    ]
+  },
+  "extensions": {
+    "x-music-coach": {
+      "interviewVersion": 1
+    }
+  }
+}
