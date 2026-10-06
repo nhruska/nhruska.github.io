@@ -1,6 +1,6 @@
 {
  "project": "nh-pages",
- "updated_at": "2026-10-05T21:57:07Z",
+ "updated_at": "2026-10-06T01:02:11Z",
  "gates": [
   {
    "id": "357-verify-setlist-gate",
@@ -207,8 +207,8 @@
      "assert": "BEFORE ok=True: nameW=133 nameH=18 metaRight=934/947 meta=not yet assessed - 1 observed in the app | AFTER ok=True: nameW=428 nameH=18 metaRight=791/947 meta=not yet assessed - 1 observed in the app | app errors before/after: 0/0"
     }
    ],
-   "ci": "none",
-   "limit": "Head 6755e2e fixes the operator-reported bug (UAT 2026-10-04, Pixel): the Ukulele row name stacked one letter per line. The +rows evidence compares efc9473 (before: name 0px wide, 126px tall in portrait) with 6755e2e (after: 276px, one line). profile-row-layout scenario RED on efc9473, GREEN on 6755e2e. Suite 81/0. Earlier shots: re-captured on efc9473. BEFORE fails the assert by design, since main has no profile section. All 3 profile scenarios (baseline, import, hostile-keys) PASS on the head. Copy note: the new intro text has a semicolon (\"adds what it has seen you do; a coach adds the rest\"), which breaks the no-semicolon copy rule. It can be fixed in a follow-up."
+   "ci": "pass",
+   "limit": "MERGED as 10fc269 by the operator (2026-10-06) from head 6755e2e. Head 6755e2e fixes the operator-reported bug (UAT 2026-10-04, Pixel): the Ukulele row name stacked one letter per line. The +rows evidence compares efc9473 (before: name 0px wide, 126px tall in portrait) with 6755e2e (after: 276px, one line). profile-row-layout scenario RED on efc9473, GREEN on 6755e2e. Suite 81/0. Earlier shots: re-captured on efc9473. BEFORE fails the assert by design, since main has no profile section. All 3 profile scenarios (baseline, import, hostile-keys) PASS on the head. Copy note: the new intro text has a semicolon (\"adds what it has seen you do; a coach adds the rest\"), which breaks the no-semicolon copy rule. It can be fixed in a follow-up."
   },
   {
    "id": "351-taste-restore",
@@ -238,8 +238,8 @@
      "assert": "BEFORE ok=False: warning=false buttonsInViewport=true msgBox=101-206 of 900 | AFTER ok=True: warning=true buttonsInViewport=true msgBox=101-276 of 900 | app errors before/after: 0/0"
     }
    ],
-   "ci": "none",
-   "limit": "OPERATOR PASS @ efc9473 on the restore warning (2026-10-04, in chat). VERDICT B (warn in the dialog), relayed @ 5be52ec. Implemented in a12e50c, then re-resolved against main by the #351 author session as efc9473 (music-v351-10, math-v351). The interdiff is mechanical: only context moved by main and the required MATH_VERSION bump. Evidence re-captured on efc9473 with the same result. Implementation: with a profile in the backup, the restore dialog adds \"It also replaces the Musician profile on this device (what the app has learned about you) with the one in this backup.\" Main has no warning (BEFORE fails by design). The scenario restore-profile-warning FAILED before the fix and PASSES after it. Suite 74/0, cache gate OK (music-v351-9). Restore behavior is unchanged: it still replaces. Scope note for the operator: the Settings line \"Restore adds and overwrites - it never deletes.\" was left unchanged. CI on efc9473: green. Head 6755e2e also corrects the Settings Backup hint to: Restore adds your backup and replaces your Musician profile. It never deletes anything else."
+   "ci": "pass",
+   "limit": "MERGED as 10fc269 (head 6755e2e). OPERATOR PASS @ efc9473 on the restore warning (2026-10-04, in chat). VERDICT B (warn in the dialog), relayed @ 5be52ec. Implemented in a12e50c, then re-resolved against main by the #351 author session as efc9473 (music-v351-10, math-v351). The interdiff is mechanical: only context moved by main and the required MATH_VERSION bump. Evidence re-captured on efc9473 with the same result. Implementation: with a profile in the backup, the restore dialog adds \"It also replaces the Musician profile on this device (what the app has learned about you) with the one in this backup.\" Main has no warning (BEFORE fails by design). The scenario restore-profile-warning FAILED before the fix and PASSES after it. Suite 74/0, cache gate OK (music-v351-9). Restore behavior is unchanged: it still replaces. Scope note for the operator: the Settings line \"Restore adds and overwrites - it never deletes.\" was left unchanged. CI on efc9473: green. Head 6755e2e also corrects the Settings Backup hint to: Restore adds your backup and replaces your Musician profile. It never deletes anything else."
   },
   {
    "id": "348-verify-dock",
@@ -306,19 +306,19 @@
    "do": "Read the PR summary on #358",
    "evidence": [],
    "ci": "pass",
-   "limit": "Docs-only: no app surface to screenshot. Merges first in the stack #358, #346, #347."
+   "limit": "MERGED as da9f1c3 by the operator (2026-10-06) from head cb9fe81. Docs-only: no app surface to screenshot. Merged first in the stack #358, #346, #347."
   },
   {
    "id": "346-verify-docs",
    "pr": "nhruska/nhruska.github.io#346",
-   "head_sha": "6bbe96383ca0899aaf6e879eb8bf68a77bb0cd28",
+   "head_sha": "37ac5b318f0c719a4fc9f644542357c54fa57065",
    "kind": "verify",
    "title": "Public-claims calibration docs (docs only)",
    "expect": "Docs-only diff. Merges only after #358, then retargets to main",
    "do": "Read the PR summary on #346",
    "evidence": [],
    "ci": "none",
-   "limit": "Docs-only: no app surface to screenshot. Stacked on #358, so it is not mergeable until #358 lands. CI is re-checked after the retarget."
+   "limit": "Retargeted to main after #358 landed, main merged in as 37ac5b3 (suite 81/0, cache gate clean). Verdict PASS @ 6bbe963 carried forward (main merge only). Diff vs main: its own 3 docs pages. Docs-only: no app surface to screenshot."
   },
   {
    "id": "347-verify-docs",
