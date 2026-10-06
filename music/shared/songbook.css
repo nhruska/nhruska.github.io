@@ -1887,11 +1887,16 @@ footer{display:none;}
  * ===================================================================== */
 .skillsPanel .skillsImportRow{margin-top:10px;}
 .skillRow{border:1px solid var(--line);border-radius:var(--r-card);background:var(--surface);margin-top:10px;overflow:hidden;}
-.skillHead{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:44px;padding:11px 13px;background:transparent;border:0;color:var(--txt);font-family:inherit;font-weight:700;font-size:1rem;cursor:pointer;text-align:left;transition:background .15s;}
+.skillHead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:2px 10px;width:100%;min-height:44px;padding:11px 13px;background:transparent;border:0;color:var(--txt);font-family:inherit;font-weight:700;font-size:1rem;cursor:pointer;text-align:left;transition:background .15s;}
 .skillHead:active{background:var(--surface-2);}
 .skillHead[aria-expanded="true"]{border-bottom:1px solid var(--line);}
-.skillName{flex:1;min-width:0;overflow-wrap:break-word;}
-.skillMeta{flex:0 0 auto;font-family:'Space Mono',monospace;font-size:.74rem;color:var(--txt-dim);font-weight:400;}
+/* UAT 2026-10-04 (392px): the status was flex:0 0 auto - it never shrank or
+   wrapped - so a long one ("not yet assessed - 1 observed in the app") crushed
+   the name to one letter per line. The head wraps instead: the name keeps a
+   9rem basis, and a status that does not fit beside it drops below, where it
+   may itself wrap. Guarded by test/pw/scenarios/profile-row-layout.json. */
+.skillName{flex:1 1 9rem;min-width:0;overflow-wrap:break-word;}
+.skillMeta{flex:0 1 auto;min-width:0;max-width:100%;overflow-wrap:anywhere;font-family:'Space Mono',monospace;font-size:.74rem;color:var(--txt-dim);font-weight:400;}
 .skillDetail{padding:6px 13px 12px;}
 .skillDetail[hidden]{display:none;}
 .compRow{display:grid;grid-template-columns:1fr;gap:3px;padding:8px 0;border-top:1px solid var(--line);}
@@ -1901,6 +1906,14 @@ footer{display:none;}
 .compBarFill{height:100%;background:var(--accent);border-radius:6px 0 0 6px;transition:width .3s ease;}
 .compMeta{font-family:'Space Mono',monospace;font-size:.72rem;color:var(--txt-dim);}
 .skillPref{margin-top:8px;font-size:.8rem;color:var(--txt-soft);line-height:1.4;}
+/* M-MUSICIAN-PROFILE-VNEXT: the headline ("what kind of musician am I?") - one
+   short line per group, read before any row is opened; and the area subhead
+   inside the Musicianship row (Ear / Harmony / ...). Both compose the existing
+   type scale; neither is a new control. */
+.profileHead{margin-top:10px;}
+.profileLine{margin:0 0 4px;font-size:.88rem;font-weight:700;color:var(--txt);line-height:1.35;}
+.compArea{margin:10px 0 0;font-family:'Space Mono',monospace;font-size:.7rem;letter-spacing:.04em;text-transform:uppercase;color:var(--txt-dim);}
+.skillGoals .planLink{margin-top:6px;}
 .skillActs{margin-top:12px;display:flex;}
 .skillExport{flex:0 0 auto;min-height:44px;}
 

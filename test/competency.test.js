@@ -146,10 +146,23 @@ test('exportProfile emits a schema-v1 doc with an app:music provenance stamp', f
   assert.ok(Array.isArray(doc.competencies) && doc.competencies.length === 5);
   assert.ok(doc.provenance.some(function (p) { return p.source === 'app:music' && p.at; }), 'export provenance stamped');
 });
-test('exportProfile works for a skill with no local data (blank export)', function () {
+test('exportProfile works for a skill with no local data (blank export) - and UNASSESSED is explicit: every never-observed row exports level null, never a 0 a reader could take for beginner', function () {
   var doc = JSON.parse(C.exportProfile('lyric-writing', FakeStore()));
   assert.strictEqual(doc.skill, 'lyric-writing');
-  doc.competencies.forEach(function (c) { assert.strictEqual(c.level, 0); });
+  doc.competencies.forEach(function (c) { assert.strictEqual(c.level, null); assert.strictEqual(c.evidence_count, 0); });
+});
+test('exportProfile keeps a real level for an observed row; a null-level round trip through importProfile never moves a counter', function () {
+  var s = FakeStore();
+  C.recordEvidence('ukulele', 'uke-open-chords', null, s);
+  var doc = JSON.parse(C.exportProfile('ukulele', s));
+  var open = doc.competencies.filter(function (c) { return c.id === 'uke-open-chords'; })[0];
+  assert.ok(open.level > 0 && open.evidence_count === 1);
+  assert.strictEqual(doc.competencies.filter(function (c) { return c.id === 'uke-chunking'; })[0].level, null);
+  var before = JSON.stringify(C.getProfile('ukulele', s).competencies.map(function (c) { return [c.id, c.level, c.evidence_count]; }));
+  assert.strictEqual(C.importProfile(doc, s).ok, true);
+  var after = JSON.stringify(C.getProfile('ukulele', s).competencies.map(function (c) { return [c.id, c.level, c.evidence_count + (c.id === 'uke-open-chords' ? -1 : 0)]; }));
+  assert.strictEqual(after, before, 'levels unchanged; only the observed row summed its own evidence back (max level, sum evidence)');
+  assert.strictEqual(C.getProfile('ukulele', s).competencies.filter(function (c) { return c.id === 'uke-chunking'; })[0].level, 0, 'storage keeps the ladder floor');
 });
 
 /* ---------- importProfile: merge semantics ---------- */

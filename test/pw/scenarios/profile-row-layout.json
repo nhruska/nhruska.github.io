@@ -1,0 +1,21 @@
+{
+  "name": "profile-row-layout",
+  "persona": "beginner",
+  "dismissNotables": ["firstrun", "composeintro", "transposetip", "backup"],
+  "note": "Operator UAT 2026-10-04 (Pixel, 392px wide): the Ukulele row in Settings > Musician profile stacked its name one letter per line (U k u l e l e) because the right-hand status 'not yet assessed - 1 observed in the app' was flex:0 0 auto (never shrinks, never wraps) while .skillName had min-width:0 and break-word. Contract: on a phone every row name keeps whole words, and no status text runs past its card. Also pins the Backup hint copy to the restore behavior (restore replaces the Musician profile).",
+  "viewport": {"width": 392, "height": 711},
+  "steps": [
+    {"action": "evalAssert", "label": "seed one ukulele observation so the long status line renders", "js": "(function(){var C=window.Competency;if(!C)return false;C.recordEvidence('ukulele','uke-repertoire',null);return C.hasData()===true;})()"},
+    {"action": "tap", "selector": "#settingsBtn"},
+    {"action": "waitFor", "selector": "#settingsBody .accSec"},
+    {"action": "wait", "ms": 400},
+    {"action": "tap", "selector": "#accBtnSkills"},
+    {"action": "waitFor", "selector": "#accBodySkills .skillRow"},
+    {"action": "wait", "ms": 300},
+    {"action": "evalAssert", "label": "no row name is crushed: each .skillName is at least as wide as its longest word (no per-letter wrapping)", "js": "(function(){var bad=[];[].slice.call(document.querySelectorAll('#accBodySkills .skillName')).forEach(function(n){var words=n.textContent.trim().split(/\\s+/);var probe=document.createElement('span');probe.style.cssText='position:absolute;visibility:hidden;white-space:nowrap;font:inherit';n.appendChild(probe);var w=0;words.forEach(function(x){probe.textContent=x;w=Math.max(w,probe.getBoundingClientRect().width);});n.removeChild(probe);if(n.getBoundingClientRect().width+1<w)bad.push(n.textContent.trim()+':'+Math.round(n.getBoundingClientRect().width)+'<'+Math.round(w));});window.__crushed=bad;return bad.length===0;})()"},
+    {"action": "evalAssert", "label": "no status text runs past the right edge of its card", "js": "(function(){return [].slice.call(document.querySelectorAll('#accBodySkills .skillHead')).every(function(h){var m=h.querySelector('.skillMeta');if(!m)return true;return m.getBoundingClientRect().right<=h.getBoundingClientRect().right+1&&m.scrollWidth<=m.clientWidth+1;});})()"},
+    {"action": "evalAssert", "label": "the Ukulele row shows the observed count in full", "js": "(function(){return [].slice.call(document.querySelectorAll('#accBodySkills .skillMeta')).some(function(e){return /1 observed in the app/.test(e.textContent);});})()"},
+    {"action": "screenshot", "name": "profile-rows-392"},
+    {"action": "evalAssert", "label": "Backup hint matches restore behavior: names the Musician profile replace, no blanket never-deletes promise", "js": "(function(){var t=[].slice.call(document.querySelectorAll('#settingsBody .setHint')).map(function(e){return e.textContent;}).join(' | ');return t.indexOf('Restore adds your backup and replaces your Musician profile. It never deletes anything else.')>=0 && t.indexOf('it never deletes.')<0;})()"}
+  ]
+}
