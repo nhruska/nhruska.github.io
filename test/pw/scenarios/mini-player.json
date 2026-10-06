@@ -61,8 +61,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "landscape: the bar keeps its one slot (bottom-pinned card, no two-pane leak)",
-      "js": "(function(){var bar=document.querySelector('.bt-player.mini .bt-st-head');var tab=document.querySelector('.tabbar');if(!bar||!tab)return false;var bb=bar.getBoundingClientRect(),tb=tab.getBoundingClientRect();return bb.bottom<=tb.top+1&&bb.height>=44&&bb.width>=300;})()"
+      "label": "landscape: the bar keeps its one slot (bottom-pinned card, no two-pane leak) and clears the tab bar - the bottom bar in the portrait shell, the left rail in the landscape rail shell",
+      "js": "(function(){var bar=document.querySelector('.bt-player.mini .bt-st-head');var tab=document.querySelector('.tabbar');if(!bar||!tab)return false;var bb=bar.getBoundingClientRect(),tb=tab.getBoundingClientRect();var clear=bb.bottom<=tb.top+1||bb.left>=tb.right-1;return clear&&bb.bottom>=innerHeight-90&&bb.height>=44&&bb.width>=300;})()"
     },
     {
       "action": "screenshot",

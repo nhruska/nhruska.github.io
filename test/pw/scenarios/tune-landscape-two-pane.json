@@ -1,0 +1,405 @@
+{
+  "name": "tune-landscape-two-pane",
+  "note": "Operator decision 2026-10-05 (Nik): in LANDSCAPE on a phone the Tune tab is TWO-PANE for every instrument - tuner (note, cents line, runway, Start/Tone, mode chips) on the left, the string buttons on the right - and the whole thing is usable on ONE screen with NO scroll, including with the mini-player bar up. #366 made the stacked column scroll clear of the bar (the strings were one scroll away); this scenario raises the bar to no scroll at all. Asserts at 915x340, 844x340 and 740x320 (a landscape phone with browser chrome showing) for guitar (6 strings), ukulele (4), banjo (5) and mandolin (4 courses), mini bar up with the video parked: the tuner card and #tStrings sit side by side sharing a band of height; #view scrollHeight <= clientHeight and the tuner card does not scroll internally either; Start, Tone, both mode chips, the runway, the note readout, the cents line and every string are fully on screen, clear of the app bar, tab bar and mini bar, and hit-test to themselves at centre + 4 inner-quarter points (pill chips round off true corners); every control is >=44x44; the strings take the landscape-audit grid (4 strings/courses 2x2, banjo 3+2, guitar 3x2) at 340px tall, including 740x320 (#367 fell back to one row there; inside the landscape rail shell of #369 the header and tab bar are gone, so the grid's rows stay far above the 44px floor and the fallback is retired). Inside the rail shell 'clear of the chrome' means: inside the view box and intersecting neither the .appbar (gear) nor the .tabbar (rail) - the same check that meant 'below the header, above the tab bar' in the old shell. Then 412x800 portrait and 1280x800 desktop keep the stacked column (structural no-regression; exact bounding boxes are diffed against the pre-change build out of band - fonts vary by machine). RED before the change: the 540px stacked column leaves ~110px between the header and the bar, so the view scrolls and the strings sit under the bar.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "seed": {
+    "music.vidPref.v1": "hid"
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/index.html?p=guitar-standard"
+    },
+    {
+      "action": "wait",
+      "ms": 1200
+    },
+    {
+      "action": "waitFor",
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major']",
+      "timeoutMs": 8000
+    },
+    {
+      "action": "tap",
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major'] .li-body"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 6000
+    },
+    {
+      "action": "evalAssert",
+      "label": "guitar fixture: plain mini bar (video parked, no theater scrim, no PIP dock)",
+      "js": "document.body.classList.contains('miniplayer')&&!document.body.classList.contains('pipdock')&&!document.querySelector('.bt-player.vidopen')"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=tune]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#tStrings .tStr"
+    },
+    {
+      "action": "resize",
+      "width": 915,
+      "height": 340
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "evalAssert",
+      "label": "guitar 915x340: two-pane - tuner and strings side by side, no view or tuner-pane scroll, Start/Tone/mode chips/runway/note and all 6 strings fully visible, clear of the rail / header / tab bar + mini bar, hit-test to themselves (centre + 4 inner-quarter points - pill chips have no corners), controls >=44px, strings laid out in the pane grid (4 -> 2x2, 5 -> 3+2, 6 -> 3x2)",
+      "js": "(function(){function rect(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function name(e){return (e.id?'#'+e.id:'.'+String(e.className).split(' ')[0])+(e.textContent?' \"'+e.textContent.trim().slice(0,12)+'\"':'');}function usable(e,why){var b=e.getBoundingClientRect();var vr=document.getElementById('view').getBoundingClientRect(); var ab=document.querySelector('.appbar').getBoundingClientRect(),tb=document.querySelector('.tabbar').getBoundingClientRect(); var bar=document.querySelector('.bt-player.mini .bt-st-head');var br=bar?bar.getBoundingClientRect():null; var n=name(e)+' '+rect(e); if(b.width<1||b.height<1)throw new Error(why+': '+n+' not rendered'); if(b.left<-0.5||b.right>innerWidth+0.5)throw new Error(why+': '+n+' off-screen horizontally'); function clear(q){return q.width<1||q.height<1||b.right<=q.left+0.5||b.left>=q.right-0.5||b.bottom<=q.top+0.5||b.top>=q.bottom-0.5;}if(b.top<vr.top-0.5||b.bottom>vr.bottom+0.5||b.left<vr.left-0.5||b.right>vr.right+0.5||!clear(ab)||!clear(tb))throw new Error(why+': '+n+' outside the view, or under the header / tab bar / rail - view '+rect(document.getElementById('view'))); if(br&&!(b.bottom<=br.top+0.5||b.top>=br.bottom-0.5||b.right<=br.left+0.5||b.left>=br.right-0.5))throw new Error(why+': '+n+' under the mini-player bar '+rect(bar)); [[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/4],[b.right-b.width/4,b.top+b.height/4],[b.left+b.width/4,b.bottom-b.height/4],[b.right-b.width/4,b.bottom-b.height/4]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!e.contains(h))throw new Error(why+': '+n+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+(h?name(h):'nothing'));}); return true;}function big(e,why){var b=e.getBoundingClientRect();if(b.width<44-0.5||b.height<44-0.5)throw new Error(why+': '+name(e)+' '+rect(e)+' below the 44px tap floor');return true;}var v=document.getElementById('view');v.scrollTo({top:0,behavior:'instant'});if(!document.querySelector('.bt-player.mini .bt-st-head'))throw new Error('guitar 915x340: fixture lost - mini-player bar is not up');var c=document.querySelector('.tCard').getBoundingClientRect(),s=document.getElementById('tStrings').getBoundingClientRect();if(!(c.right<=s.left+0.5||s.right<=c.left+0.5))throw new Error('guitar 915x340: panes not side by side - tuner '+rect(document.querySelector('.tCard'))+' strings '+rect(document.getElementById('tStrings')));if(!(c.top<s.bottom&&s.top<c.bottom))throw new Error('guitar 915x340: panes do not share a band of height');if(v.scrollHeight>v.clientHeight+1)throw new Error('guitar 915x340: the view scrolls - scrollHeight '+v.scrollHeight+' > clientHeight '+v.clientHeight);var tc=document.querySelector('.tCard');if(tc.scrollHeight>tc.clientHeight+1)throw new Error('guitar 915x340: the tuner pane scrolls internally - scrollHeight '+tc.scrollHeight+' > clientHeight '+tc.clientHeight);var ss=[].slice.call(document.querySelectorAll('#tStrings .tStr'));if(ss.length!==6)throw new Error('guitar 915x340: expected 6 string buttons, got '+ss.length);var tops=[];ss.forEach(function(e){var t=Math.round(e.getBoundingClientRect().top);if(tops.indexOf(t)<0)tops.push(t);});if(tops.length!==2)throw new Error('guitar 915x340: expected the strings in 2 row(s), got '+tops.length);var ctl=[document.getElementById('micToggle'),document.getElementById('toneToggle')].concat([].slice.call(document.querySelectorAll('.micModes .chip')));ctl.concat(ss).forEach(function(e){usable(e,'guitar 915x340');big(e,'guitar 915x340');});[document.getElementById('micRunway'),document.getElementById('micNote'),document.getElementById('micCents')].forEach(function(e){usable(e,'guitar 915x340');});return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "guitar-915x340"
+    },
+    {
+      "action": "resize",
+      "width": 844,
+      "height": 340
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "evalAssert",
+      "label": "guitar 844x340: two-pane - tuner and strings side by side, no view or tuner-pane scroll, Start/Tone/mode chips/runway/note and all 6 strings fully visible, clear of the rail / header / tab bar + mini bar, hit-test to themselves (centre + 4 inner-quarter points - pill chips have no corners), controls >=44px, strings laid out in the pane grid (4 -> 2x2, 5 -> 3+2, 6 -> 3x2)",
+      "js": "(function(){function rect(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function name(e){return (e.id?'#'+e.id:'.'+String(e.className).split(' ')[0])+(e.textContent?' \"'+e.textContent.trim().slice(0,12)+'\"':'');}function usable(e,why){var b=e.getBoundingClientRect();var vr=document.getElementById('view').getBoundingClientRect(); var ab=document.querySelector('.appbar').getBoundingClientRect(),tb=document.querySelector('.tabbar').getBoundingClientRect(); var bar=document.querySelector('.bt-player.mini .bt-st-head');var br=bar?bar.getBoundingClientRect():null; var n=name(e)+' '+rect(e); if(b.width<1||b.height<1)throw new Error(why+': '+n+' not rendered'); if(b.left<-0.5||b.right>innerWidth+0.5)throw new Error(why+': '+n+' off-screen horizontally'); function clear(q){return q.width<1||q.height<1||b.right<=q.left+0.5||b.left>=q.right-0.5||b.bottom<=q.top+0.5||b.top>=q.bottom-0.5;}if(b.top<vr.top-0.5||b.bottom>vr.bottom+0.5||b.left<vr.left-0.5||b.right>vr.right+0.5||!clear(ab)||!clear(tb))throw new Error(why+': '+n+' outside the view, or under the header / tab bar / rail - view '+rect(document.getElementById('view'))); if(br&&!(b.bottom<=br.top+0.5||b.top>=br.bottom-0.5||b.right<=br.left+0.5||b.left>=br.right-0.5))throw new Error(why+': '+n+' under the mini-player bar '+rect(bar)); [[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/4],[b.right-b.width/4,b.top+b.height/4],[b.left+b.width/4,b.bottom-b.height/4],[b.right-b.width/4,b.bottom-b.height/4]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!e.contains(h))throw new Error(why+': '+n+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+(h?name(h):'nothing'));}); return true;}function big(e,why){var b=e.getBoundingClientRect();if(b.width<44-0.5||b.height<44-0.5)throw new Error(why+': '+name(e)+' '+rect(e)+' below the 44px tap floor');return true;}var v=document.getElementById('view');v.scrollTo({top:0,behavior:'instant'});if(!document.querySelector('.bt-player.mini .bt-st-head'))throw new Error('guitar 844x340: fixture lost - mini-player bar is not up');var c=document.querySelector('.tCard').getBoundingClientRect(),s=document.getElementById('tStrings').getBoundingClientRect();if(!(c.right<=s.left+0.5||s.right<=c.left+0.5))throw new Error('guitar 844x340: panes not side by side - tuner '+rect(document.querySelector('.tCard'))+' strings '+rect(document.getElementById('tStrings')));if(!(c.top<s.bottom&&s.top<c.bottom))throw new Error('guitar 844x340: panes do not share a band of height');if(v.scrollHeight>v.clientHeight+1)throw new Error('guitar 844x340: the view scrolls - scrollHeight '+v.scrollHeight+' > clientHeight '+v.clientHeight);var tc=document.querySelector('.tCard');if(tc.scrollHeight>tc.clientHeight+1)throw new Error('guitar 844x340: the tuner pane scrolls internally - scrollHeight '+tc.scrollHeight+' > clientHeight '+tc.clientHeight);var ss=[].slice.call(document.querySelectorAll('#tStrings .tStr'));if(ss.length!==6)throw new Error('guitar 844x340: expected 6 string buttons, got '+ss.length);var tops=[];ss.forEach(function(e){var t=Math.round(e.getBoundingClientRect().top);if(tops.indexOf(t)<0)tops.push(t);});if(tops.length!==2)throw new Error('guitar 844x340: expected the strings in 2 row(s), got '+tops.length);var ctl=[document.getElementById('micToggle'),document.getElementById('toneToggle')].concat([].slice.call(document.querySelectorAll('.micModes .chip')));ctl.concat(ss).forEach(function(e){usable(e,'guitar 844x340');big(e,'guitar 844x340');});[document.getElementById('micRunway'),document.getElementById('micNote'),document.getElementById('micCents')].forEach(function(e){usable(e,'guitar 844x340');});return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "guitar-844x340"
+    },
+    {
+      "action": "resize",
+      "width": 740,
+      "height": 320
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "evalAssert",
+      "label": "guitar 740x320: two-pane - tuner and strings side by side, no view or tuner-pane scroll, Start/Tone/mode chips/runway/note and all 6 strings fully visible, clear of the rail / header / tab bar + mini bar, hit-test to themselves (centre + 4 inner-quarter points - pill chips have no corners), controls >=44px, strings laid out in the pane grid (4 -> 2x2, 5 -> 3+2, 6 -> 3x2) - the rail shell leaves every row far above the 44px floor, so #367's one-row fallback is retired",
+      "js": "(function(){function rect(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function name(e){return (e.id?'#'+e.id:'.'+String(e.className).split(' ')[0])+(e.textContent?' \"'+e.textContent.trim().slice(0,12)+'\"':'');}function usable(e,why){var b=e.getBoundingClientRect();var vr=document.getElementById('view').getBoundingClientRect(); var ab=document.querySelector('.appbar').getBoundingClientRect(),tb=document.querySelector('.tabbar').getBoundingClientRect(); var bar=document.querySelector('.bt-player.mini .bt-st-head');var br=bar?bar.getBoundingClientRect():null; var n=name(e)+' '+rect(e); if(b.width<1||b.height<1)throw new Error(why+': '+n+' not rendered'); if(b.left<-0.5||b.right>innerWidth+0.5)throw new Error(why+': '+n+' off-screen horizontally'); function clear(q){return q.width<1||q.height<1||b.right<=q.left+0.5||b.left>=q.right-0.5||b.bottom<=q.top+0.5||b.top>=q.bottom-0.5;}if(b.top<vr.top-0.5||b.bottom>vr.bottom+0.5||b.left<vr.left-0.5||b.right>vr.right+0.5||!clear(ab)||!clear(tb))throw new Error(why+': '+n+' outside the view, or under the header / tab bar / rail - view '+rect(document.getElementById('view'))); if(br&&!(b.bottom<=br.top+0.5||b.top>=br.bottom-0.5||b.right<=br.left+0.5||b.left>=br.right-0.5))throw new Error(why+': '+n+' under the mini-player bar '+rect(bar)); [[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/4],[b.right-b.width/4,b.top+b.height/4],[b.left+b.width/4,b.bottom-b.height/4],[b.right-b.width/4,b.bottom-b.height/4]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!e.contains(h))throw new Error(why+': '+n+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+(h?name(h):'nothing'));}); return true;}function big(e,why){var b=e.getBoundingClientRect();if(b.width<44-0.5||b.height<44-0.5)throw new Error(why+': '+name(e)+' '+rect(e)+' below the 44px tap floor');return true;}var v=document.getElementById('view');v.scrollTo({top:0,behavior:'instant'});if(!document.querySelector('.bt-player.mini .bt-st-head'))throw new Error('guitar 740x320: fixture lost - mini-player bar is not up');var c=document.querySelector('.tCard').getBoundingClientRect(),s=document.getElementById('tStrings').getBoundingClientRect();if(!(c.right<=s.left+0.5||s.right<=c.left+0.5))throw new Error('guitar 740x320: panes not side by side - tuner '+rect(document.querySelector('.tCard'))+' strings '+rect(document.getElementById('tStrings')));if(!(c.top<s.bottom&&s.top<c.bottom))throw new Error('guitar 740x320: panes do not share a band of height');if(v.scrollHeight>v.clientHeight+1)throw new Error('guitar 740x320: the view scrolls - scrollHeight '+v.scrollHeight+' > clientHeight '+v.clientHeight);var tc=document.querySelector('.tCard');if(tc.scrollHeight>tc.clientHeight+1)throw new Error('guitar 740x320: the tuner pane scrolls internally - scrollHeight '+tc.scrollHeight+' > clientHeight '+tc.clientHeight);var ss=[].slice.call(document.querySelectorAll('#tStrings .tStr'));if(ss.length!==6)throw new Error('guitar 740x320: expected 6 string buttons, got '+ss.length);var tops=[];ss.forEach(function(e){var t=Math.round(e.getBoundingClientRect().top);if(tops.indexOf(t)<0)tops.push(t);});if(tops.length!==2)throw new Error('guitar 740x320: expected the strings in 2 row(s), got '+tops.length);var ctl=[document.getElementById('micToggle'),document.getElementById('toneToggle')].concat([].slice.call(document.querySelectorAll('.micModes .chip')));ctl.concat(ss).forEach(function(e){usable(e,'guitar 740x320');big(e,'guitar 740x320');});[document.getElementById('micRunway'),document.getElementById('micNote'),document.getElementById('micCents')].forEach(function(e){usable(e,'guitar 740x320');});return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "guitar-740x320"
+    },
+    {
+      "action": "resize",
+      "width": 412,
+      "height": 800
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "evalAssert",
+      "label": "412x800 (no regression): stacked one-screen layout - 540px column, strings full-width under the tuner card, card >=200px, no view scroll, card title + strings caption shown, Start and strings clear of the bar",
+      "js": "(function(){function rect(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function name(e){return (e.id?'#'+e.id:'.'+String(e.className).split(' ')[0])+(e.textContent?' \"'+e.textContent.trim().slice(0,12)+'\"':'');}function usable(e,why){var b=e.getBoundingClientRect();var vr=document.getElementById('view').getBoundingClientRect(); var ab=document.querySelector('.appbar').getBoundingClientRect(),tb=document.querySelector('.tabbar').getBoundingClientRect(); var bar=document.querySelector('.bt-player.mini .bt-st-head');var br=bar?bar.getBoundingClientRect():null; var n=name(e)+' '+rect(e); if(b.width<1||b.height<1)throw new Error(why+': '+n+' not rendered'); if(b.left<-0.5||b.right>innerWidth+0.5)throw new Error(why+': '+n+' off-screen horizontally'); function clear(q){return q.width<1||q.height<1||b.right<=q.left+0.5||b.left>=q.right-0.5||b.bottom<=q.top+0.5||b.top>=q.bottom-0.5;}if(b.top<vr.top-0.5||b.bottom>vr.bottom+0.5||b.left<vr.left-0.5||b.right>vr.right+0.5||!clear(ab)||!clear(tb))throw new Error(why+': '+n+' outside the view, or under the header / tab bar / rail - view '+rect(document.getElementById('view'))); if(br&&!(b.bottom<=br.top+0.5||b.top>=br.bottom-0.5||b.right<=br.left+0.5||b.left>=br.right-0.5))throw new Error(why+': '+n+' under the mini-player bar '+rect(bar)); [[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/4],[b.right-b.width/4,b.top+b.height/4],[b.left+b.width/4,b.bottom-b.height/4],[b.right-b.width/4,b.bottom-b.height/4]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!e.contains(h))throw new Error(why+': '+n+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+(h?name(h):'nothing'));}); return true;}function big(e,why){var b=e.getBoundingClientRect();if(b.width<44-0.5||b.height<44-0.5)throw new Error(why+': '+name(e)+' '+rect(e)+' below the 44px tap floor');return true;}var v=document.getElementById('view');v.scrollTo({top:0,behavior:'instant'});var TAG=innerWidth+'x'+innerHeight;if(getComputedStyle(document.querySelector('.tunerWrap')).display!=='flex')throw new Error(TAG+': .tunerWrap is no longer the stacked flex column');var app=document.querySelector('.app').getBoundingClientRect();if(app.width>540.5)throw new Error(TAG+': .app widened past its 540px column');var c=document.querySelector('.tCard').getBoundingClientRect(),s=document.getElementById('tStrings').getBoundingClientRect();if(s.top<c.bottom-0.5||Math.abs(s.left-c.left)>0.5||Math.abs(s.width-c.width)>0.5)throw new Error(TAG+': strings no longer stacked full-width under the tuner card');if(c.height<200)throw new Error(TAG+': tuner card shrank below 200px');if(v.scrollHeight>v.clientHeight+1)throw new Error(TAG+': the view scrolls');[document.getElementById('micToggle')].concat([].slice.call(document.querySelectorAll('#tStrings .tStr'))).forEach(function(e){usable(e,TAG);});if(getComputedStyle(document.querySelector('.tCard h3')).display==='none'||getComputedStyle(document.querySelector('.refSub')).display==='none')throw new Error(TAG+': portrait/desktop copy (card title, strings caption) hidden');return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "guitar-412x800"
+    },
+    {
+      "action": "resize",
+      "width": 1280,
+      "height": 800
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "evalAssert",
+      "label": "1280x800 (no regression): stacked one-screen layout - 540px column, strings full-width under the tuner card, card >=200px, no view scroll, card title + strings caption shown, Start and strings clear of the bar",
+      "js": "(function(){function rect(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function name(e){return (e.id?'#'+e.id:'.'+String(e.className).split(' ')[0])+(e.textContent?' \"'+e.textContent.trim().slice(0,12)+'\"':'');}function usable(e,why){var b=e.getBoundingClientRect();var vr=document.getElementById('view').getBoundingClientRect(); var ab=document.querySelector('.appbar').getBoundingClientRect(),tb=document.querySelector('.tabbar').getBoundingClientRect(); var bar=document.querySelector('.bt-player.mini .bt-st-head');var br=bar?bar.getBoundingClientRect():null; var n=name(e)+' '+rect(e); if(b.width<1||b.height<1)throw new Error(why+': '+n+' not rendered'); if(b.left<-0.5||b.right>innerWidth+0.5)throw new Error(why+': '+n+' off-screen horizontally'); function clear(q){return q.width<1||q.height<1||b.right<=q.left+0.5||b.left>=q.right-0.5||b.bottom<=q.top+0.5||b.top>=q.bottom-0.5;}if(b.top<vr.top-0.5||b.bottom>vr.bottom+0.5||b.left<vr.left-0.5||b.right>vr.right+0.5||!clear(ab)||!clear(tb))throw new Error(why+': '+n+' outside the view, or under the header / tab bar / rail - view '+rect(document.getElementById('view'))); if(br&&!(b.bottom<=br.top+0.5||b.top>=br.bottom-0.5||b.right<=br.left+0.5||b.left>=br.right-0.5))throw new Error(why+': '+n+' under the mini-player bar '+rect(bar)); [[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/4],[b.right-b.width/4,b.top+b.height/4],[b.left+b.width/4,b.bottom-b.height/4],[b.right-b.width/4,b.bottom-b.height/4]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!e.contains(h))throw new Error(why+': '+n+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+(h?name(h):'nothing'));}); return true;}function big(e,why){var b=e.getBoundingClientRect();if(b.width<44-0.5||b.height<44-0.5)throw new Error(why+': '+name(e)+' '+rect(e)+' below the 44px tap floor');return true;}var v=document.getElementById('view');v.scrollTo({top:0,behavior:'instant'});var TAG=innerWidth+'x'+innerHeight;if(getComputedStyle(document.querySelector('.tunerWrap')).display!=='flex')throw new Error(TAG+': .tunerWrap is no longer the stacked flex column');var app=document.querySelector('.app').getBoundingClientRect();if(app.width>540.5)throw new Error(TAG+': .app widened past its 540px column');var c=document.querySelector('.tCard').getBoundingClientRect(),s=document.getElementById('tStrings').getBoundingClientRect();if(s.top<c.bottom-0.5||Math.abs(s.left-c.left)>0.5||Math.abs(s.width-c.width)>0.5)throw new Error(TAG+': strings no longer stacked full-width under the tuner card');if(c.height<200)throw new Error(TAG+': tuner card shrank below 200px');if(v.scrollHeight>v.clientHeight+1)throw new Error(TAG+': the view scrolls');[document.getElementById('micToggle')].concat([].slice.call(document.querySelectorAll('#tStrings .tStr'))).forEach(function(e){usable(e,TAG);});if(getComputedStyle(document.querySelector('.tCard h3')).display==='none'||getComputedStyle(document.querySelector('.refSub')).display==='none')throw new Error(TAG+': portrait/desktop copy (card title, strings caption) hidden');return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "guitar-1280x800"
+    },
+    {
+      "action": "goto",
+      "path": "/music/play/index.html?p=ukulele-gcea"
+    },
+    {
+      "action": "wait",
+      "ms": 1200
+    },
+    {
+      "action": "waitFor",
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major']",
+      "timeoutMs": 8000
+    },
+    {
+      "action": "tap",
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major'] .li-body"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 6000
+    },
+    {
+      "action": "evalAssert",
+      "label": "ukulele fixture: plain mini bar (video parked, no theater scrim, no PIP dock)",
+      "js": "document.body.classList.contains('miniplayer')&&!document.body.classList.contains('pipdock')&&!document.querySelector('.bt-player.vidopen')"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=tune]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#tStrings .tStr"
+    },
+    {
+      "action": "resize",
+      "width": 915,
+      "height": 340
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "evalAssert",
+      "label": "ukulele 915x340: two-pane - tuner and strings side by side, no view or tuner-pane scroll, Start/Tone/mode chips/runway/note and all 4 strings fully visible, clear of the rail / header / tab bar + mini bar, hit-test to themselves (centre + 4 inner-quarter points - pill chips have no corners), controls >=44px, strings laid out in the pane grid (4 -> 2x2, 5 -> 3+2, 6 -> 3x2)",
+      "js": "(function(){function rect(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function name(e){return (e.id?'#'+e.id:'.'+String(e.className).split(' ')[0])+(e.textContent?' \"'+e.textContent.trim().slice(0,12)+'\"':'');}function usable(e,why){var b=e.getBoundingClientRect();var vr=document.getElementById('view').getBoundingClientRect(); var ab=document.querySelector('.appbar').getBoundingClientRect(),tb=document.querySelector('.tabbar').getBoundingClientRect(); var bar=document.querySelector('.bt-player.mini .bt-st-head');var br=bar?bar.getBoundingClientRect():null; var n=name(e)+' '+rect(e); if(b.width<1||b.height<1)throw new Error(why+': '+n+' not rendered'); if(b.left<-0.5||b.right>innerWidth+0.5)throw new Error(why+': '+n+' off-screen horizontally'); function clear(q){return q.width<1||q.height<1||b.right<=q.left+0.5||b.left>=q.right-0.5||b.bottom<=q.top+0.5||b.top>=q.bottom-0.5;}if(b.top<vr.top-0.5||b.bottom>vr.bottom+0.5||b.left<vr.left-0.5||b.right>vr.right+0.5||!clear(ab)||!clear(tb))throw new Error(why+': '+n+' outside the view, or under the header / tab bar / rail - view '+rect(document.getElementById('view'))); if(br&&!(b.bottom<=br.top+0.5||b.top>=br.bottom-0.5||b.right<=br.left+0.5||b.left>=br.right-0.5))throw new Error(why+': '+n+' under the mini-player bar '+rect(bar)); [[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/4],[b.right-b.width/4,b.top+b.height/4],[b.left+b.width/4,b.bottom-b.height/4],[b.right-b.width/4,b.bottom-b.height/4]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!e.contains(h))throw new Error(why+': '+n+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+(h?name(h):'nothing'));}); return true;}function big(e,why){var b=e.getBoundingClientRect();if(b.width<44-0.5||b.height<44-0.5)throw new Error(why+': '+name(e)+' '+rect(e)+' below the 44px tap floor');return true;}var v=document.getElementById('view');v.scrollTo({top:0,behavior:'instant'});if(!document.querySelector('.bt-player.mini .bt-st-head'))throw new Error('ukulele 915x340: fixture lost - mini-player bar is not up');var c=document.querySelector('.tCard').getBoundingClientRect(),s=document.getElementById('tStrings').getBoundingClientRect();if(!(c.right<=s.left+0.5||s.right<=c.left+0.5))throw new Error('ukulele 915x340: panes not side by side - tuner '+rect(document.querySelector('.tCard'))+' strings '+rect(document.getElementById('tStrings')));if(!(c.top<s.bottom&&s.top<c.bottom))throw new Error('ukulele 915x340: panes do not share a band of height');if(v.scrollHeight>v.clientHeight+1)throw new Error('ukulele 915x340: the view scrolls - scrollHeight '+v.scrollHeight+' > clientHeight '+v.clientHeight);var tc=document.querySelector('.tCard');if(tc.scrollHeight>tc.clientHeight+1)throw new Error('ukulele 915x340: the tuner pane scrolls internally - scrollHeight '+tc.scrollHeight+' > clientHeight '+tc.clientHeight);var ss=[].slice.call(document.querySelectorAll('#tStrings .tStr'));if(ss.length!==4)throw new Error('ukulele 915x340: expected 4 string buttons, got '+ss.length);var tops=[];ss.forEach(function(e){var t=Math.round(e.getBoundingClientRect().top);if(tops.indexOf(t)<0)tops.push(t);});if(tops.length!==2)throw new Error('ukulele 915x340: expected the strings in 2 row(s), got '+tops.length);var ctl=[document.getElementById('micToggle'),document.getElementById('toneToggle')].concat([].slice.call(document.querySelectorAll('.micModes .chip')));ctl.concat(ss).forEach(function(e){usable(e,'ukulele 915x340');big(e,'ukulele 915x340');});[document.getElementById('micRunway'),document.getElementById('micNote'),document.getElementById('micCents')].forEach(function(e){usable(e,'ukulele 915x340');});return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "ukulele-915x340"
+    },
+    {
+      "action": "resize",
+      "width": 844,
+      "height": 340
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "evalAssert",
+      "label": "ukulele 844x340: two-pane - tuner and strings side by side, no view or tuner-pane scroll, Start/Tone/mode chips/runway/note and all 4 strings fully visible, clear of the rail / header / tab bar + mini bar, hit-test to themselves (centre + 4 inner-quarter points - pill chips have no corners), controls >=44px, strings laid out in the pane grid (4 -> 2x2, 5 -> 3+2, 6 -> 3x2)",
+      "js": "(function(){function rect(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function name(e){return (e.id?'#'+e.id:'.'+String(e.className).split(' ')[0])+(e.textContent?' \"'+e.textContent.trim().slice(0,12)+'\"':'');}function usable(e,why){var b=e.getBoundingClientRect();var vr=document.getElementById('view').getBoundingClientRect(); var ab=document.querySelector('.appbar').getBoundingClientRect(),tb=document.querySelector('.tabbar').getBoundingClientRect(); var bar=document.querySelector('.bt-player.mini .bt-st-head');var br=bar?bar.getBoundingClientRect():null; var n=name(e)+' '+rect(e); if(b.width<1||b.height<1)throw new Error(why+': '+n+' not rendered'); if(b.left<-0.5||b.right>innerWidth+0.5)throw new Error(why+': '+n+' off-screen horizontally'); function clear(q){return q.width<1||q.height<1||b.right<=q.left+0.5||b.left>=q.right-0.5||b.bottom<=q.top+0.5||b.top>=q.bottom-0.5;}if(b.top<vr.top-0.5||b.bottom>vr.bottom+0.5||b.left<vr.left-0.5||b.right>vr.right+0.5||!clear(ab)||!clear(tb))throw new Error(why+': '+n+' outside the view, or under the header / tab bar / rail - view '+rect(document.getElementById('view'))); if(br&&!(b.bottom<=br.top+0.5||b.top>=br.bottom-0.5||b.right<=br.left+0.5||b.left>=br.right-0.5))throw new Error(why+': '+n+' under the mini-player bar '+rect(bar)); [[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/4],[b.right-b.width/4,b.top+b.height/4],[b.left+b.width/4,b.bottom-b.height/4],[b.right-b.width/4,b.bottom-b.height/4]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!e.contains(h))throw new Error(why+': '+n+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+(h?name(h):'nothing'));}); return true;}function big(e,why){var b=e.getBoundingClientRect();if(b.width<44-0.5||b.height<44-0.5)throw new Error(why+': '+name(e)+' '+rect(e)+' below the 44px tap floor');return true;}var v=document.getElementById('view');v.scrollTo({top:0,behavior:'instant'});if(!document.querySelector('.bt-player.mini .bt-st-head'))throw new Error('ukulele 844x340: fixture lost - mini-player bar is not up');var c=document.querySelector('.tCard').getBoundingClientRect(),s=document.getElementById('tStrings').getBoundingClientRect();if(!(c.right<=s.left+0.5||s.right<=c.left+0.5))throw new Error('ukulele 844x340: panes not side by side - tuner '+rect(document.querySelector('.tCard'))+' strings '+rect(document.getElementById('tStrings')));if(!(c.top<s.bottom&&s.top<c.bottom))throw new Error('ukulele 844x340: panes do not share a band of height');if(v.scrollHeight>v.clientHeight+1)throw new Error('ukulele 844x340: the view scrolls - scrollHeight '+v.scrollHeight+' > clientHeight '+v.clientHeight);var tc=document.querySelector('.tCard');if(tc.scrollHeight>tc.clientHeight+1)throw new Error('ukulele 844x340: the tuner pane scrolls internally - scrollHeight '+tc.scrollHeight+' > clientHeight '+tc.clientHeight);var ss=[].slice.call(document.querySelectorAll('#tStrings .tStr'));if(ss.length!==4)throw new Error('ukulele 844x340: expected 4 string buttons, got '+ss.length);var tops=[];ss.forEach(function(e){var t=Math.round(e.getBoundingClientRect().top);if(tops.indexOf(t)<0)tops.push(t);});if(tops.length!==2)throw new Error('ukulele 844x340: expected the strings in 2 row(s), got '+tops.length);var ctl=[document.getElementById('micToggle'),document.getElementById('toneToggle')].concat([].slice.call(document.querySelectorAll('.micModes .chip')));ctl.concat(ss).forEach(function(e){usable(e,'ukulele 844x340');big(e,'ukulele 844x340');});[document.getElementById('micRunway'),document.getElementById('micNote'),document.getElementById('micCents')].forEach(function(e){usable(e,'ukulele 844x340');});return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "ukulele-844x340"
+    },
+    {
+      "action": "resize",
+      "width": 740,
+      "height": 320
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "evalAssert",
+      "label": "ukulele 740x320: two-pane - tuner and strings side by side, no view or tuner-pane scroll, Start/Tone/mode chips/runway/note and all 4 strings fully visible, clear of the rail / header / tab bar + mini bar, hit-test to themselves (centre + 4 inner-quarter points - pill chips have no corners), controls >=44px, strings laid out in the pane grid (4 -> 2x2, 5 -> 3+2, 6 -> 3x2) - the rail shell leaves every row far above the 44px floor, so #367's one-row fallback is retired",
+      "js": "(function(){function rect(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function name(e){return (e.id?'#'+e.id:'.'+String(e.className).split(' ')[0])+(e.textContent?' \"'+e.textContent.trim().slice(0,12)+'\"':'');}function usable(e,why){var b=e.getBoundingClientRect();var vr=document.getElementById('view').getBoundingClientRect(); var ab=document.querySelector('.appbar').getBoundingClientRect(),tb=document.querySelector('.tabbar').getBoundingClientRect(); var bar=document.querySelector('.bt-player.mini .bt-st-head');var br=bar?bar.getBoundingClientRect():null; var n=name(e)+' '+rect(e); if(b.width<1||b.height<1)throw new Error(why+': '+n+' not rendered'); if(b.left<-0.5||b.right>innerWidth+0.5)throw new Error(why+': '+n+' off-screen horizontally'); function clear(q){return q.width<1||q.height<1||b.right<=q.left+0.5||b.left>=q.right-0.5||b.bottom<=q.top+0.5||b.top>=q.bottom-0.5;}if(b.top<vr.top-0.5||b.bottom>vr.bottom+0.5||b.left<vr.left-0.5||b.right>vr.right+0.5||!clear(ab)||!clear(tb))throw new Error(why+': '+n+' outside the view, or under the header / tab bar / rail - view '+rect(document.getElementById('view'))); if(br&&!(b.bottom<=br.top+0.5||b.top>=br.bottom-0.5||b.right<=br.left+0.5||b.left>=br.right-0.5))throw new Error(why+': '+n+' under the mini-player bar '+rect(bar)); [[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/4],[b.right-b.width/4,b.top+b.height/4],[b.left+b.width/4,b.bottom-b.height/4],[b.right-b.width/4,b.bottom-b.height/4]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!e.contains(h))throw new Error(why+': '+n+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+(h?name(h):'nothing'));}); return true;}function big(e,why){var b=e.getBoundingClientRect();if(b.width<44-0.5||b.height<44-0.5)throw new Error(why+': '+name(e)+' '+rect(e)+' below the 44px tap floor');return true;}var v=document.getElementById('view');v.scrollTo({top:0,behavior:'instant'});if(!document.querySelector('.bt-player.mini .bt-st-head'))throw new Error('ukulele 740x320: fixture lost - mini-player bar is not up');var c=document.querySelector('.tCard').getBoundingClientRect(),s=document.getElementById('tStrings').getBoundingClientRect();if(!(c.right<=s.left+0.5||s.right<=c.left+0.5))throw new Error('ukulele 740x320: panes not side by side - tuner '+rect(document.querySelector('.tCard'))+' strings '+rect(document.getElementById('tStrings')));if(!(c.top<s.bottom&&s.top<c.bottom))throw new Error('ukulele 740x320: panes do not share a band of height');if(v.scrollHeight>v.clientHeight+1)throw new Error('ukulele 740x320: the view scrolls - scrollHeight '+v.scrollHeight+' > clientHeight '+v.clientHeight);var tc=document.querySelector('.tCard');if(tc.scrollHeight>tc.clientHeight+1)throw new Error('ukulele 740x320: the tuner pane scrolls internally - scrollHeight '+tc.scrollHeight+' > clientHeight '+tc.clientHeight);var ss=[].slice.call(document.querySelectorAll('#tStrings .tStr'));if(ss.length!==4)throw new Error('ukulele 740x320: expected 4 string buttons, got '+ss.length);var tops=[];ss.forEach(function(e){var t=Math.round(e.getBoundingClientRect().top);if(tops.indexOf(t)<0)tops.push(t);});if(tops.length!==2)throw new Error('ukulele 740x320: expected the strings in 2 row(s), got '+tops.length);var ctl=[document.getElementById('micToggle'),document.getElementById('toneToggle')].concat([].slice.call(document.querySelectorAll('.micModes .chip')));ctl.concat(ss).forEach(function(e){usable(e,'ukulele 740x320');big(e,'ukulele 740x320');});[document.getElementById('micRunway'),document.getElementById('micNote'),document.getElementById('micCents')].forEach(function(e){usable(e,'ukulele 740x320');});return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "ukulele-740x320"
+    },
+    {
+      "action": "goto",
+      "path": "/music/play/index.html?p=banjo-gdgbd"
+    },
+    {
+      "action": "wait",
+      "ms": 1200
+    },
+    {
+      "action": "waitFor",
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major']",
+      "timeoutMs": 8000
+    },
+    {
+      "action": "tap",
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major'] .li-body"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 6000
+    },
+    {
+      "action": "evalAssert",
+      "label": "banjo fixture: plain mini bar (video parked, no theater scrim, no PIP dock)",
+      "js": "document.body.classList.contains('miniplayer')&&!document.body.classList.contains('pipdock')&&!document.querySelector('.bt-player.vidopen')"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=tune]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#tStrings .tStr"
+    },
+    {
+      "action": "resize",
+      "width": 915,
+      "height": 340
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "evalAssert",
+      "label": "banjo 915x340: two-pane - tuner and strings side by side, no view or tuner-pane scroll, Start/Tone/mode chips/runway/note and all 5 strings fully visible, clear of the rail / header / tab bar + mini bar, hit-test to themselves (centre + 4 inner-quarter points - pill chips have no corners), controls >=44px, strings laid out in the pane grid (4 -> 2x2, 5 -> 3+2, 6 -> 3x2)",
+      "js": "(function(){function rect(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function name(e){return (e.id?'#'+e.id:'.'+String(e.className).split(' ')[0])+(e.textContent?' \"'+e.textContent.trim().slice(0,12)+'\"':'');}function usable(e,why){var b=e.getBoundingClientRect();var vr=document.getElementById('view').getBoundingClientRect(); var ab=document.querySelector('.appbar').getBoundingClientRect(),tb=document.querySelector('.tabbar').getBoundingClientRect(); var bar=document.querySelector('.bt-player.mini .bt-st-head');var br=bar?bar.getBoundingClientRect():null; var n=name(e)+' '+rect(e); if(b.width<1||b.height<1)throw new Error(why+': '+n+' not rendered'); if(b.left<-0.5||b.right>innerWidth+0.5)throw new Error(why+': '+n+' off-screen horizontally'); function clear(q){return q.width<1||q.height<1||b.right<=q.left+0.5||b.left>=q.right-0.5||b.bottom<=q.top+0.5||b.top>=q.bottom-0.5;}if(b.top<vr.top-0.5||b.bottom>vr.bottom+0.5||b.left<vr.left-0.5||b.right>vr.right+0.5||!clear(ab)||!clear(tb))throw new Error(why+': '+n+' outside the view, or under the header / tab bar / rail - view '+rect(document.getElementById('view'))); if(br&&!(b.bottom<=br.top+0.5||b.top>=br.bottom-0.5||b.right<=br.left+0.5||b.left>=br.right-0.5))throw new Error(why+': '+n+' under the mini-player bar '+rect(bar)); [[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/4],[b.right-b.width/4,b.top+b.height/4],[b.left+b.width/4,b.bottom-b.height/4],[b.right-b.width/4,b.bottom-b.height/4]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!e.contains(h))throw new Error(why+': '+n+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+(h?name(h):'nothing'));}); return true;}function big(e,why){var b=e.getBoundingClientRect();if(b.width<44-0.5||b.height<44-0.5)throw new Error(why+': '+name(e)+' '+rect(e)+' below the 44px tap floor');return true;}var v=document.getElementById('view');v.scrollTo({top:0,behavior:'instant'});if(!document.querySelector('.bt-player.mini .bt-st-head'))throw new Error('banjo 915x340: fixture lost - mini-player bar is not up');var c=document.querySelector('.tCard').getBoundingClientRect(),s=document.getElementById('tStrings').getBoundingClientRect();if(!(c.right<=s.left+0.5||s.right<=c.left+0.5))throw new Error('banjo 915x340: panes not side by side - tuner '+rect(document.querySelector('.tCard'))+' strings '+rect(document.getElementById('tStrings')));if(!(c.top<s.bottom&&s.top<c.bottom))throw new Error('banjo 915x340: panes do not share a band of height');if(v.scrollHeight>v.clientHeight+1)throw new Error('banjo 915x340: the view scrolls - scrollHeight '+v.scrollHeight+' > clientHeight '+v.clientHeight);var tc=document.querySelector('.tCard');if(tc.scrollHeight>tc.clientHeight+1)throw new Error('banjo 915x340: the tuner pane scrolls internally - scrollHeight '+tc.scrollHeight+' > clientHeight '+tc.clientHeight);var ss=[].slice.call(document.querySelectorAll('#tStrings .tStr'));if(ss.length!==5)throw new Error('banjo 915x340: expected 5 string buttons, got '+ss.length);var tops=[];ss.forEach(function(e){var t=Math.round(e.getBoundingClientRect().top);if(tops.indexOf(t)<0)tops.push(t);});if(tops.length!==2)throw new Error('banjo 915x340: expected the strings in 2 row(s), got '+tops.length);var ctl=[document.getElementById('micToggle'),document.getElementById('toneToggle')].concat([].slice.call(document.querySelectorAll('.micModes .chip')));ctl.concat(ss).forEach(function(e){usable(e,'banjo 915x340');big(e,'banjo 915x340');});[document.getElementById('micRunway'),document.getElementById('micNote'),document.getElementById('micCents')].forEach(function(e){usable(e,'banjo 915x340');});return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "banjo-915x340"
+    },
+    {
+      "action": "resize",
+      "width": 844,
+      "height": 340
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "evalAssert",
+      "label": "banjo 844x340: two-pane - tuner and strings side by side, no view or tuner-pane scroll, Start/Tone/mode chips/runway/note and all 5 strings fully visible, clear of the rail / header / tab bar + mini bar, hit-test to themselves (centre + 4 inner-quarter points - pill chips have no corners), controls >=44px, strings laid out in the pane grid (4 -> 2x2, 5 -> 3+2, 6 -> 3x2)",
+      "js": "(function(){function rect(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function name(e){return (e.id?'#'+e.id:'.'+String(e.className).split(' ')[0])+(e.textContent?' \"'+e.textContent.trim().slice(0,12)+'\"':'');}function usable(e,why){var b=e.getBoundingClientRect();var vr=document.getElementById('view').getBoundingClientRect(); var ab=document.querySelector('.appbar').getBoundingClientRect(),tb=document.querySelector('.tabbar').getBoundingClientRect(); var bar=document.querySelector('.bt-player.mini .bt-st-head');var br=bar?bar.getBoundingClientRect():null; var n=name(e)+' '+rect(e); if(b.width<1||b.height<1)throw new Error(why+': '+n+' not rendered'); if(b.left<-0.5||b.right>innerWidth+0.5)throw new Error(why+': '+n+' off-screen horizontally'); function clear(q){return q.width<1||q.height<1||b.right<=q.left+0.5||b.left>=q.right-0.5||b.bottom<=q.top+0.5||b.top>=q.bottom-0.5;}if(b.top<vr.top-0.5||b.bottom>vr.bottom+0.5||b.left<vr.left-0.5||b.right>vr.right+0.5||!clear(ab)||!clear(tb))throw new Error(why+': '+n+' outside the view, or under the header / tab bar / rail - view '+rect(document.getElementById('view'))); if(br&&!(b.bottom<=br.top+0.5||b.top>=br.bottom-0.5||b.right<=br.left+0.5||b.left>=br.right-0.5))throw new Error(why+': '+n+' under the mini-player bar '+rect(bar)); [[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/4],[b.right-b.width/4,b.top+b.height/4],[b.left+b.width/4,b.bottom-b.height/4],[b.right-b.width/4,b.bottom-b.height/4]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!e.contains(h))throw new Error(why+': '+n+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+(h?name(h):'nothing'));}); return true;}function big(e,why){var b=e.getBoundingClientRect();if(b.width<44-0.5||b.height<44-0.5)throw new Error(why+': '+name(e)+' '+rect(e)+' below the 44px tap floor');return true;}var v=document.getElementById('view');v.scrollTo({top:0,behavior:'instant'});if(!document.querySelector('.bt-player.mini .bt-st-head'))throw new Error('banjo 844x340: fixture lost - mini-player bar is not up');var c=document.querySelector('.tCard').getBoundingClientRect(),s=document.getElementById('tStrings').getBoundingClientRect();if(!(c.right<=s.left+0.5||s.right<=c.left+0.5))throw new Error('banjo 844x340: panes not side by side - tuner '+rect(document.querySelector('.tCard'))+' strings '+rect(document.getElementById('tStrings')));if(!(c.top<s.bottom&&s.top<c.bottom))throw new Error('banjo 844x340: panes do not share a band of height');if(v.scrollHeight>v.clientHeight+1)throw new Error('banjo 844x340: the view scrolls - scrollHeight '+v.scrollHeight+' > clientHeight '+v.clientHeight);var tc=document.querySelector('.tCard');if(tc.scrollHeight>tc.clientHeight+1)throw new Error('banjo 844x340: the tuner pane scrolls internally - scrollHeight '+tc.scrollHeight+' > clientHeight '+tc.clientHeight);var ss=[].slice.call(document.querySelectorAll('#tStrings .tStr'));if(ss.length!==5)throw new Error('banjo 844x340: expected 5 string buttons, got '+ss.length);var tops=[];ss.forEach(function(e){var t=Math.round(e.getBoundingClientRect().top);if(tops.indexOf(t)<0)tops.push(t);});if(tops.length!==2)throw new Error('banjo 844x340: expected the strings in 2 row(s), got '+tops.length);var ctl=[document.getElementById('micToggle'),document.getElementById('toneToggle')].concat([].slice.call(document.querySelectorAll('.micModes .chip')));ctl.concat(ss).forEach(function(e){usable(e,'banjo 844x340');big(e,'banjo 844x340');});[document.getElementById('micRunway'),document.getElementById('micNote'),document.getElementById('micCents')].forEach(function(e){usable(e,'banjo 844x340');});return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "banjo-844x340"
+    },
+    {
+      "action": "resize",
+      "width": 740,
+      "height": 320
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "evalAssert",
+      "label": "banjo 740x320: two-pane - tuner and strings side by side, no view or tuner-pane scroll, Start/Tone/mode chips/runway/note and all 5 strings fully visible, clear of the rail / header / tab bar + mini bar, hit-test to themselves (centre + 4 inner-quarter points - pill chips have no corners), controls >=44px, strings laid out in the pane grid (4 -> 2x2, 5 -> 3+2, 6 -> 3x2) - the rail shell leaves every row far above the 44px floor, so #367's one-row fallback is retired",
+      "js": "(function(){function rect(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function name(e){return (e.id?'#'+e.id:'.'+String(e.className).split(' ')[0])+(e.textContent?' \"'+e.textContent.trim().slice(0,12)+'\"':'');}function usable(e,why){var b=e.getBoundingClientRect();var vr=document.getElementById('view').getBoundingClientRect(); var ab=document.querySelector('.appbar').getBoundingClientRect(),tb=document.querySelector('.tabbar').getBoundingClientRect(); var bar=document.querySelector('.bt-player.mini .bt-st-head');var br=bar?bar.getBoundingClientRect():null; var n=name(e)+' '+rect(e); if(b.width<1||b.height<1)throw new Error(why+': '+n+' not rendered'); if(b.left<-0.5||b.right>innerWidth+0.5)throw new Error(why+': '+n+' off-screen horizontally'); function clear(q){return q.width<1||q.height<1||b.right<=q.left+0.5||b.left>=q.right-0.5||b.bottom<=q.top+0.5||b.top>=q.bottom-0.5;}if(b.top<vr.top-0.5||b.bottom>vr.bottom+0.5||b.left<vr.left-0.5||b.right>vr.right+0.5||!clear(ab)||!clear(tb))throw new Error(why+': '+n+' outside the view, or under the header / tab bar / rail - view '+rect(document.getElementById('view'))); if(br&&!(b.bottom<=br.top+0.5||b.top>=br.bottom-0.5||b.right<=br.left+0.5||b.left>=br.right-0.5))throw new Error(why+': '+n+' under the mini-player bar '+rect(bar)); [[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/4],[b.right-b.width/4,b.top+b.height/4],[b.left+b.width/4,b.bottom-b.height/4],[b.right-b.width/4,b.bottom-b.height/4]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!e.contains(h))throw new Error(why+': '+n+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+(h?name(h):'nothing'));}); return true;}function big(e,why){var b=e.getBoundingClientRect();if(b.width<44-0.5||b.height<44-0.5)throw new Error(why+': '+name(e)+' '+rect(e)+' below the 44px tap floor');return true;}var v=document.getElementById('view');v.scrollTo({top:0,behavior:'instant'});if(!document.querySelector('.bt-player.mini .bt-st-head'))throw new Error('banjo 740x320: fixture lost - mini-player bar is not up');var c=document.querySelector('.tCard').getBoundingClientRect(),s=document.getElementById('tStrings').getBoundingClientRect();if(!(c.right<=s.left+0.5||s.right<=c.left+0.5))throw new Error('banjo 740x320: panes not side by side - tuner '+rect(document.querySelector('.tCard'))+' strings '+rect(document.getElementById('tStrings')));if(!(c.top<s.bottom&&s.top<c.bottom))throw new Error('banjo 740x320: panes do not share a band of height');if(v.scrollHeight>v.clientHeight+1)throw new Error('banjo 740x320: the view scrolls - scrollHeight '+v.scrollHeight+' > clientHeight '+v.clientHeight);var tc=document.querySelector('.tCard');if(tc.scrollHeight>tc.clientHeight+1)throw new Error('banjo 740x320: the tuner pane scrolls internally - scrollHeight '+tc.scrollHeight+' > clientHeight '+tc.clientHeight);var ss=[].slice.call(document.querySelectorAll('#tStrings .tStr'));if(ss.length!==5)throw new Error('banjo 740x320: expected 5 string buttons, got '+ss.length);var tops=[];ss.forEach(function(e){var t=Math.round(e.getBoundingClientRect().top);if(tops.indexOf(t)<0)tops.push(t);});if(tops.length!==2)throw new Error('banjo 740x320: expected the strings in 2 row(s), got '+tops.length);var ctl=[document.getElementById('micToggle'),document.getElementById('toneToggle')].concat([].slice.call(document.querySelectorAll('.micModes .chip')));ctl.concat(ss).forEach(function(e){usable(e,'banjo 740x320');big(e,'banjo 740x320');});[document.getElementById('micRunway'),document.getElementById('micNote'),document.getElementById('micCents')].forEach(function(e){usable(e,'banjo 740x320');});return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "banjo-740x320"
+    },
+    {
+      "action": "goto",
+      "path": "/music/play/index.html?p=mandolin-gdae"
+    },
+    {
+      "action": "wait",
+      "ms": 1200
+    },
+    {
+      "action": "waitFor",
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major']",
+      "timeoutMs": 8000
+    },
+    {
+      "action": "tap",
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major'] .li-body"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 6000
+    },
+    {
+      "action": "evalAssert",
+      "label": "mandolin fixture: plain mini bar (video parked, no theater scrim, no PIP dock)",
+      "js": "document.body.classList.contains('miniplayer')&&!document.body.classList.contains('pipdock')&&!document.querySelector('.bt-player.vidopen')"
+    },
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=tune]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#tStrings .tStr"
+    },
+    {
+      "action": "resize",
+      "width": 915,
+      "height": 340
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "evalAssert",
+      "label": "mandolin 915x340: two-pane - tuner and strings side by side, no view or tuner-pane scroll, Start/Tone/mode chips/runway/note and all 4 strings fully visible, clear of the rail / header / tab bar + mini bar, hit-test to themselves (centre + 4 inner-quarter points - pill chips have no corners), controls >=44px, strings laid out in the pane grid (4 -> 2x2, 5 -> 3+2, 6 -> 3x2)",
+      "js": "(function(){function rect(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function name(e){return (e.id?'#'+e.id:'.'+String(e.className).split(' ')[0])+(e.textContent?' \"'+e.textContent.trim().slice(0,12)+'\"':'');}function usable(e,why){var b=e.getBoundingClientRect();var vr=document.getElementById('view').getBoundingClientRect(); var ab=document.querySelector('.appbar').getBoundingClientRect(),tb=document.querySelector('.tabbar').getBoundingClientRect(); var bar=document.querySelector('.bt-player.mini .bt-st-head');var br=bar?bar.getBoundingClientRect():null; var n=name(e)+' '+rect(e); if(b.width<1||b.height<1)throw new Error(why+': '+n+' not rendered'); if(b.left<-0.5||b.right>innerWidth+0.5)throw new Error(why+': '+n+' off-screen horizontally'); function clear(q){return q.width<1||q.height<1||b.right<=q.left+0.5||b.left>=q.right-0.5||b.bottom<=q.top+0.5||b.top>=q.bottom-0.5;}if(b.top<vr.top-0.5||b.bottom>vr.bottom+0.5||b.left<vr.left-0.5||b.right>vr.right+0.5||!clear(ab)||!clear(tb))throw new Error(why+': '+n+' outside the view, or under the header / tab bar / rail - view '+rect(document.getElementById('view'))); if(br&&!(b.bottom<=br.top+0.5||b.top>=br.bottom-0.5||b.right<=br.left+0.5||b.left>=br.right-0.5))throw new Error(why+': '+n+' under the mini-player bar '+rect(bar)); [[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/4],[b.right-b.width/4,b.top+b.height/4],[b.left+b.width/4,b.bottom-b.height/4],[b.right-b.width/4,b.bottom-b.height/4]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!e.contains(h))throw new Error(why+': '+n+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+(h?name(h):'nothing'));}); return true;}function big(e,why){var b=e.getBoundingClientRect();if(b.width<44-0.5||b.height<44-0.5)throw new Error(why+': '+name(e)+' '+rect(e)+' below the 44px tap floor');return true;}var v=document.getElementById('view');v.scrollTo({top:0,behavior:'instant'});if(!document.querySelector('.bt-player.mini .bt-st-head'))throw new Error('mandolin 915x340: fixture lost - mini-player bar is not up');var c=document.querySelector('.tCard').getBoundingClientRect(),s=document.getElementById('tStrings').getBoundingClientRect();if(!(c.right<=s.left+0.5||s.right<=c.left+0.5))throw new Error('mandolin 915x340: panes not side by side - tuner '+rect(document.querySelector('.tCard'))+' strings '+rect(document.getElementById('tStrings')));if(!(c.top<s.bottom&&s.top<c.bottom))throw new Error('mandolin 915x340: panes do not share a band of height');if(v.scrollHeight>v.clientHeight+1)throw new Error('mandolin 915x340: the view scrolls - scrollHeight '+v.scrollHeight+' > clientHeight '+v.clientHeight);var tc=document.querySelector('.tCard');if(tc.scrollHeight>tc.clientHeight+1)throw new Error('mandolin 915x340: the tuner pane scrolls internally - scrollHeight '+tc.scrollHeight+' > clientHeight '+tc.clientHeight);var ss=[].slice.call(document.querySelectorAll('#tStrings .tStr'));if(ss.length!==4)throw new Error('mandolin 915x340: expected 4 string buttons, got '+ss.length);var tops=[];ss.forEach(function(e){var t=Math.round(e.getBoundingClientRect().top);if(tops.indexOf(t)<0)tops.push(t);});if(tops.length!==2)throw new Error('mandolin 915x340: expected the strings in 2 row(s), got '+tops.length);var ctl=[document.getElementById('micToggle'),document.getElementById('toneToggle')].concat([].slice.call(document.querySelectorAll('.micModes .chip')));ctl.concat(ss).forEach(function(e){usable(e,'mandolin 915x340');big(e,'mandolin 915x340');});[document.getElementById('micRunway'),document.getElementById('micNote'),document.getElementById('micCents')].forEach(function(e){usable(e,'mandolin 915x340');});return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "mandolin-915x340"
+    },
+    {
+      "action": "resize",
+      "width": 844,
+      "height": 340
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "evalAssert",
+      "label": "mandolin 844x340: two-pane - tuner and strings side by side, no view or tuner-pane scroll, Start/Tone/mode chips/runway/note and all 4 strings fully visible, clear of the rail / header / tab bar + mini bar, hit-test to themselves (centre + 4 inner-quarter points - pill chips have no corners), controls >=44px, strings laid out in the pane grid (4 -> 2x2, 5 -> 3+2, 6 -> 3x2)",
+      "js": "(function(){function rect(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function name(e){return (e.id?'#'+e.id:'.'+String(e.className).split(' ')[0])+(e.textContent?' \"'+e.textContent.trim().slice(0,12)+'\"':'');}function usable(e,why){var b=e.getBoundingClientRect();var vr=document.getElementById('view').getBoundingClientRect(); var ab=document.querySelector('.appbar').getBoundingClientRect(),tb=document.querySelector('.tabbar').getBoundingClientRect(); var bar=document.querySelector('.bt-player.mini .bt-st-head');var br=bar?bar.getBoundingClientRect():null; var n=name(e)+' '+rect(e); if(b.width<1||b.height<1)throw new Error(why+': '+n+' not rendered'); if(b.left<-0.5||b.right>innerWidth+0.5)throw new Error(why+': '+n+' off-screen horizontally'); function clear(q){return q.width<1||q.height<1||b.right<=q.left+0.5||b.left>=q.right-0.5||b.bottom<=q.top+0.5||b.top>=q.bottom-0.5;}if(b.top<vr.top-0.5||b.bottom>vr.bottom+0.5||b.left<vr.left-0.5||b.right>vr.right+0.5||!clear(ab)||!clear(tb))throw new Error(why+': '+n+' outside the view, or under the header / tab bar / rail - view '+rect(document.getElementById('view'))); if(br&&!(b.bottom<=br.top+0.5||b.top>=br.bottom-0.5||b.right<=br.left+0.5||b.left>=br.right-0.5))throw new Error(why+': '+n+' under the mini-player bar '+rect(bar)); [[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/4],[b.right-b.width/4,b.top+b.height/4],[b.left+b.width/4,b.bottom-b.height/4],[b.right-b.width/4,b.bottom-b.height/4]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!e.contains(h))throw new Error(why+': '+n+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+(h?name(h):'nothing'));}); return true;}function big(e,why){var b=e.getBoundingClientRect();if(b.width<44-0.5||b.height<44-0.5)throw new Error(why+': '+name(e)+' '+rect(e)+' below the 44px tap floor');return true;}var v=document.getElementById('view');v.scrollTo({top:0,behavior:'instant'});if(!document.querySelector('.bt-player.mini .bt-st-head'))throw new Error('mandolin 844x340: fixture lost - mini-player bar is not up');var c=document.querySelector('.tCard').getBoundingClientRect(),s=document.getElementById('tStrings').getBoundingClientRect();if(!(c.right<=s.left+0.5||s.right<=c.left+0.5))throw new Error('mandolin 844x340: panes not side by side - tuner '+rect(document.querySelector('.tCard'))+' strings '+rect(document.getElementById('tStrings')));if(!(c.top<s.bottom&&s.top<c.bottom))throw new Error('mandolin 844x340: panes do not share a band of height');if(v.scrollHeight>v.clientHeight+1)throw new Error('mandolin 844x340: the view scrolls - scrollHeight '+v.scrollHeight+' > clientHeight '+v.clientHeight);var tc=document.querySelector('.tCard');if(tc.scrollHeight>tc.clientHeight+1)throw new Error('mandolin 844x340: the tuner pane scrolls internally - scrollHeight '+tc.scrollHeight+' > clientHeight '+tc.clientHeight);var ss=[].slice.call(document.querySelectorAll('#tStrings .tStr'));if(ss.length!==4)throw new Error('mandolin 844x340: expected 4 string buttons, got '+ss.length);var tops=[];ss.forEach(function(e){var t=Math.round(e.getBoundingClientRect().top);if(tops.indexOf(t)<0)tops.push(t);});if(tops.length!==2)throw new Error('mandolin 844x340: expected the strings in 2 row(s), got '+tops.length);var ctl=[document.getElementById('micToggle'),document.getElementById('toneToggle')].concat([].slice.call(document.querySelectorAll('.micModes .chip')));ctl.concat(ss).forEach(function(e){usable(e,'mandolin 844x340');big(e,'mandolin 844x340');});[document.getElementById('micRunway'),document.getElementById('micNote'),document.getElementById('micCents')].forEach(function(e){usable(e,'mandolin 844x340');});return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "mandolin-844x340"
+    },
+    {
+      "action": "resize",
+      "width": 740,
+      "height": 320
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "evalAssert",
+      "label": "mandolin 740x320: two-pane - tuner and strings side by side, no view or tuner-pane scroll, Start/Tone/mode chips/runway/note and all 4 strings fully visible, clear of the rail / header / tab bar + mini bar, hit-test to themselves (centre + 4 inner-quarter points - pill chips have no corners), controls >=44px, strings laid out in the pane grid (4 -> 2x2, 5 -> 3+2, 6 -> 3x2) - the rail shell leaves every row far above the 44px floor, so #367's one-row fallback is retired",
+      "js": "(function(){function rect(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function name(e){return (e.id?'#'+e.id:'.'+String(e.className).split(' ')[0])+(e.textContent?' \"'+e.textContent.trim().slice(0,12)+'\"':'');}function usable(e,why){var b=e.getBoundingClientRect();var vr=document.getElementById('view').getBoundingClientRect(); var ab=document.querySelector('.appbar').getBoundingClientRect(),tb=document.querySelector('.tabbar').getBoundingClientRect(); var bar=document.querySelector('.bt-player.mini .bt-st-head');var br=bar?bar.getBoundingClientRect():null; var n=name(e)+' '+rect(e); if(b.width<1||b.height<1)throw new Error(why+': '+n+' not rendered'); if(b.left<-0.5||b.right>innerWidth+0.5)throw new Error(why+': '+n+' off-screen horizontally'); function clear(q){return q.width<1||q.height<1||b.right<=q.left+0.5||b.left>=q.right-0.5||b.bottom<=q.top+0.5||b.top>=q.bottom-0.5;}if(b.top<vr.top-0.5||b.bottom>vr.bottom+0.5||b.left<vr.left-0.5||b.right>vr.right+0.5||!clear(ab)||!clear(tb))throw new Error(why+': '+n+' outside the view, or under the header / tab bar / rail - view '+rect(document.getElementById('view'))); if(br&&!(b.bottom<=br.top+0.5||b.top>=br.bottom-0.5||b.right<=br.left+0.5||b.left>=br.right-0.5))throw new Error(why+': '+n+' under the mini-player bar '+rect(bar)); [[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/4],[b.right-b.width/4,b.top+b.height/4],[b.left+b.width/4,b.bottom-b.height/4],[b.right-b.width/4,b.bottom-b.height/4]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!e.contains(h))throw new Error(why+': '+n+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+(h?name(h):'nothing'));}); return true;}function big(e,why){var b=e.getBoundingClientRect();if(b.width<44-0.5||b.height<44-0.5)throw new Error(why+': '+name(e)+' '+rect(e)+' below the 44px tap floor');return true;}var v=document.getElementById('view');v.scrollTo({top:0,behavior:'instant'});if(!document.querySelector('.bt-player.mini .bt-st-head'))throw new Error('mandolin 740x320: fixture lost - mini-player bar is not up');var c=document.querySelector('.tCard').getBoundingClientRect(),s=document.getElementById('tStrings').getBoundingClientRect();if(!(c.right<=s.left+0.5||s.right<=c.left+0.5))throw new Error('mandolin 740x320: panes not side by side - tuner '+rect(document.querySelector('.tCard'))+' strings '+rect(document.getElementById('tStrings')));if(!(c.top<s.bottom&&s.top<c.bottom))throw new Error('mandolin 740x320: panes do not share a band of height');if(v.scrollHeight>v.clientHeight+1)throw new Error('mandolin 740x320: the view scrolls - scrollHeight '+v.scrollHeight+' > clientHeight '+v.clientHeight);var tc=document.querySelector('.tCard');if(tc.scrollHeight>tc.clientHeight+1)throw new Error('mandolin 740x320: the tuner pane scrolls internally - scrollHeight '+tc.scrollHeight+' > clientHeight '+tc.clientHeight);var ss=[].slice.call(document.querySelectorAll('#tStrings .tStr'));if(ss.length!==4)throw new Error('mandolin 740x320: expected 4 string buttons, got '+ss.length);var tops=[];ss.forEach(function(e){var t=Math.round(e.getBoundingClientRect().top);if(tops.indexOf(t)<0)tops.push(t);});if(tops.length!==2)throw new Error('mandolin 740x320: expected the strings in 2 row(s), got '+tops.length);var ctl=[document.getElementById('micToggle'),document.getElementById('toneToggle')].concat([].slice.call(document.querySelectorAll('.micModes .chip')));ctl.concat(ss).forEach(function(e){usable(e,'mandolin 740x320');big(e,'mandolin 740x320');});[document.getElementById('micRunway'),document.getElementById('micNote'),document.getElementById('micCents')].forEach(function(e){usable(e,'mandolin 740x320');});return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "mandolin-740x320"
+    }
+  ]
+}
