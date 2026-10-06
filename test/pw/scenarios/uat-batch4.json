@@ -42,6 +42,8 @@
       "js": "(function(){var p=document.querySelector('.bt-player');if(!p.classList.contains('npPaused'))return false;var eq=p.querySelector('.bt-st-bareq');var i=eq&&eq.querySelector('i');return !!i&&eq.offsetParent!==null&&getComputedStyle(i).animationName==='none';})()"
     },
     { "action": "tap", "selector": ".bt-player.mini [data-nppp]" },
+    { "action": "tap", "selector": "[data-vidscrim]" },
+    { "action": "wait", "ms": 450 },
     { "action": "tap", "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major'] .li-lead" },
     { "action": "waitFor", "selector": ".bt-player.studio:not(.mini) .bt-st-body", "timeoutMs": 6000 },
     {
