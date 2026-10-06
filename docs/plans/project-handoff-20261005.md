@@ -30,13 +30,13 @@ Read 2026-10-05 via GitHub REST and `get_session`/`list_events`. `main` head: `2
 |---|---|---|
 | #360 verify runtime V2 for Music | MERGED 2026-10-05T13:01Z | done (orchestrator still lists it as owed, stale) |
 | #363 check-cache-bump judges uncommitted changes | MERGED (on main as `17f1105`) | done |
-| #358 Thought-Ware method v0.1 (base of #346/#347) | open, ready, head `cb9fe81` | Nik merges, then retarget #346 to main |
-| #351 Musician Profile + VNext model | open, draft, head `6755e2e`, mergeable clean | Nik phone-tests the `6755e2e` commit preview (Settings > Musician profile), replies PASS, then merges |
-| #346 calibrate Thought-Ware public claims | open, draft, head `6bbe963`, stacked on #358 | #358 merge, then retarget and mark ready |
-| #347 engineering-wiki lifecycle integrity | open, draft, head `e848419`, stacked | after #346 |
+| #358 Thought-Ware method v0.1 (was the base of #346) | MERGED 2026-10-06T01:00Z (`da9f1c3`) | done |
+| #351 Musician Profile + VNext model | MERGED 2026-10-06T01:00Z (`10fc269`) | done |
+| #346 calibrate Thought-Ware public claims | open, READY, base `main`, head `37ac5b3`, CI green, mergeable clean (live read 2026-10-06T17:15Z) | Nik merges |
+| #347 engineering-wiki lifecycle integrity | open, draft, base `propose/public-claims-calibration` (#346's head branch) | after #346 merges: retarget to main, merge main in, run checks, mark ready |
 | #356 SBS merge plan for the open PRs | open, draft, head `8323e6e` | goes last, after the stack lands |
 | #362 allow merge-resolution commands in sprint sessions | open, draft, head `e78b942`, mergeable clean | Nik reviews (touches `.claude/` permissions) |
-| Landscape Tune bug: mini-player bar covers the bottom tuner strings | on main, no PR yet | new draft PR with a red-then-green test (orchestrator's offered next step) |
+| Landscape Tune bug: mini-player bar covers the bottom tuner strings | FIXED: #366, then #367 (two-pane Tune) and #369 (side rail), with #368 (video window), all MERGED 2026-10-06 | done |
 
 CI state per head: not checked here beyond the orchestrator's 2026-10-04T23:45Z report of green on #351, #356, #358.
 
@@ -58,10 +58,15 @@ Other sessions: not checked.
 - **SME coach bench:** consult the domain coach in `.claude/skills/` (music-theory, ux, audio-dsp, pedagogy, copy, a11y, mobile-dev, songwriting, usdd) before a judgment call. No coach for the domain: scaffold one first.
 - **Session start:** run `python3 scripts/command-center-gen.py`, read the payload and the newest session record, render the sensing report. Commit a material payload diff through the docs-only PR flow.
 
+## Sprint status (updated 2026-10-06)
+
+The orchestrator session above is retired (Cockpit, 2026-10-06). This Project now owns its 10-PR sprint.
+
+- Done (7): #350 closed as superseded; #355, #348, #357, #360, #351 and #358 merged.
+- Left (3): #346 (Nik merges), then #347 (retarget to main, refresh, ready), then #356 (the SBS merge plan, last).
+
 ## Owed to Nik
 
-1. Merge #358 (ready), then say "next" so #346 gets retargeted to main and readied.
-2. Phone-test the #351 commit preview at `6755e2e` (Settings > Musician profile), reply PASS or FAIL, then merge.
-3. Review and decide #362 (sprint-session permission change).
-4. Pick up or decline the landscape Tune bug PR.
-5. Decide when to retire or retitle the two sessions above. This doc does not do it.
+1. Merge #346 (ready, green, base `main`). Then #347 gets retargeted and readied.
+2. Review and decide #362 (sprint-session permission change).
+3. Decide #356 once #347 lands: merge it as the record of the run, or close it.
