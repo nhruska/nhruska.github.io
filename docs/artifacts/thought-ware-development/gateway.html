@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>User-Centric Development - Nik Hruska</title>
-<meta name="description" content="User-Centric Development (working name: Thought-Ware Development) - a deterministic goalpost loop for agentic engineering: TDD, SDD, and a business-logic wiki as the source of truth both humans and agents read.">
+<meta name="description" content="Thought-Ware Development pilot - an evidence-governed friction-to-goalpost loop for agent-assisted engineering, with a proposed v0.1 specification and controlled evaluation protocol.">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCI+PGNpcmNsZSBjeD0iMjQiIGN5PSIyNCIgcj0iMjIiIGZpbGw9IiMxYjNhM2EiLz48dGV4dCB4PSIyNCIgeT0iMzMiIGZvbnQtZmFtaWx5PSJnZW9yZ2lhLHNlcmlmIiBmb250LXNpemU9IjI2IiBmaWxsPSIjZTZiOTcwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5OPC90ZXh0Pjwvc3ZnPg==">
 <style>
 :root{
@@ -107,14 +107,15 @@ a{color:var(--accent-ink);}
 
 <section class="slide hero">
   <div class="inner">
-    <span class="pill">Candidate for global promotion - pilot in progress</span>
+    <span class="pill">Operational single-product method - controlled evaluation proposed</span>
     <h1 class="title">User-Centric Development</h1>
-    <p class="sub">A method for steering agentic AI development with a wiki that
-    makes business rules deterministic - so an app built mostly by agents stays
-    verifiable, not just plausible.</p>
+    <p class="sub">A method for steering agent-assisted development by converting
+    observed friction into versioned goalposts and fail-closed evidence - so a change
+    stays inspectable instead of merely plausible.</p>
     <div class="cta-row">
       <a class="cta solid" href="#loop">Start here &darr;</a>
       <a class="cta" href="method.html">Read the full method</a>
+      <a class="cta" href="specification-v0.1.md">Review the proposed v0.1 spec</a>
     </div>
   </div>
 </section>
@@ -122,16 +123,16 @@ a{color:var(--accent-ink);}
 <section class="slide">
   <div class="inner">
     <div class="eyebrow">Who does which job</div>
-    <h2 class="claim">HiTL is not technical, and not a subject-matter expert.</h2>
+    <h2 class="claim">The human can report friction in their own language. Authority
+    still stays human and explicit.</h2>
     <p class="big">A problem gets reported as a spoken phrase or fragment - speech-to-text,
     not an implementation direction. "the studio thing is confusing when I'm playing" is
     a valid, sufficient report. Nobody on the human side is expected to say which
     component, which state, or which fix.</p>
-    <p class="big">The agents are the CTO and the subject-matter experts. A coach suite -
-    UX, accessibility, music theory - turns that fragment into a wiki entry written to
-    whatever level of detail the TDD/SDD/UAT loops actually need to run. The wiki is the
-    human-computer-interaction layer's spec, written by the SMEs, for a HiTL who never
-    has to speak their language.</p>
+    <p class="big">Agents can perform delegated engineering and domain-analysis work. A
+    coach suite - UX, accessibility, music theory - turns the fragment into a proposed
+    rule, goalpost, and scenario. Named product and domain authorities approve what
+    counts as correct; the agent's role or confidence is never authority by itself.</p>
     <svg class="diagram" viewBox="0 0 640 240" role="img" aria-labelledby="wikiDiagTitle" xmlns="http://www.w3.org/2000/svg">
       <title id="wikiDiagTitle">Human reports a spoken fragment to the agents; the agents author and check against the wiki; the wiki defines what "correct" means back to the human.</title>
       <defs>
@@ -156,7 +157,7 @@ a{color:var(--accent-ink);}
       <text x="110" y="211" text-anchor="middle" font-size="11" fill="var(--txt-dim)">reports a fragment</text>
       <rect x="432" y="170" width="188" height="56" rx="10" fill="var(--surface)" stroke="var(--line-strong)" stroke-width="1.5"/>
       <text x="526" y="193" text-anchor="middle" font-size="13" font-weight="700" fill="var(--txt)">AGENTS</text>
-      <text x="526" y="211" text-anchor="middle" font-size="11" fill="var(--txt-dim)">CTO + SMEs</text>
+      <text x="526" y="211" text-anchor="middle" font-size="11" fill="var(--txt-dim)">delegated analysis + build</text>
     </svg>
   </div>
 </section>
@@ -165,11 +166,12 @@ a{color:var(--accent-ink);}
   <div class="inner">
     <div class="eyebrow">The claim</div>
     <h2 class="claim">Hallucination is upstream of the gate, never inside it.</h2>
-    <p class="big">The model is free to generate - guess at features, hallucinate task
-    ideas, propose whatever it wants. Nothing it generates ships until it survives a
-    deterministic loop that doesn't care what the model believes.</p>
+    <p class="big">The model is free to generate - guess at features, propose task
+    ideas, and produce multiple candidates. Nothing it generates should ship until it
+    survives a versioned, fail-closed gate that does not treat model confidence as
+    evidence.</p>
     <svg class="diagram" viewBox="0 0 700 190" role="img" aria-labelledby="loopDiagTitle" xmlns="http://www.w3.org/2000/svg">
-      <title id="loopDiagTitle">Friction profile leads to a goalpost scenario, which must fail red, then is built to green, then kept as a regression forever - and the next friction profile restarts the cycle.</title>
+      <title id="loopDiagTitle">Friction leads to an authorized goalpost, which must fail red, then is built to green and retained until explicit supersession or retirement.</title>
       <defs>
         <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" fill="var(--txt-dim)"/>
@@ -188,7 +190,7 @@ a{color:var(--accent-ink);}
       <rect x="400" y="20" width="118" height="44" rx="9" fill="var(--surface-2)" stroke="var(--accent-ink)"/>
       <text x="459" y="46" text-anchor="middle" font-size="11" fill="var(--accent-ink)">GREEN - build</text>
       <rect x="530" y="20" width="118" height="44" rx="9" fill="var(--surface)" stroke="var(--line-strong)"/>
-      <text x="589" y="46" text-anchor="middle" font-size="11" fill="var(--txt)">Regression, forever</text>
+      <text x="589" y="46" text-anchor="middle" font-size="11" fill="var(--txt)">Active regression</text>
       <path d="M589,66 C589,158 69,158 69,66" fill="none" stroke="var(--txt-dim)" stroke-width="2" stroke-dasharray="3 4" marker-end="url(#arrow2)"/>
       <text x="329" y="178" text-anchor="middle" font-size="11" fill="var(--txt-dim)">next friction profile restarts the cycle</text>
     </svg>
@@ -198,8 +200,8 @@ a{color:var(--accent-ink);}
 <section class="slide">
   <div class="inner">
     <div class="eyebrow">The human half of the loop</div>
-    <h2 class="claim">Deterministic doesn't mean unattended. It means the human's
-    judgment is verifiable too.</h2>
+    <h2 class="claim">Reproducible gates do not mean unattended work. Human judgment
+    remains an identified evidence class.</h2>
     <p class="big">A PR opens a real, branch-tagged preview - a githack link at that
     exact commit, live before anything merges - and the operator gets it on their
     phone. From there it's a guided tour, not a report: server logs tail in the
@@ -242,10 +244,10 @@ a{color:var(--accent-ink);}
     <div class="eyebrow">Composing the right amount</div>
     <h2 class="claim">Too little generation and nothing new gets tried. Too much and
     nothing converges.</h2>
-    <p class="big">Agentic engineering is composing the right amount of probabilistic
-    hallucination - of app, of personas, of scenarios - against a Playwright scenario
-    harness that scores each attempt. The generation stays loose; the scoring stays
-    exact. Iteration is what happens in between.</p>
+    <p class="big">Agentic engineering composes probabilistic candidate generation
+    against declared acceptance procedures. Some graders are exact; others require
+    repeated trials, calibrated models, or authorized human judgment. Iteration happens
+    between generation and a bounded decision.</p>
     <p>Every candidate feature is a guess about what a persona needs next. Most guesses
     are wrong in some detail. That's fine - a wrong guess against a real scenario fails
     for a specific, readable reason, and the next guess is better informed than the
@@ -300,20 +302,18 @@ a{color:var(--accent-ink);}
 <section class="slide">
   <div class="inner">
     <div class="eyebrow">Why any of this can be checked at all</div>
-    <h2 class="claim">A business-logic wiki, kept as the single source of truth, is
-    what makes the whole app verifiable.</h2>
-    <p class="big">A scenario can only fail "for a real reason" if there's a written,
-    deterministic statement of what correct means - a wiki the agents read before they
-    write code, not tribal knowledge in one person's head. Without it, "looks right"
-    is the only bar anyone can check against, and that bar moves depending on who's
-    looking. With it, a persona's assertion traces back to a rule someone actually
-    wrote down, and disagreements are a diff, not an argument.</p>
+    <h2 class="claim">A governed rule registry makes acceptance traceable - if its
+    authority, lifecycle, and drift are controlled.</h2>
+    <p class="big">A scenario needs a written statement of what acceptable means - a
+    registry agents and humans read before code changes. The registry is not infallible:
+    its claims must identify authority, version, status, conflicts, and verification
+    against primary sources, code, tests, and current decisions.</p>
     <p class="big"><strong>The wiki is the shared abstraction, not a document for one
     side of the loop.</strong> The human reads it to know what "correct" was supposed
     to mean; the agent reads the same page to know what to build and what to check.
-    Same source, both readers - which is exactly what makes the loop deterministic:
-    neither side is verifying the other against a private understanding, both are
-    verifying against the one thing that's actually written down.</p>
+    Same source, both readers - which makes disagreement inspectable. It does not make
+    every requirement objective; subjective outcomes still require a declared human or
+    calibrated model grader.</p>
     <p style="font-size:.85rem; color:var(--txt-dim);">The wiki-as-institutional-memory
     idea traces to <a href="https://gist.github.com/karpathy" target="_blank" rel="noopener">Andrej Karpathy's llm-wiki gist</a> - not reinvented here, just applied
     to business rules instead of general knowledge.</p>
@@ -323,16 +323,14 @@ a{color:var(--accent-ink);}
 <section class="slide">
   <div class="inner">
     <div class="eyebrow">When there's no goalpost left</div>
-    <h2 class="claim">A different vendor's model gets to refuse every claim that
-    isn't proven.</h2>
+    <h2 class="claim">Cross-vendor review challenges claims. It does not prove them.</h2>
     <p class="big">Once every goalpost passes, the loop's shape changes: PR, then CI,
-    then an adversarial volley between two different vendors' models, not one model
-    checking its own work. The highest-thinking Claude tier writes; a skeptical Codex
-    pass reviews - and denies any claim that isn't backed by deterministic, TDD-proven
-    evidence. "It should work" and "it looks right" are not evidence. A passing
-    scenario is.</p>
+    then an adversarial volley between two different vendors' models. That diversity is
+    useful for finding correlated assumptions, but vendor difference is not scientific
+    independence. The release decision still requires valid scenario evidence and an
+    accountable human or technically enforced policy.</p>
     <svg class="diagram" viewBox="0 0 700 260" role="img" aria-labelledby="volleyDiagTitle" xmlns="http://www.w3.org/2000/svg">
-      <title id="volleyDiagTitle">Once every goalpost passes: PR opens, CI goes green, Claude and Codex volley until Codex stops refusing, a separate bot identity formally approves, the PR merges, and the next cycle begins.</title>
+      <title id="volleyDiagTitle">Once required goalposts pass: a pull request opens, continuous integration runs, an adversarial model review challenges the evidence, an accountable approval is recorded, and release may proceed.</title>
       <defs>
         <marker id="arrow3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" fill="var(--txt-dim)"/>
@@ -359,17 +357,16 @@ a{color:var(--accent-ink);}
       <text x="329" y="110" text-anchor="middle" font-size="10" font-weight="700" fill="var(--bad)">CODEX</text>
       <text x="329" y="124" text-anchor="middle" font-size="9" fill="var(--txt-dim)">refuses unproven</text>
       <rect x="400" y="62" width="118" height="44" rx="9" fill="var(--surface)" stroke="var(--line-strong)"/>
-      <text x="459" y="88" text-anchor="middle" font-size="11" fill="var(--txt)">Bot approves</text>
+      <text x="459" y="88" text-anchor="middle" font-size="11" fill="var(--txt)">Approval</text>
       <rect x="530" y="62" width="118" height="44" rx="9" fill="var(--accent-deep)" stroke="var(--accent-ink)"/>
       <text x="589" y="88" text-anchor="middle" font-size="11" fill="var(--accent-ink)">Merge</text>
       <path d="M589,120 C589,210 69,210 69,120" fill="none" stroke="var(--txt-dim)" stroke-width="2" stroke-dasharray="3 4" marker-end="url(#arrow3)"/>
       <text x="329" y="230" text-anchor="middle" font-size="11" fill="var(--txt-dim)">next cycle, back into the loop</text>
     </svg>
-    <p>Only after that survives does a GitHub App bot identity file the formal
-    approve - a separate identity from the one that authored the PR, because a model
-    cannot credibly approve its own work under its own name. Merge, then back into the
-    TDD/UAT loop for the next cycle. The volley is a gate on the way out, not a
-    courtesy step.</p>
+    <p>In the pilot, cross-vendor review is an adversarial practice. A review becomes a
+    release gate only when repository controls or an accountable approver actually
+    enforce it. Advisory review, required review, and technically enforced approval are
+    reported separately.</p>
   </div>
 </section>
 
@@ -391,7 +388,7 @@ a{color:var(--accent-ink);}
 <section class="slide">
   <div class="inner">
     <div class="eyebrow">Go deeper</div>
-    <h2 class="claim">This is the pitch. The method has the receipts.</h2>
+    <h2 class="claim">This is the operational pilot. The controlled test comes next.</h2>
     <p class="big">This is one pilot on one real app, not yet a portable methodology -
     the skill that runs this loop says so itself. What follows is the full account:
     the loop in detail, the actual persona roster, and the status, honestly stated.</p>
@@ -402,6 +399,10 @@ a{color:var(--accent-ink);}
     <div class="cta-row">
       <a class="cta solid" href="method.html">The full method &rarr;</a>
       <a class="cta" href="sdd.html">SDD in depth</a>
+      <a class="cta" href="experiment-1-controlled-evaluation-protocol.md">Controlled evaluation</a>
+      <a class="cta" href="experiment-1-calibration-runbook.md">Calibration runbook</a>
+      <a class="cta" href="normative-review-20260907.md">Normative review</a>
+      <a class="cta" href="red-team-review-20260906.md">Adversarial review</a>
       <a class="cta" href="../case-study-music-app.html">Origin case study (audited)</a>
       <a class="cta" href="https://nhruska.github.io/music/play/">Live app</a>
     </div>
