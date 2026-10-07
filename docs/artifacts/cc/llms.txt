@@ -1,22 +1,18 @@
 # Repo Command Center - nhruska/nhruska.github.io - Problem Solutions (agent-readable brief)
-Generated: 2026-10-06T16:01:50Z
+Generated: 2026-10-07T16:39:11Z
 Status: ok
 
 ## NOW
-- Queue NOW: **PR [#355](https://github.com/nhruska/nhruska.github.io/pull/355) OPEN (math-v355, music-v355-2)**, issue [#354](https://github.com/nhruska/nhruska.github.io/issues/354): + - x / and mixed, tables x2-x12 to 10/11/12, Race (default) / Sprint 60s / Practice, +3s retry-same-fact, players, Coach (Leitner), progress map + trend; landing lists 2 apps. Deferred: Write-it handwriting, Math data in Music Backup/Restore.
+- Queue NOW: **PR [#355](https://github.com/nhruska/nhruska.github.io/pull/355) MERGED 2026-09-27 (math-v355, music-v355-2), live at [nhruska.github.io/math/](https://nhruska.github.io/math/)**, issue [#354](https://github.com/nhruska/nhruska.github.io/issues/354): + - x / and mixed, tables x2-x12 to 10/11/12, Race (default) / Sprint 60s / Practice, +3s retry-same-fact, players, Coach (Leitner), progress map + trend; landing lists 2 apps. Deferred: Write-it handwriting, Math data in Music Backup/Restore.
 - Queue NOW: **PR-A [#322](https://github.com/nhruska/nhruska.github.io/pull/322) MERGED (v322); PR-B [#323](https://github.com/nhruska/nhruska.github.io/pull/323) MERGED (v323-8) 2026-08-09** after 7 phone-UAT batches - the app now behaves as a real music player (SSOT bar, sheet+live tabs, Jams filter, queue + prev/next/shuffle, honest state sync, Media Session). **PR-C [#324](https://github.com/nhruska/nhruska.github.io/pull/324) MERGED (v324) 2026-08-09**: item 17 + 14 artists enriched. **PR [#328](https://github.com/nhruska/nhruska.github.io/pull/328) OPEN (v328-5)**: shuffle-in-bar + solid SVG transport, jams-first landing + tour-ends-in-a-jam + no-scroll tour + cigar box retired + welcome-jam ad strategy (reggae original). Veto #8 C-vs-Am stands open.
 - Queue NOW: **Import MERGED 2026-08-09 (PR [#326](https://github.com/nhruska/nhruska.github.io/pull/326), v326-2)** after live-device UAT: keyless enumeration + key ladder + landing-on-results + repeat-URL dedupe all proven. **Variety fill MERGED 2026-08-09 (PR [#327](https://github.com/nhruska/nhruska.github.io/pull/327), v327-3; catalog 55->108 incl. the 46-item operator playlist + 15 searched Phish keys)**: 12 curated search-first gap fillers (Bm/G#m/B/Eb/Ab + A/G/D/Bb blues + tempo tails; ladder-dogfooded 12/12; candidates gate gains the explicit 'search-first' lifecycle carve-out). Residual gaps (C#/F# major, D#m/A#m, outer blues keys) deliberately left for the OPERATOR'S curated gap playlist - the pipeline bakes it + enriches ids onto the stubs via trackKey remaps when ready. Also 2026-08-09: community PR [#274](https://github.com/nhruska/nhruska.github.io/pull/274) (emre155, first outside contribution) merged via vehicle #325 (v274).
 - Queue NOW: **STORED 2026-07-10 (v136)**: full SDD loop closed - spark -> skeleton -> v0.1 -> operator reframe burst -> v0.2 -> "store it" -> songs.json (first operator-authored catalog song, library-scenario-proven). Taste verdicts encoded into songwriting-coach; next round = play-and-burst on feel
 - Queue NOW: **SHIPPED 2026-07-10 (PR #199, v133)**: every keyed surface spells letter-per-degree from `preferredTonicName` (bVII of C = Bb; A#-maj renders Bb-maj); token-vs-display split keeps packs/audio/storage canonical; 12 professor traps enforced as tests; PW pixel gates re-proven. Wave-2 residue queued below (S-KEYPICKER-FLATNAMES).
 - Queue NOW: CLOSED 2026-07-10
-- Open PR #371 (CI green): fix(theory): F major's B tile reads B, not Cb (music-v371) - https://github.com/nhruska/nhruska.github.io/pull/371
-- Open draft PR #370 (CI green): test(pw): bring 4 stale scenarios up to the shipped app - https://github.com/nhruska/nhruska.github.io/pull/370
-- Open draft PR #365 (CI green): cc: REST fallback so the session-start sweep sees open PRs; stop run-all dropping test summaries; mark #355 merged - https://github.com/nhruska/nhruska.github.io/pull/365
-- Open PR #364 (CI green): docs(plans): nh-pages Project handoff 2026-10-05 - https://github.com/nhruska/nhruska.github.io/pull/364
+- Queue NOW: **7 of 10 done** (2026-10-06): #350 closed; #355, #348, #357, #360, #351, #358 merged. **[#346](https://github.com/nhruska/nhruska.github.io/pull/346) READY on main** (no longer stacked behind #358) - Nik merges; then [#347](https://github.com/nhruska/nhruska.github.io/pull/347) retargets to main; [#356](https://github.com/nhruska/nhruska.github.io/pull/356) SBS plan last. Owned by the nh-pages Project since the sprint orchestrator retired.
 - Open draft PR #362 (CI green): chore(claude): allow merge-resolution commands on PR branches in sprint sessions - https://github.com/nhruska/nhruska.github.io/pull/362
 - Open draft PR #356 (CI green): docs(plans): SBS merge plan for the 6 open PRs - https://github.com/nhruska/nhruska.github.io/pull/356
-- Open draft PR #347 (CI green): docs: enforce engineering-wiki lifecycle integrity - https://github.com/nhruska/nhruska.github.io/pull/347
-- Open PR #346 (CI green): docs: calibrate Thought-Ware public claims - https://github.com/nhruska/nhruska.github.io/pull/346
+- Open PR #347 (CI green): docs: enforce engineering-wiki lifecycle integrity - https://github.com/nhruska/nhruska.github.io/pull/347
 
 ## Open gaps / to-wire
 - Vision CAPTURED: Vision Capture: Command Center Hierarchy (operator, 2026-07-05) - https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-command-center-20260705.md
@@ -24,14 +20,14 @@ Status: ok
 - Vision CAPTURED: Vision Capture: Deterministic Adaptive Tutor (operator, 2026-07-05) - https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-tutor-deterministic-20260705.md
 
 ## Recent work products
+- #371 - fix(theory): F major's B tile reads B, not Cb (music-v371) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/371
+- #370 - test(pw): bring 4 stale scenarios up to the shipped app (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/370
 - #369 - feat(shell): landscape phones get a side rail and one-row player (music-v369) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/369
 - #368 - fix(player): video window never covers the mini-player controls or tab bar (music-v368) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/368
 - #367 - feat(tune): two-pane landscape Tune for every instrument, one screen, no scroll (music-v367) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/367
 - #366 - fix(tune): landscape mini-player no longer buries the bottom string row (music-v366) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/366
-- #363 - fix(check-cache-bump): judge uncommitted changes, not just HEAD (2026-10-05) - https://github.com/nhruska/nhruska.github.io/pull/363
-- #361 - fix(check-cache-bump): skip pre-Math commits in the Math per-commit walk (2026-10-03) - https://github.com/nhruska/nhruska.github.io/pull/361
-- #360 - verify: adopt the verification runtime at V2 for the Music app (2026-10-05) - https://github.com/nhruska/nhruska.github.io/pull/360
-- #358 - docs: propose Thought-Ware method v0.1 (base of the #346/#347 stack) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/358
+- #365 - cc: REST fallback so the session-start sweep sees open PRs; stop run-all dropping test summaries; reconcile QUEUE and the handoff doc (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/365
+- #364 - docs(plans): nh-pages Project handoff 2026-10-05 (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/364
 
 ## Links
 - Repo Command Center: https://nhruska.github.io/docs/artifacts/cc/repo.html
@@ -44,6 +40,6 @@ Status: ok
 ## Conventions
 - Payload: docs/artifacts/cc/payload-repo.json
 - Regen: python3 scripts/command-center-gen.py (rewrites the payload AND this file together)
-- Suite: node test/run-all.js (4339 cases / 81 suites)
+- Suite: node test/run-all.js (4345 cases / 81 suites)
 - CACHE discipline: music/shared|play changes require a music/sw.js CACHE bump - scripts/check-cache-bump.sh
 - Public repo: payload + this brief carry public data only (no session-file content)
