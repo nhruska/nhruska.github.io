@@ -208,8 +208,15 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 .search::placeholder{color:var(--txt-dim);}
 .search:focus{outline:none;border-color:var(--accent-ink);}
 /* clear (x) button - shown only when the search field has text (toggled in JS via [hidden]) */
-.searchClear{position:absolute;top:50%;right:8px;transform:translateY(-50%);width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:none;border-radius:50%;background:transparent;color:var(--txt-dim);font-size:.85rem;line-height:1;cursor:pointer;padding:0;}
-.searchClear:hover{color:var(--txt);background:var(--surface-2);}
+/* 44x44 tap box (a11y floor) over a 26px visual: the ::before circle is the hover
+   fill (the house invisible-halo pattern, like .cueDismiss); the glyph stays small.
+   transform makes this button its own stacking context, so the z-index:-1 circle
+   paints behind the glyph but above the field. right:0 keeps the glyph centre where
+   the old 26px box at right:8px had it (21px from the edge). */
+.searchClear{position:absolute;top:50%;right:0;transform:translateY(-50%);width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:none;border-radius:50%;background:transparent;color:var(--txt-dim);font-size:.85rem;line-height:1;cursor:pointer;padding:0;}
+.searchClear::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:26px;height:26px;z-index:-1;border-radius:50%;background:transparent;}
+.searchClear:hover{color:var(--txt);}
+.searchClear:hover::before{background:var(--surface-2);}
 .searchClear[hidden]{display:none;}
 .chips{display:flex;gap:6px;overflow-x:auto;margin-bottom:14px;padding-bottom:3px;scrollbar-width:none;touch-action:pan-x;}
 .chips[hidden]{display:none;}
@@ -351,10 +358,9 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 /* li-up/li-dn: the setlist reorder a11y fallback (S-SETLIST-GESTURES, below -
  * .li-a11yctrl keeps them out of the sighted-pointer view since press-and-hold
  * covers that case). .li-ctrl (the old edit-mode stacked-column wrapper) is
- * unused now - these render as flat siblings. NOTE: 40x32, below the 44px
- * floor - a pre-existing gap this mission did not introduce or grow (tracked
- * separately; the buttons are keyboard-reachable, not a new tap surface). */
-.listItem .li-up,.listItem .li-dn{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);width:40px;height:32px;border-radius:7px;cursor:pointer;font-size:.8rem;line-height:1;font-family:'Space Mono';font-weight:700;transition:background .15s,transform .08s,color .15s;}
+ * unused now - these render as flat siblings. 44x44 (U1 touch-floor sweep): the
+ * revealed-on-focus box meets the floor like every other thumb target. */
+.listItem .li-up,.listItem .li-dn{flex:0 0 auto;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);width:44px;height:44px;min-width:44px;min-height:44px;border-radius:var(--r-btn-sm);cursor:pointer;font-size:.8rem;line-height:1;font-family:'Space Mono';font-weight:700;transition:background .15s,transform .08s,color .15s;}
 .listItem .li-up:active,.listItem .li-dn:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);}
 .listItem .li-up:disabled,.listItem .li-dn:disabled{opacity:.3;cursor:default;}
 /* >=44x44 via padding (NOT a bigger glyph - the "x" stays font-size:1.2rem).
@@ -387,11 +393,11 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 .listItem .li-a11yctrl{position:absolute;width:1px;height:1px;min-width:0;min-height:0;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 /* On focus: restore each control's OWN real size (not a shared guess). CSS
  * `revert` looks like the right tool here but is NOT - it skips every other
- * AUTHOR rule (li-up/li-dn's 40x32, li-rm's 44px floor) straight to the
+ * AUTHOR rule (li-up/li-dn's 44x44, li-rm's 44px floor) straight to the
  * user-agent default, landing on the button's bare shrink-to-fit content
  * width (~13px, caught by the setlist-gestures pw scenario) instead of
  * either control's real size. Naming each size explicitly is the fix. */
-.listItem .li-up.li-a11yctrl:focus,.listItem .li-dn.li-a11yctrl:focus{position:static;width:40px;height:32px;min-width:0;min-height:0;margin:0;overflow:visible;clip:auto;white-space:normal;}
+.listItem .li-up.li-a11yctrl:focus,.listItem .li-dn.li-a11yctrl:focus{position:static;width:44px;height:44px;min-width:0;min-height:0;margin:0;overflow:visible;clip:auto;white-space:normal;}
 .listItem .li-rm.li-a11yctrl:focus{position:static;width:auto;height:auto;min-width:44px;min-height:44px;margin:0;overflow:visible;clip:auto;white-space:normal;}
 /* S-SETLIST-GESTURES swipe shell (operator UAT 2026-09-03, "like outlook and
  * Gmail mobile"): .li-inner carries the row's real look (background/border/
@@ -1658,7 +1664,7 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 /* keep the "All chords" category chips on the same 44px touch floor as the key controls */
 .maxOv{position:fixed;inset:0;z-index:70;background:var(--bg);display:none;flex-direction:column;padding:calc(max(env(safe-area-inset-top,0px), 30px) + 12px) calc(env(safe-area-inset-right,0px) + 14px) calc(env(safe-area-inset-bottom,0px) + 14px) calc(env(safe-area-inset-left,0px) + 14px);}
 .maxOv.on{display:flex;animation:fadeUp .24s ease;}
-.maxClose{align-self:flex-end;border:1px solid var(--line-strong);background:var(--surface-2);width:40px;height:40px;border-radius:var(--r-btn-sm);font-size:1.1rem;cursor:pointer;color:var(--txt);}
+.maxClose{align-self:flex-end;border:1px solid var(--line-strong);background:var(--surface-2);width:44px;height:44px;min-width:44px;min-height:44px;border-radius:var(--r-btn-sm);font-size:1.1rem;cursor:pointer;color:var(--txt);}
 /* Chord-expand grid fills the screen per orientation (one screen, no scroll):
    portrait = 2 per row, rows scroll; landscape = 4 across in a single row that
    fits the height. SVG diagrams scale to their cell via the viewBox. */
@@ -1855,7 +1861,7 @@ footer{display:none;}
 .invModal{position:fixed;inset:0;z-index:70;display:none;align-items:stretch;justify-content:center;background:rgba(0,0,0,.6);}
 .invModal.on{display:flex;}
 .invModal-box{position:relative;width:100%;max-width:600px;height:100%;background:var(--bg);display:flex;flex-direction:column;box-shadow:0 0 40px rgba(0,0,0,.5);}
-.invModal-x{position:absolute;top:calc(max(env(safe-area-inset-top,0px),8px));right:10px;z-index:2;width:38px;height:38px;border-radius:var(--r-btn-sm);border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-size:1.05rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.invModal-x{position:absolute;top:calc(max(env(safe-area-inset-top,0px),8px));right:10px;z-index:2;width:44px;height:44px;min-width:44px;min-height:44px;border-radius:var(--r-btn-sm);border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-size:1.05rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .invModal-x:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);}
 .invModal-frame{flex:1;width:100%;border:0;background:var(--bg);}
 
