@@ -88,3 +88,13 @@ Never merge (Nik merges). Never change tuner flow semantics (G2). Never bump the
 | G2 | integrated (Nik: now) | squash of claude/polish-g2 @ 85f8067 | music-v372-6 |
 | G1 | integrated (Nik: migrate) | orchestrator commit | music-v372-4 |
 | U6 | integrated | squash of claude/polish-u6 @ be8c890 | n/a |
+
+## Session record (2026-10-08, orchestrator session, status: units complete - PR awaits Nik)
+
+- **Shipped on PR #372 (draft, CI green on every push):** U6 docs reconcile; U1+U3 touch floors + Tune copy (v372); U4 Studio chord-chip primitive + Studio icons (v372-2); U2 icon glyphs to SVG (v372-3); G1 tab bar SVG (v372-4); U5 song-view sheet wraps at the measured budget (v372-5); G2 tuner idle state (v372-6); G3 chord-detail spelled notes (v372-7); review fixes (v372-8). Plus gate tooling (a11y + layout gates resolve the container Chromium), wiki sync (findings register, note-spelling, tuner idle contract), QUEUE rows for Nik's G4 picks and the S-TUNER-MODE-CHIPS bug.
+- **Decisions taken by Nik this session:** G1 migrate, G2 now, G3 ship here; S-GUIDE-CONTEXT = in-context hints replace ?, S-POSTPROG-FLOW = lead with practice over a track, S-AUDITION-CAPTURE behind post-prog, M-13 + desktop layout get interviews, M-PERFORM parked.
+- **Open for Nik:** merge #372 (repo rule: Nik merges); the G2 layout-shift taste item (one word flips it); phone UAT on the v372-8 link in the PR.
+- **Method notes:** workers ran in isolated worktrees, one unit per branch, squash-integrated with one version per integrated commit (the bump is CACHE + build stamp + stamp-asset-versions.py + MATH_VERSION when songbook.css/theme.js/esc.js/toast.js change). One worker-process restart killed two in-flight workers; their worktrees kept the uncommitted work and it was resumed, not redone. githack is egress-blocked from the container, so UAT links are unverified by curl; local render-verify stood in.
+- **Deferred (not in this PR):** layout-check.py key-picker flow is stale (manual gate); duplicated SVG strings / triplicate chrome_path (review 7, 8); S-TUNER-MODE-CHIPS (bug, QUEUE); G4 build units (QUEUE SHORT).
+- **Worktrees left registered** (not removed - deletion needs approval): .claude/worktrees/agent-* (7) and the review scratch worktree at the session scratchpad basewt. `git worktree prune` after the agent dirs are gone.
+
