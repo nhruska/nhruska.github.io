@@ -51,6 +51,13 @@ NODE_PATH=/opt/node-tools/node_modules node .claude/skills/ux-coach/scripts/web-
 
 Never merge (Nik merges). Never change tuner flow semantics (G2). Never bump the cache in a worker branch - the orchestrator bumps at integration, one version per integrated commit (`music-v372`, `-2`, `-3` ...). The bump is a TRIPLE plus one: `music/sw.js` CACHE, `shared/build-stamp.js` VERSION + UPDATED_ISO, `python3 scripts/stamp-asset-versions.py` (53 asset URLs in play/index.html + 5 in triad-inversions.html), and `math/version.js` MATH_VERSION whenever songbook.css / theme.js / esc.js / toast.js change (Math precaches them). `scripts/check-cache-bump.sh` judges all four. Abort a unit after 3 failed gate attempts and record the evidence here.
 
+## Tooling fixed on the way
+
+- `scripts/a11y-check.py` and `scripts/layout-check.py` now resolve Chromium like `test/pw/run-scenario.py` ($PW_CHROME > /opt/pw-browsers > Playwright default), so both run directly in a Claude web container. a11y gate proven: `PASS a11y gate: 0 total, 0 baselined, 0 new` (A2/A3/A4 examined zero elements - the script's own WARN, pre-existing).
+- `scripts/layout-check.py` seeds the welcome tour + callouts done (the `#welcomeOv` overlay intercepted every click).
+- DEFERRED (scope stated, not fixed here): `layout-check.py`'s Compose key-picker flow is stale against the app - a Playwright mouse click on `#keyRoots .rootChip` never selects a root (probe: no `.on` root, flyout stays open), so `wait_for_function(keyFlyout.hidden)` times out at the first width. The script predates the current flyout. It is manual and not in CI. Re-author its picker steps as a pw scenario verb instead.
+- U5 probe (scratchpad u5-sheet-clip.py): at Pixel 5 width the practice sheet is 742px wide in a 329px box on Mr. Jones (723 Refugee, 704 Roxanne), `overflow-x:auto`, no affordance. The Stage already wraps at a measured budget (CW-1, `perfWrapMaxChars`) - the song view never passes one. U5 = pass the budget in the song view too.
+
 ## Ledger
 
 | Unit | State | Commit | Version |
