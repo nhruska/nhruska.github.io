@@ -49,6 +49,7 @@
   var realizeRoman = T.realizeRoman;
   var realizeSection = T.realizeSection;
   var dispChordNameInKey = T.dispChordNameInKey;
+  var chordNotesInKey = T.chordNotesInKey;
   /* ---------- suggestion / progression / key-inference model ----------
    * Extracted to suggest-model.js (loaded before this file). Rebind as locals
    * so call sites + the Songbook.* re-exports are unchanged.
@@ -1708,6 +1709,15 @@
         // canonical token and shows the key-aware name (Bb, not A#), fallback
         // branch included. Was `pack.diagram(c,'big')` with a raw `c` label.
         var bd = packDiagram(c, 'big', dispChordName(c));
+        // G3 S-TONES: the chord's notes, spelled in the active key (Bb D F in F,
+        // E# G# B for the vii of F#). textContent only - names are never HTML.
+        var tones = chordNotesInKey(c, songKey.root, songKey.mode);
+        if (tones.length) {
+          var tl = document.createElement('div');
+          tl.className = 'bigNotes';
+          tl.textContent = 'Notes: ' + tones.join(' ');
+          bd.appendChild(tl);
+        }
         bd.onclick = function () { packPlayChord(c); };
         el.maxGrid.appendChild(bd);
       });
@@ -7335,6 +7345,7 @@
     realizeRoman: realizeRoman,
     realizeSection: realizeSection,
     dispChordNameInKey: dispChordNameInKey,
+    chordNotesInKey: chordNotesInKey, // G3 S-TONES: key-aware chord tones
     sectionConnectScore: sectionConnectScore, // UAT: adjacent-section fit ranking
     // M-13 g3: competency-profile-driven suggestion re-rank + why-cue, exposed
     // for unit tests (pure - no DOM, no localStorage).
