@@ -80,6 +80,13 @@
    * ------------------------------------------------------------------- */
   var SR = global.SongbookSheet || (typeof require === 'function' ? require('./sheet-render.js') : null);
   var escHTML = SR.escHTML;
+  // U2 icon-density standard: icon-only buttons carry inline SVG (renders its stated
+  // size; text glyphs under-render). tracks.js (Studio) carries the identical strings.
+  var PLAY_SVG = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg>';
+  var STOP_SVG = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg>';
+  var CLOSE_SVG = '<svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  var CLOSE_SVG_SM = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  var DOTS_SVG = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
   var chordSpeller = SR.chordSpeller;
   var renderLyricLine = SR.renderLyricLine;
   var deleteBtnClass = SR.deleteBtnClass;
@@ -1443,7 +1450,7 @@
         + '<div class="ti"><h2>' + escHTML(s.t) + '</h2><p>' + (s.a ? escHTML(s.a) + ' · ' : '') + escHTML(s.y) + '</p></div>'
         + '<div class="headActions">'
         + '<button class="iconBtn setBtn' + (inSet ? ' on' : '') + '" id="setToggle" title="' + (inSet ? 'Remove from setlist' : 'Add to setlist') + '">' + (inSet ? '✓' : '+') + '</button>'
-        + '<div class="moreWrap"><button class="iconBtn moreBtn" id="moreBtn" type="button" title="More actions" aria-label="More actions" aria-haspopup="true" aria-expanded="false"><span aria-hidden="true">⋯</span></button>'
+        + '<div class="moreWrap"><button class="iconBtn moreBtn" id="moreBtn" type="button" title="More actions" aria-label="More actions" aria-haspopup="true" aria-expanded="false">' + DOTS_SVG + '</button>'
         + '<div class="moreMenu" id="moreMenu" hidden>' + overflowItems + '</div></div>'
         + '</div></div>';
       // View row: just Lyrics / Chords / Both + the transpose chip now (Stage +
@@ -3265,7 +3272,7 @@
       var songCloseEl = document.createElement('button');
       songCloseEl.type = 'button'; songCloseEl.id = 'songCanvasClose'; songCloseEl.className = 'songCanvasClose';
       songCloseEl.setAttribute('aria-label', 'Close the song canvas');
-      songCloseEl.textContent = '\u2715';
+      songCloseEl.innerHTML = CLOSE_SVG;
       composeWireTap(songCloseEl, function () { returnToSong = false; setComposeMode('chords'); });
       composeSongEl.appendChild(songCloseEl);
       // Operator UAT: the canvas never showed WHICH song you're building - you saw
@@ -3710,7 +3717,7 @@
           renderSongTray();
         }; })(i));
         chip.appendChild(dup);
-        var rm = document.createElement('button'); rm.type = 'button'; rm.className = 'rm'; rm.textContent = '×';
+        var rm = document.createElement('button'); rm.type = 'button'; rm.className = 'rm'; rm.innerHTML = CLOSE_SVG_SM;
         rm.setAttribute('aria-label', 'Remove ' + sec.label + ' section');
         // Reuse the ONE inline-remove grammar (armRm/disarmRm): quiet at rest,
         // first tap arms red (1600ms auto-disarm), second tap removes.
@@ -4756,7 +4763,7 @@
         var soundToggle = document.createElement('button');
         soundToggle.type = 'button'; soundToggle.className = 'iconBtn soundToggle keySoloSoundToggle';
         soundToggle.setAttribute('aria-label', 'Hear this scale'); soundToggle.setAttribute('aria-pressed', 'false');
-        soundToggle.innerHTML = '&#9658;';
+        soundToggle.innerHTML = PLAY_SVG;
         var curNotes = null; // the currently-selected chip's note names (for the toggle to derive pcs from)
         function renderNoteTokens(notes) {
           return notes.map(function (n, i) { return '<span class="soundNote" data-i="' + i + '">' + escHTML(n) + '</span>'; }).join(' ');
@@ -4779,7 +4786,7 @@
           soundToggle.classList.toggle('on', on);
           soundToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
           soundToggle.setAttribute('aria-label', on ? 'Stop' : 'Hear this scale');
-          soundToggle.innerHTML = on ? '&#9632;' : '&#9658;';
+          soundToggle.innerHTML = on ? STOP_SVG : PLAY_SVG;
         }
         // Chip switch and any renderKeyView() re-render (key/mode change, the
         // popover closing - see the MutationObserver below) all stop playback
@@ -4897,7 +4904,7 @@
           ov.id = 'invModal';
           ov.className = 'invModal';
           ov.innerHTML = '<div class="invModal-box" role="dialog" aria-modal="true" aria-label="Triads & Inversions">'
-            + '<button class="invModal-x" type="button" aria-label="Close">✕</button>'
+            + '<button class="invModal-x" type="button" aria-label="Close">' + CLOSE_SVG + '</button>'
             + '<iframe class="invModal-frame" title="Triads & Inversions"></iframe></div>';
           document.body.appendChild(ov);
           var close = function () { ov.classList.remove('on'); var f = ov.querySelector('.invModal-frame'); if (f) f.removeAttribute('src'); };

@@ -103,14 +103,14 @@
             <span class="filterBtnIcon" aria-hidden="true">⌕</span>
             <span class="filterBtnLabel" id="filterLabel">Search &amp; filter</span>
           </button>
-          <button class="iconBtn filterClear" id="filterClear" type="button" title="Clear search and filters" aria-label="Clear search and filters" hidden>✕</button>
+          <button class="iconBtn filterClear" id="filterClear" type="button" title="Clear search and filters" aria-label="Clear search and filters" hidden><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
           <button class="iconBtn" id="addBtn" title="Add a song or track" aria-label="Add a song or track">+</button>
         </div>
         <!-- The sheet. Dropdowns rather than chip strips (operator: "filters can
              be drop down to stack side by side") - two native selects share one
              row, which is what makes the whole block fit in a sheet at all. -->
         <div class="filterSheet" id="filterSheet" hidden role="dialog" aria-modal="true" aria-label="Search and filter">
-          <div class="searchWrap" id="searchWrap"><input class="search" id="search" placeholder="Search a song or an artist…"><button class="searchClear" id="searchClear" type="button" title="Clear search" aria-label="Clear search" hidden>✕</button></div>
+          <div class="searchWrap" id="searchWrap"><input class="search" id="search" placeholder="Search a song or an artist…"><button class="searchClear" id="searchClear" type="button" title="Clear search" aria-label="Clear search" hidden><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
           <div class="filterRow">
             <label class="filterField"><span class="filterFieldLbl">Genre</span><select class="filterSel" id="genreSel"></select></label>
             <label class="filterField"><span class="filterFieldLbl">Key</span><select class="filterSel" id="keySel"></select></label>
@@ -122,7 +122,7 @@
            Start. Unmoved from the old Jam surface - operator ruling: Start stays
            in the Setlist segment header, beside Clear. -->
       <div class="setHead" id="setHead" hidden><div class="ti"><p id="setCount">No songs yet</p></div>
-        <button class="iconBtn setDelete" id="setClear" title="Clear setlist" aria-label="Clear setlist">✕</button>
+        <button class="iconBtn setDelete" id="setClear" type="button" title="Clear setlist" aria-label="Clear setlist"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
         <button class="btn red" id="performBtn" title="Start performance">Start</button></div>
       <!-- Repertoire list (merged songs + tracks) -->
       <div class="libSongs" id="libSongs">
@@ -269,7 +269,7 @@
   </div>
   <div class="pNav"><button class="btn ghost" id="pPrev" aria-label="Previous"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5 7.5 12l7 7"/></svg></button><button class="btn" id="pNext" aria-label="Next"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 5l7 7-7 7"/></svg></button></div>
 </div>
-<div class="maxOv" id="maxOv"><button class="maxClose" id="maxClose" type="button" aria-label="Close">✕</button><div class="maxGrid" id="maxGrid"></div></div>
+<div class="maxOv" id="maxOv"><button class="maxClose" id="maxClose" type="button" aria-label="Close"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button><div class="maxGrid" id="maxGrid"></div></div>
 <!-- Settings sheet: accent colour + whole-songbook backup/restore + which
      offline build is running. Opened by the appbar gear (#settingsBtn). -->
 <!-- Sections are a ONE-AT-A-TIME accordion (shared/accordion.js + the
@@ -292,7 +292,7 @@
      guard). -->
 <div class="welcomeOv" id="welcomeOv" hidden>
   <div class="welcomeCard" role="dialog" aria-modal="true" aria-label="Welcome to Music">
-    <button class="x" id="welcomeSkip" type="button" aria-label="Skip intro and use defaults">✕</button>
+    <button class="x" id="welcomeSkip" type="button" aria-label="Skip intro and use defaults"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     <div class="wPanels" id="wPanels">
       <section class="wPanel">
         <h2>Welcome</h2>
@@ -307,7 +307,7 @@
 </div>
 <div class="setOv" id="setOv" hidden>
   <div class="setCard" role="dialog" aria-modal="true" aria-label="Settings">
-    <div class="setHd"><h2 class="setHdTitle"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>Settings</h2><button class="x" id="setClose" type="button" aria-label="Close settings">✕</button></div>
+    <div class="setHd"><h2 class="setHdTitle"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>Settings</h2><button class="x" id="setClose" type="button" aria-label="Close settings"><svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
     <div class="setPanelBody" id="settingsBody">
       <!-- The Settings-row setter, so the dots|patterns pref can be changed any
            time - not just at the one-time Notables prompt. The "Preferences"
