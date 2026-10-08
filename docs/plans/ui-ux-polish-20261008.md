@@ -66,6 +66,6 @@ Never merge (Nik merges). Never change tuner flow semantics (G2). Never bump the
 | U2 | integrated | squash of claude/polish-u2 @ 247dae4 | music-v372-3 |
 | U3 | integrated | with U1 | music-v372 |
 | U4 | integrated | squash of claude/polish-u4 @ 9502714 | music-v372-2 |
-| U5 | queued | | |
+| U5 | integrated | squash of claude/polish-u5 @ 0432822 | music-v372-5 |
 | G1 | integrated (Nik: migrate) | orchestrator commit | music-v372-4 |
 | U6 | integrated | squash of claude/polish-u6 @ be8c890 | n/a |

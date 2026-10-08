@@ -1382,6 +1382,33 @@
       if (chipsEl && chipsEl.parentNode) chipsEl.parentNode.insertBefore(bannerEl, chipsEl.nextSibling);
     }
 
+    // U5 (ui-ux-polish-20261008): the song view's practice sheet wraps its
+    // chord-over-lyric rows at the MEASURED character budget, exactly like the
+    // Stage - one measurement (sheetWrapMaxChars, below) serves both. Before
+    // this the sheet rendered unwrapped white-space:pre rows (renderSheet got no
+    // budget because the element was not in the DOM yet to measure), so on a
+    // phone a long line ran ~700px wide inside a ~329px overflow-x:auto box
+    // (Mr. Jones 742, Refugee 723, Roxanne 704 at Pixel 5) with no sign that it
+    // scrolled. The box is mounted EMPTY, measured, then filled once with the
+    // budget. The 'chords' view wraps via flex and never comes through here.
+    // A bold chord label can render a touch wider than the plain-weight probe,
+    // so the render is re-measured and the budget shrunk proportionally (bounded
+    // retries, floor 1 char) - same convergence as fitStageSheet. The sheet keeps
+    // its overflow-x:auto in CSS as a last-resort safety net.
+    var songSheetCtx = null; // {box, s, view, map, w} for the mounted song-view sheet, re-fit on resize
+    function fillSongSheet(ctx) {
+      var box = ctx.box;
+      var chars = sheetWrapMaxChars(box); // null only when the DOM is unmeasurable (hidden / no layout)
+      for (var attempts = 0; attempts < 4; attempts++) {
+        box.innerHTML = renderSheet(ctx.s, STATE.transpose, ctx.view, ctx.map, chars || undefined);
+        if (!chars || box.scrollWidth <= box.clientWidth) break;
+        var next = Math.floor(chars * (box.clientWidth / box.scrollWidth) * 0.97);
+        if (next >= chars) next = chars - 1; // forward progress on a 1-2px rounding overshoot
+        if (next < 1) break;
+        chars = next;
+      }
+      ctx.w = box.clientWidth;
+    }
     function renderPractice() {
       if (!el.practiceBody) return;
       if (!STATE.current) {
@@ -1521,11 +1548,15 @@
           + actions;
       } else {
         body = chips
-          + '<div class="sheet" id="sheetBox">' + renderSheet(s, STATE.transpose, view, dispMap) + '</div>'
+          + '<div class="sheet" id="sheetBox"></div>'
           + actions
           + '<p class="note">Sheet shows a short representative snippet. Full lyrics open on a licensed site.</p>';
       }
       el.practiceBody.innerHTML = '<div class="detail">' + head + switcher + songActRow + queueNav + body + '</div>';
+      // U5: fill the sheet now that #sheetBox is in the DOM and measurable (Lyrics/Both views).
+      var sheetBoxEl = view === 'chords' ? null : el.practiceBody.querySelector('#sheetBox');
+      songSheetCtx = sheetBoxEl ? { box: sheetBoxEl, s: s, view: view, map: dispMap, w: 0 } : null;
+      if (songSheetCtx) fillSongSheet(songSheetCtx);
       renderSaveBasicsNotable(); // M-GUIDANCE: one-shot beginner cue, prepended above the card
       renderChordTapNotable(); // S-CHORDCHIP-A11Y: one-shot tap-to-hear cue, under the chip row
       var qPrev = el.practiceBody.querySelector('#qPrev'); if (qPrev) qPrev.onclick = function () { navQueue(-1); };
@@ -2423,6 +2454,11 @@
     // shares that width, which is what lets wrapChordLyricPair's
     // character-index cuts land in the same pixel column for the chord row
     // and the lyric row.
+    // U5 (ui-ux-polish-20261008): this is THE one wrap-budget measurement. The
+    // song view's practice sheet (#sheetBox, renderPractice) calls the same
+    // helper, so the two surfaces can never wrap at different widths. Pass any
+    // element carrying the sheet's padding and font (the probe is appended to it
+    // and removed again, so it can be empty).
     // CW-1 operator-UAT fix (defect 1): clientWidth INCLUDES the sheet's own
     // horizontal padding, and that padding is NOT symmetric across
     // orientations - portrait is ~4px total, but the landscape media query
@@ -2432,9 +2468,9 @@
     // column, since a wide-enough `.pInner{width:max-content}` simply grows
     // into the padding rather than being clipped by it - is clientWidth minus
     // the REAL computed padding, not a flat guess. Shared by both the wrap
-    // BUDGET (perfWrapMaxChars, chars-based) and the fit CHECK (fitStageSheet,
+    // BUDGET (sheetWrapMaxChars, chars-based) and the fit CHECK (fitStageSheet,
     // pixels-based) so the two can never drift into checking two different
-    // widths (that mismatch was itself a second bug: perfWrapMaxChars alone
+    // widths (that mismatch was itself a second bug: sheetWrapMaxChars alone
     // computing the right budget didn't help while fitStageSheet still judged
     // "fits" against the full clientWidth, which the padding-right region is
     // part of).
@@ -2443,7 +2479,7 @@
       var hPad = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
       return sheetEl.clientWidth - hPad;
     }
-    function perfWrapMaxChars(sheetEl) {
+    function sheetWrapMaxChars(sheetEl) {
       var probe = document.createElement('div');
       probe.className = 'lyrLine';
       probe.style.cssText = 'position:absolute;visibility:hidden;left:-9999px;top:-9999px;white-space:pre;';
@@ -2495,7 +2531,7 @@
     //            floor NOTHING should wrap - wrap is the floor's last
     //            resort, not a fitted render's rounding artifact).
     // Then WRAP to the applied scale: the character budget
-    // (perfWrapMaxChars, padding-aware, at the applied --pscale) is computed
+    // (sheetWrapMaxChars, padding-aware, at the applied --pscale) is computed
     // BEFORE the wrapped render. The render is re-MEASURED and the budget
     // shrunk proportionally if a row still lands over (a bold chord label,
     // .crd{font-weight:700}, renders a touch wider per character than the
@@ -2535,7 +2571,7 @@
         scale = clampFontScale(w1 > 0 ? ((avail - 2) / w1) * 0.99 : 1);
       }
       applyScale(scale); // size FIRST - the budget probe below measures at this --pscale
-      var wrapChars = perfWrapMaxChars(pSheet); // null only when the DOM is unmeasurable (no layout at all)
+      var wrapChars = sheetWrapMaxChars(pSheet); // null only when the DOM is unmeasurable (no layout at all)
       for (var attempts = 0; attempts < 6; attempts++) {
         pSheet.innerHTML = '<div class="pInner">' + renderSheet(ctx.s, STATE.performTpose, ctx.view, ctx.stageDisp, wrapChars || undefined) + '</div>';
         inertStageChords();
@@ -2554,7 +2590,7 @@
         if (STATE.fontMode !== 'manual' && scale > FONT_MIN + 0.001) {
           scale = clampFontScale(scale * (avail / stageInner.scrollWidth) * 0.99);
           applyScale(scale);
-          wrapChars = perfWrapMaxChars(pSheet); // budget moves with the size
+          wrapChars = sheetWrapMaxChars(pSheet); // budget moves with the size
           continue;
         }
         var next = Math.floor(wrapChars * (avail / stageInner.scrollWidth) * 0.97);
@@ -2658,7 +2694,7 @@
     }
     // Re-wrap the stage sheet on orientation change / resize: a rotation
     // changes the content width, and a wrap computed for one orientation's
-    // width (and its reserved padding, see perfWrapMaxChars) must never
+    // width (and its reserved padding, see sheetWrapMaxChars) must never
     // silently carry into the other. Routes through the SAME
     // fitStageSheet() a song-change uses (via refitStage), preserving scroll
     // position (a rotation shouldn't jump the reader back to the top). Runs
@@ -2673,7 +2709,13 @@
       window.addEventListener('resize', function () {
         if (stageResizeTimer) clearTimeout(stageResizeTimer);
         stageResizeTimer = setTimeout(function () {
-          if (!(performEl && performEl.classList.contains('on'))) return;
+          if (!(performEl && performEl.classList.contains('on'))) {
+            // U5: the song view's sheet re-wraps on the same debounced resize, but only
+            // while it is mounted, visible, and its width actually changed (a rotation).
+            var sc = songSheetCtx;
+            if (sc && sc.box.isConnected && sc.box.clientWidth > 0 && sc.box.clientWidth !== sc.w) fillSongSheet(sc);
+            return;
+          }
           refitStage(true);
         }, 150);
       });
