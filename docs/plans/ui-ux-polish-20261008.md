@@ -20,7 +20,7 @@ Every LAUNCH unit below is merged into PR #372 as its own commit with its own ca
 | U3 tune copy dedupe | The Tune card h3 subNote repeats the header purpose line word for word. Drop the card subNote (the purpose line is the system-wide carrier). | music/play/index.html | screenshot 412, grep no second copy | S |
 | U4 chord-chip primitive | `.bt-st-chordchip` (40px, Studio) and `.chordChips .c` (44px, song view) carry one meaning with two looks. Compose the Studio chip from the song-view primitive (Element Consistency Law: fix at the primitive). Confine edits to tracks.css / tracks.js so it can run beside U2. | music/shared/tracks.css, tracks.js | Studio scenarios (cockpit-*, studio-*), 44px probe, both themes | M |
 | U5 lyric clip hint | `.sheet` lines clip at the right edge with no scroll sign. Render-check first at 412 with a long-lyric song. Only if it reproduces: opt the sheet into scroll-hint.js. | songbook.css (+ sheet-render.js if needed) | screenshot before/after | S |
-| U6 docs reconcile | test/pw/README persona coverage line (14 scenarios, not "2 of 8"). Wiki findings register `.helpIcon` row (applied at tracks.js). QUEUE.md: mark S3/S4/S5/S8/S9, S-TYPEFILTER-ACCENT, S-OVERLAY-HITTEST-SWEEP (#352), the two video scenarios (#344) as shipped. | test/pw/README.md, music/engineering-wiki/ux-philosophy/component-conventions.md, docs/plans/QUEUE.md | link check, no app files touched (no bump) | S |
+| U6 docs reconcile | test/pw/README persona coverage line (measured 25 of 133 scenarios carry a persona, not "2 of 8"). Wiki findings register `.helpIcon` row (applied at tracks.js). QUEUE.md: mark S3/S4/S5/S8/S9, S-TYPEFILTER-ACCENT, S-OVERLAY-HITTEST-SWEEP (#352), the two video scenarios (#344) as shipped. | test/pw/README.md, music/engineering-wiki/ux-philosophy/component-conventions.md, docs/plans/QUEUE.md | link check, no app files touched (no bump) | S |
 
 Order: U6 runs in parallel with U1+U3 (no shared files). U2 and U4 run in parallel after U1 lands (U4 confined to tracks.*). U5 last.
 
@@ -60,4 +60,4 @@ Never merge (Nik merges). Never change tuner flow semantics (G2). Never bump the
 | U3 | queued | | |
 | U4 | queued | | |
 | U5 | queued | | |
-| U6 | queued | | n/a |
+| U6 | integrated | squash of claude/polish-u6 @ be8c890 | n/a |
