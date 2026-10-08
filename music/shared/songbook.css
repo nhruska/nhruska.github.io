@@ -213,7 +213,7 @@ body.studioopen .tabbar{position:relative;z-index:55;}
    transform makes this button its own stacking context, so the z-index:-1 circle
    paints behind the glyph but above the field. right:0 keeps the glyph centre where
    the old 26px box at right:8px had it (21px from the edge). */
-.searchClear{position:absolute;top:50%;right:0;transform:translateY(-50%);width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:none;border-radius:50%;background:transparent;color:var(--txt-dim);font-size:.85rem;line-height:1;cursor:pointer;padding:0;}
+.searchClear{position:absolute;top:50%;right:0;transform:translateY(-50%);width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:none;border-radius:50%;background:transparent;color:var(--txt-dim);line-height:1;cursor:pointer;padding:0;}
 .searchClear::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:26px;height:26px;z-index:-1;border-radius:50%;background:transparent;}
 .searchClear:hover{color:var(--txt);}
 .searchClear:hover::before{background:var(--surface-2);}
@@ -521,8 +521,14 @@ body.studioopen .tabbar{position:relative;z-index:55;}
    accent-fill selected grammar (same as .iconBtn.setBtn.on above) - "while
    playing" is a selected/active state. Compact so it fits inline beside the
    "Solo over it" label without pushing content below the fold. */
-.soundToggle{width:32px;height:32px;font-size:1.05rem;}
+/* U2: inline-SVG play/stop at the icon-density standard - a full 44x44 box (the 32px
+   + font-size text-glyph hack is gone; the svg renders its stated 22px). */
+.soundToggle{width:44px;height:44px;min-width:44px;min-height:44px;}
 .soundToggle.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
+/* U2: ONE shared rule for every inline-SVG icon-only button (no per-button svg rules):
+   block-level so the line box adds no descender gap, and pointer-events:none so the tap
+   target is always the button itself (composeWireTap / wireTapCancel see the button). */
+.iconBtn > svg,.searchClear > svg,.songCanvasClose > svg,.maxClose > svg,.invModal-x > svg,.welcomeCard .x > svg,.setHd .x > svg,.songSect .rm > svg{display:block;pointer-events:none;}
 /* The per-note "currently sounding" marker, on both the notes line and the
    degrees line, on both surfaces (Studio + Compose). ONE primitive
    (--sound-bg/--sound-line, declared above) - not the SELECTION or GUIDANCE
@@ -1048,7 +1054,7 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 /* The jam surface carries zero song chrome - the canvas opens on demand (Save
    sheet / Library) and carries its own close: */
 .songCanvasClose{align-self:flex-end;flex:0 0 auto;background:none;border:0;color:var(--txt-dim);
-  font-size:1.05rem;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;
+  cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;
   min-width:44px;min-height:44px;margin:-4px -6px -10px 0;}
 /* Song mode hides the editor + picker but must keep .progBox itself DISPLAYED:
    the save-name modal (.composeRow.asModal), its backdrop and the compose toast
@@ -1170,7 +1176,7 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 /* The delete X joins the SAME control row as play/edit/up/dn (not absolutely
    positioned against the whole card, which sat it vertically off-center from its
    siblings). One row, five aligned 44px targets, matching 36px visible halos. */
-.songSect .rm{position:relative;z-index:0;flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--txt-soft);font-size:1.05rem;line-height:1;cursor:pointer;}
+.songSect .rm{position:relative;z-index:0;flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--txt-soft);line-height:1;cursor:pointer;}
 .songSect .rm::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--bg-2);}
 .songSect .rm.armed{color:var(--on-danger);}
 .songSect .rm.armed::before{background:var(--bad);border-color:var(--bad);}
@@ -1664,7 +1670,7 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 /* keep the "All chords" category chips on the same 44px touch floor as the key controls */
 .maxOv{position:fixed;inset:0;z-index:70;background:var(--bg);display:none;flex-direction:column;padding:calc(max(env(safe-area-inset-top,0px), 30px) + 12px) calc(env(safe-area-inset-right,0px) + 14px) calc(env(safe-area-inset-bottom,0px) + 14px) calc(env(safe-area-inset-left,0px) + 14px);}
 .maxOv.on{display:flex;animation:fadeUp .24s ease;}
-.maxClose{align-self:flex-end;border:1px solid var(--line-strong);background:var(--surface-2);width:44px;height:44px;min-width:44px;min-height:44px;border-radius:var(--r-btn-sm);font-size:1.1rem;cursor:pointer;color:var(--txt);}
+.maxClose{align-self:flex-end;border:1px solid var(--line-strong);background:var(--surface-2);width:44px;height:44px;min-width:44px;min-height:44px;border-radius:var(--r-btn-sm);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;color:var(--txt);}
 /* Chord-expand grid fills the screen per orientation (one screen, no scroll):
    portrait = 2 per row, rows scroll; landscape = 4 across in a single row that
    fits the height. SVG diagrams scale to their cell via the viewBox. */
@@ -1861,7 +1867,7 @@ footer{display:none;}
 .invModal{position:fixed;inset:0;z-index:70;display:none;align-items:stretch;justify-content:center;background:rgba(0,0,0,.6);}
 .invModal.on{display:flex;}
 .invModal-box{position:relative;width:100%;max-width:600px;height:100%;background:var(--bg);display:flex;flex-direction:column;box-shadow:0 0 40px rgba(0,0,0,.5);}
-.invModal-x{position:absolute;top:calc(max(env(safe-area-inset-top,0px),8px));right:10px;z-index:2;width:44px;height:44px;min-width:44px;min-height:44px;border-radius:var(--r-btn-sm);border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-size:1.05rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.invModal-x{position:absolute;top:calc(max(env(safe-area-inset-top,0px),8px));right:10px;z-index:2;width:44px;height:44px;min-width:44px;min-height:44px;border-radius:var(--r-btn-sm);border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
 .invModal-x:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);}
 .invModal-frame{flex:1;width:100%;border:0;background:var(--bg);}
 
@@ -2040,7 +2046,7 @@ footer{display:none;}
   background:var(--surface-2);border:1px solid var(--line-strong);border-radius:16px;
   box-shadow:0 14px 40px rgba(0,0,0,.55);padding:14px 0 14px;}
 .welcomeCard .x{position:absolute;top:4px;right:4px;z-index:1;background:none;border:0;color:var(--txt-dim);
-  font-size:1.1rem;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;
+  cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;
   min-width:44px;min-height:44px;}
 .wPanels{display:flex;overflow-x:auto;overflow-y:auto;scroll-snap-type:x mandatory;scrollbar-width:none;
   -webkit-overflow-scrolling:touch;min-height:0;}
@@ -2117,7 +2123,7 @@ footer{display:none;}
 .setHd{display:flex;align-items:center;justify-content:space-between;flex:0 0 auto;
   padding:16px 16px 10px;border-bottom:1px solid var(--line-strong);}
 .setHd h2{margin:0;font-size:1.15rem;}
-.setHd .x{background:none;border:0;color:var(--txt);font-size:1.3rem;cursor:pointer;padding:0;
+.setHd .x{background:none;border:0;color:var(--txt);cursor:pointer;padding:0;
   display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;}
 .setPanelBody{flex:1 1 auto;min-height:0;overflow-y:auto;padding:0 16px;-webkit-overflow-scrolling:touch;}
 /* Sections are .accSec/.accBtn/.accBody (the shared accordion primitive); every
