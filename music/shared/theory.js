@@ -305,7 +305,10 @@
     var min = !dim && !aug && /^m(?!aj)/.test(suf);
     var third = ion[2] - ((min || dim) ? 1 : 0);
     var fifth = ion[4] - (dim ? 1 : 0) + (aug ? 1 : 0);
-    var parts = [[0, 0], [2, third], [4, fifth]];
+    // sus2 / sus4 (pack vocabulary via QUAL_FALLBACK): the third is REPLACED by
+    // the 2nd or 4th degree - never added beside it.
+    var sus2 = /sus2/i.test(suf), sus4 = !sus2 && /sus(4)?(?![0-9])/i.test(suf);
+    var parts = sus2 ? [[0, 0], [1, ion[1]], [4, fifth]] : sus4 ? [[0, 0], [3, ion[3]], [4, fifth]] : [[0, 0], [2, third], [4, fifth]];
     if (/^(dim|°|o)7/i.test(suf)) parts.push([6, ion[6] - 2]);      // fully diminished: bb7
     else if (/(maj7|M7)/.test(suf)) parts.push([6, ion[6]]);
     else if (/7/.test(suf)) parts.push([6, ion[6] - 1]);            // 7, m7, m7b5

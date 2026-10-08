@@ -58,6 +58,22 @@ Never merge (Nik merges). Never change tuner flow semantics (G2). Never bump the
 - DEFERRED (scope stated, not fixed here): `layout-check.py`'s Compose key-picker flow is stale against the app - a Playwright mouse click on `#keyRoots .rootChip` never selects a root (probe: no `.on` root, flyout stays open), so `wait_for_function(keyFlyout.hidden)` times out at the first width. The script predates the current flyout. It is manual and not in CI. Re-author its picker steps as a pw scenario verb instead.
 - U5 probe (scratchpad u5-sheet-clip.py): at Pixel 5 width the practice sheet is 742px wide in a 329px box on Mr. Jones (723 Refugee, 704 Roxanne), `overflow-x:auto`, no affordance. The Stage already wraps at a measured budget (CW-1, `perfWrapMaxChars`) - the song view never passes one. U5 = pass the budget in the song view too.
 
+## Code review (orchestrator, /code-review main medium, 11 findings)
+
+| # | Finding | Disposition |
+|---|---|---|
+| 1 | Song-view sheet budget measured before Space Mono swaps in (cold load) | FIXED: the Stage's font-refit hook now re-fills the song sheet too |
+| 2 | sus2/sus4 got a major third | FIXED in chordNotesInKey (degree swap), 4 unit cases |
+| 3 | Landscape maximize overlay could clip the Notes line | DOES NOT REPRODUCE: scenario chord-detail-landscape-fit measures every card + Notes line inside the grid at 851x393, PASS, no CSS change |
+| 4 | Idle hint says "the E string" on a two-E-string guitar | FIXED: uses the string label (t.l), e.g. "6th string (low E)" |
+| 5 | Studio chip ellipsis at 360 with 6-char names | NOT A PATH: the chords-in-key strip carries diatonic triads only (5 chars max); U4 measured C#dim/D#dim/Bbdim at 360 with zero clipping |
+| 6 | .search padding-right 40 under the 44px clear box | FIXED: 48px |
+| 7 | SVG strings duplicated across 12 places, pinned by equality tests | DEFERRED: a shared icons.js cannot serve the static HTML copies without runtime injection; the pins are the drift guard. Queue row if it bites |
+| 8 | chrome_path() triplicated across gates | DEFERRED: one-module import is a scripts/ refactor outside this PR; noted on the tooling row |
+| 9 | Idle render triplet repeated in 3 places | FIXED: renderIdle() funnel, pin test updated |
+| 10 | MATH_VERSION bumped with no math/ change | NOT A BUG: Math precaches songbook.css / theme.js / esc.js / toast.js; check-cache-bump.sh FAILS without the bump when songbook.css changes (observed at U1) |
+| 11 | MQ4 `@media not (...)` unsupported on old WebKit/Blink | NOT A NEW FLOOR: the app already requires `:has()` (Chrome 105+ / Safari 15.4+), above MQ4 `not` (Chrome 104+ / Safari 16.4) - noted, no change |
+
 ## Ledger
 
 | Unit | State | Commit | Version |
@@ -67,6 +83,7 @@ Never merge (Nik merges). Never change tuner flow semantics (G2). Never bump the
 | U3 | integrated | with U1 | music-v372 |
 | U4 | integrated | squash of claude/polish-u4 @ 9502714 | music-v372-2 |
 | U5 | integrated | squash of claude/polish-u5 @ 0432822 | music-v372-5 |
+| review | integrated | orchestrator commit (fixes 1,2,4,6,9 + landscape scenario) | music-v372-8 |
 | G3 | integrated (Nik: ship here) | squash of claude/polish-g3 @ 9558cfd | music-v372-7 |
 | G2 | integrated (Nik: now) | squash of claude/polish-g2 @ 85f8067 | music-v372-6 |
 | G1 | integrated (Nik: migrate) | orchestrator commit | music-v372-4 |

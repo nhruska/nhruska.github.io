@@ -2739,7 +2739,11 @@
     // harness has no document.fonts.
     if (typeof document !== 'undefined' && document.fonts) {
       var stageFontRefit = function () {
-        if (performEl && performEl.classList.contains('on')) refitStage(true);
+        if (performEl && performEl.classList.contains('on')) { refitStage(true); return; }
+        // U5 review fix: the song view's sheet measured its budget before Space
+        // Mono swapped in on a cold load - re-fill at the real font like the Stage.
+        var sc = songSheetCtx;
+        if (sc && sc.box.isConnected && sc.box.clientWidth > 0) fillSongSheet(sc);
       };
       if (document.fonts.ready && typeof document.fonts.ready.then === 'function') document.fonts.ready.then(stageFontRefit);
       if (typeof document.fonts.addEventListener === 'function') document.fonts.addEventListener('loadingdone', stageFontRefit);

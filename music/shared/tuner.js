@@ -442,7 +442,18 @@
   }
   function idleHint() {
     if (mode === 'free') return 'tap Start mic, then play any string';
-    return STRINGS.length ? 'tap Start, then play the ' + STRINGS[0].n + ' string - the tuner follows you up from there' : 'tap Start, then play a string';
+    // Name the string the way the live hint does (t.l: "6th string (low E)") - a
+    // guitar has two E strings, so the bare note name was ambiguous (review fix).
+    var s0 = STRINGS[0];
+    return s0 ? 'tap Start, then play the ' + (s0.l || (s0.n + ' string')) + ' - the tuner follows you up from there' : 'tap Start, then play a string';
+  }
+  // One idle render for every path that lands in idle (buildMic, setMode,
+  // stopFree) so the placeholder, hint and .idle class can never drift apart.
+  function renderIdle() {
+    var nn = el('micNote'); if (nn) { nn.textContent = idleNote(); nn.classList.remove('intune'); }
+    var cc = el('micCents'); if (cc) cc.textContent = idleHint();
+    lastCentsTxt = ''; lastNoteTxt = '';
+    setIdle(true);
   }
   function setIdle(on) {
     var n = el('micNote'), b = n && n.parentNode;
@@ -581,9 +592,7 @@
   function stopFree() {
     releaseMic();
     var t = el('micToggle'); if (t) t.textContent = 'Start mic';
-    var nn = el('micNote'); if (nn) { nn.textContent = idleNote(); nn.classList.remove('intune'); }
-    setIdle(true);
-    var cc = el('micCents'); if (cc) cc.textContent = idleHint();
+    renderIdle();
     needleEMA = 50; freqHist = []; lockedString = null; switchFrames = 0; quietFrames = 0;
     inTuneHold = 0; reading = false; freeTxt = ''; glitchFrames = 0; prevShown = null;
     var nd = el('micNeedle');
@@ -699,10 +708,7 @@
     if (m) m.style.display = mode === 'free' ? '' : 'none';
     if (tone) tone.style.display = mode === 'guided' ? '' : 'none';
     if (t) t.textContent = mode === 'guided' ? 'Start' : 'Start mic';
-    var cc = el('micCents'); if (cc) cc.textContent = idleHint();
-    lastCentsTxt = ''; lastNoteTxt = '';
-    var nn = el('micNote'); if (nn) nn.textContent = idleNote();
-    setIdle(true);
+    renderIdle();
     document.querySelectorAll('.micModes .chip').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-mode') === mode); });
     document.querySelectorAll('#tStrings .tStr').forEach(function (b) { b.classList.remove('cur'); b.classList.remove('done'); });
   }

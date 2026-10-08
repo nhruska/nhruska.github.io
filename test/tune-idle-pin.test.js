@@ -48,7 +48,12 @@ test('idleNote names the first string (guided) and never returns an empty or dot
 
 test('every idle entry point flips the .idle class (build, mode switch, stop, live frames)', function () {
   assert.ok(/box\.classList\.add\('idle'\)/.test(js), 'buildMic must start idle');
-  assert.ok((js.match(/setIdle\(/g) || []).length >= 5, 'setIdle must be called from render, setMode, stopFree, startFree');
+  // review fix: setMode / stopFree / buildMic funnel through ONE renderIdle() (placeholder +
+  // hint + .idle together) - pin the funnel, not a raw setIdle call count.
+  var ri = /function renderIdle\(\) \{[\s\S]*?\n  \}/.exec(js);
+  assert.ok(ri, 'renderIdle helper must exist');
+  assert.ok(/setIdle\(true\)/.test(ri[0]) && /idleNote\(\)/.test(ri[0]) && /idleHint\(\)/.test(ri[0]), 'renderIdle must set the placeholder, the hint and the .idle class together');
+  assert.ok((js.match(/\brenderIdle\(\);/g) || []).length >= 2, 'setMode and stopFree must land in idle through renderIdle()');
   assert.ok(/setIdle\(phase === 'idle'\)/.test(js), 'renderGuided must derive idle from the phase');
   assert.ok(/setIdle\(false\)/.test(js), 'startFree must leave idle');
 });

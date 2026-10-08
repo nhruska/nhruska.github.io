@@ -36,6 +36,11 @@ test('trap 1: IV of F major spells Bb D F (never A# D F)', function () {
 });
 test('trap 2: vii of F# major spells E# G# B (token Fdim; never F G# B)', function () {
   assert.strictEqual(notes('Fdim', 'F#', 'Major'), 'E# G# B');
+  // review fix: sus2 / sus4 REPLACE the third (pack vocabulary via QUAL_FALLBACK)
+  assert.strictEqual(notes('Dsus4', 'D', 'Major'), 'D G A');
+  assert.strictEqual(notes('Dsus2', 'D', 'Major'), 'D E A');
+  assert.strictEqual(notes('Asus4', 'E', 'Major'), 'A D E');
+  assert.strictEqual(notes('A#sus4', 'F', 'Major'), 'Bb Eb F');
 });
 test('trap 3: vii of Bb major spells A C Eb (token Adim; Eb never D#)', function () {
   assert.strictEqual(notes('Adim', 'Bb', 'Major'), 'A C Eb');
