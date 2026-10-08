@@ -49,15 +49,15 @@ NODE_PATH=/opt/node-tools/node_modules node .claude/skills/ux-coach/scripts/web-
 
 ## Never-do / abort
 
-Never merge (Nik merges). Never change tuner flow semantics (G2). Never bump the cache in a worker branch - the orchestrator bumps at integration, one version per integrated commit (`music-v372`, `-2`, `-3` ...). Abort a unit after 3 failed gate attempts and record the evidence here.
+Never merge (Nik merges). Never change tuner flow semantics (G2). Never bump the cache in a worker branch - the orchestrator bumps at integration, one version per integrated commit (`music-v372`, `-2`, `-3` ...). The bump is a TRIPLE plus one: `music/sw.js` CACHE, `shared/build-stamp.js` VERSION + UPDATED_ISO, `python3 scripts/stamp-asset-versions.py` (53 asset URLs in play/index.html + 5 in triad-inversions.html), and `math/version.js` MATH_VERSION whenever songbook.css / theme.js / esc.js / toast.js change (Math precaches them). `scripts/check-cache-bump.sh` judges all four. Abort a unit after 3 failed gate attempts and record the evidence here.
 
 ## Ledger
 
 | Unit | State | Commit | Version |
 |---|---|---|---|
-| U1 | queued | | |
+| U1 | integrated | squash of claude/polish-u1 @ b9228a0 | music-v372 |
 | U2 | queued | | |
-| U3 | queued | | |
+| U3 | integrated | with U1 | music-v372 |
 | U4 | queued | | |
 | U5 | queued | | |
 | U6 | integrated | squash of claude/polish-u6 @ be8c890 | n/a |
