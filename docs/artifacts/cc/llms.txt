@@ -1,6 +1,8 @@
 # Repo Command Center - nhruska/nhruska.github.io - Problem Solutions (agent-readable brief)
-Generated: 2026-10-07T16:39:11Z
-Status: ok
+Generated: 2026-10-08T00:25:31Z
+Status: partial
+  warning: velocity merged-count search failed - count line omitted this run
+  warning: Pages status fetch failed - deploy.pages.status is unknown this run
 
 ## NOW
 - Queue NOW: **PR [#355](https://github.com/nhruska/nhruska.github.io/pull/355) MERGED 2026-09-27 (math-v355, music-v355-2), live at [nhruska.github.io/math/](https://nhruska.github.io/math/)**, issue [#354](https://github.com/nhruska/nhruska.github.io/issues/354): + - x / and mixed, tables x2-x12 to 10/11/12, Race (default) / Sprint 60s / Practice, +3s retry-same-fact, players, Coach (Leitner), progress map + trend; landing lists 2 apps. Deferred: Write-it handwriting, Math data in Music Backup/Restore.
@@ -20,14 +22,14 @@ Status: ok
 - Vision CAPTURED: Vision Capture: Deterministic Adaptive Tutor (operator, 2026-07-05) - https://github.com/nhruska/nhruska.github.io/blob/main/docs/plans/vision-tutor-deterministic-20260705.md
 
 ## Recent work products
-- #371 - fix(theory): F major's B tile reads B, not Cb (music-v371) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/371
-- #370 - test(pw): bring 4 stale scenarios up to the shipped app (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/370
-- #369 - feat(shell): landscape phones get a side rail and one-row player (music-v369) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/369
-- #368 - fix(player): video window never covers the mini-player controls or tab bar (music-v368) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/368
-- #367 - feat(tune): two-pane landscape Tune for every instrument, one screen, no scroll (music-v367) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/367
-- #366 - fix(tune): landscape mini-player no longer buries the bottom string row (music-v366) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/366
+- #346 - docs: calibrate Thought-Ware public claims (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/346
 - #365 - cc: REST fallback so the session-start sweep sees open PRs; stop run-all dropping test summaries; reconcile QUEUE and the handoff doc (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/365
+- #370 - test(pw): bring 4 stale scenarios up to the shipped app (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/370
+- #371 - fix(theory): F major's B tile reads B, not Cb (music-v371) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/371
 - #364 - docs(plans): nh-pages Project handoff 2026-10-05 (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/364
+- #368 - fix(player): video window never covers the mini-player controls or tab bar (music-v368) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/368
+- #369 - feat(shell): landscape phones get a side rail and one-row player (music-v369) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/369
+- #367 - feat(tune): two-pane landscape Tune for every instrument, one screen, no scroll (music-v367) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/367
 
 ## Links
 - Repo Command Center: https://nhruska.github.io/docs/artifacts/cc/repo.html
