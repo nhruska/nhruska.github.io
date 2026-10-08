@@ -135,6 +135,14 @@
     + '<path d="M3 18 C7.5 18 9.8 15.8 12 12 C14.2 8.2 16.5 6 21 6"/>'
     + '<polyline points="17.5 14.5 21 18 17.5 21.5"/>'
     + '<polyline points="17.5 2.5 21 6 17.5 9.5"/></svg>';
+  // U4 (UI/UX polish 2026-10-08): Studio icon glyphs as inline SVG so the ink
+  // renders its stated size (icon-density standard, component-conventions.md).
+  // PLAY_SVG / STOP_SVG / CLOSE_SVG are the LOCKED strings shared verbatim with
+  // songbook.js (U2) - one look for the sound toggle on every surface.
+  var PLAY_SVG = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg>';
+  var STOP_SVG = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg>';
+  var CLOSE_SVG = '<svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  var DOTS_SVG = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
   // G6 S-SCALE-MEMORY (2026-07-10): remember the solo-scale chip a player
   // TAPPED for a given track, so the next Studio open pre-selects it instead
   // of re-deriving inferSoloDefault() every time. ADDITIVE - a brand-new
@@ -1196,7 +1204,7 @@
       // "Optional" pill stays retired (UAT batch 1); the menu's hint carries
       // the find-a-jam guidance.
       var menuBlock = t.yt
-        ? '<button class="iconBtn moreBtn bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="More options"><span aria-hidden="true">⋯</span></button>'
+        ? '<button class="iconBtn moreBtn bt-st-np-menu" data-stmenu type="button" aria-haspopup="true" aria-expanded="false" aria-label="More options">' + DOTS_SVG + '</button>'
           + '<div class="bt-st-menu" data-stmenu-panel hidden role="menu">'
           + '<button class="bt-st-menu-item" data-stcollapse type="button">Collapse player - keeps playing</button>'
           + '<button class="bt-st-menu-item" data-vidtoggle type="button" aria-expanded="true">Minimize video</button>'
@@ -1288,7 +1296,7 @@
         // section, ahead of the notes line, so it reads as the section's
         // primary controls rather than one more inline label decoration.
         + '<div class="bt-st-sec"><div class="bt-st-ctrlrow" data-ctrlrow>'
-        + '<button class="iconBtn soundToggle bt-st-soundtoggle" data-soundtoggle type="button" aria-label="Hear this scale" aria-pressed="false">&#9658;</button>'
+        + '<button class="iconBtn soundToggle bt-st-soundtoggle" data-soundtoggle type="button" aria-label="Hear this scale" aria-pressed="false">' + PLAY_SVG + '</button>'
         + '<button class="bt-st-speedbtn" data-speedtoggle type="button">' + esc(TEMPO_LABEL[tempo] || TEMPO_LABEL[TEMPO_DEFAULT]) + '</button>'
         // G4: the app-wide help-icon convention (songbook.css .helpIcon, an
         // (i)-style glyph prefix) replaces the ad-hoc "?" text - one explainer
@@ -1393,7 +1401,7 @@
         + '<div class="bt-st-id"><span class="bt-st-t"><span class="bt-st-tx">' + esc(t.title || '') + '</span></span>'
         + '<span class="bt-st-meta">' + meta + '</span></div>'
         + barStrip
-        + '<button class="bt-st-minix" data-minix type="button" aria-label="Close player">&#215;</button>'
+        + '<button class="bt-st-minix" data-minix type="button" aria-label="Close player">' + CLOSE_SVG + '</button>'
         + '</div>'
         + progRow
         + '</div>'
@@ -1854,7 +1862,7 @@
         soundToggleEl.classList.toggle('on', on);
         soundToggleEl.setAttribute('aria-pressed', on ? 'true' : 'false');
         soundToggleEl.setAttribute('aria-label', on ? 'Stop' : 'Hear this scale');
-        soundToggleEl.innerHTML = on ? '&#9632;' : '&#9658;';
+        soundToggleEl.innerHTML = on ? STOP_SVG : PLAY_SVG;
       }
       // Studio close (closePlayer, above) still stops outright (implementation
       // note #3, M-EAR wave 1 spec). A scale-chip switch WHILE playing no
