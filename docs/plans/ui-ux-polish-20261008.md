@@ -28,9 +28,9 @@ Order: U6 runs in parallel with U1+U3 (no shared files). U2 and U4 run in parall
 
 | Id | Decision | Options |
 |---|---|---|
-| G1 tab bar icons | Migrate the ♪ ✎ ◴ text glyphs to SVG per the icon-density standard? It is the primary nav look. | keep glyphs / migrate |
-| G2 tuner idle state | The idle card shows a middle-dot placeholder and ~500px of reserved space before Start. #348's guided flow is still awaiting device UAT - polish now, or after that UAT? | after UAT / now |
-| G3 S-TONES | Chord detail shows correctly spelled tones (E#dim = E# G# B). Small, unblocked since #199, theory-coach consult required. | ship in this PR / later |
+| G1 tab bar icons | Migrate the ♪ ✎ ◴ text glyphs to SVG per the icon-density standard? It is the primary nav look. | PICKED 2026-10-08: migrate (note / pencil / tuning fork, 22px) |
+| G2 tuner idle state (PICKED: now) | The idle card shows a middle-dot placeholder and ~500px of reserved space before Start. #348's guided flow is still awaiting device UAT - polish now, or after that UAT? | after UAT / now |
+| G3 S-TONES (PICKED: ship in this PR) | Chord detail shows correctly spelled tones (E#dim = E# G# B). Small, unblocked since #199, theory-coach consult required. | ship in this PR / later |
 | G4 S-GUIDE-CONTEXT, S-POSTPROG-FLOW, S-AUDITION-CAPTURE, M-13 tutor polish, M-PERFORM, desktop layout | Vision items from QUEUE - each needs its own interview. | interview next / park |
 
 ## Dropped (already shipped - the QUEUE rows were stale)
@@ -67,4 +67,5 @@ Never merge (Nik merges). Never change tuner flow semantics (G2). Never bump the
 | U3 | integrated | with U1 | music-v372 |
 | U4 | integrated | squash of claude/polish-u4 @ 9502714 | music-v372-2 |
 | U5 | queued | | |
+| G1 | integrated (Nik: migrate) | orchestrator commit | music-v372-4 |
 | U6 | integrated | squash of claude/polish-u6 @ be8c890 | n/a |

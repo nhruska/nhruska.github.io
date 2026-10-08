@@ -198,7 +198,8 @@ body.studioopen .tabbar{position:relative;z-index:55;}
    stays put (padding-bottom absorbs the reclaimed space); corners stay fully
    rounded (it is an inset pill, not an edge-anchored tab). */
 .tabbar button.on{color:var(--accent-ink);background:var(--accent-deep);margin-bottom:calc(-1 * max(env(safe-area-inset-bottom,0px), 8px));padding-bottom:calc(6px + max(env(safe-area-inset-bottom,0px), 8px));}
-.tabbar button .icn{font-size:1.28rem;line-height:1;}
+.tabbar button .icn{line-height:1;display:block;}
+.tabbar button .icn svg{display:block;width:22px;height:22px;pointer-events:none;} /* G1: 22px ink in a 44px+ tab (icon-density standard) */
 .tabbar button .lbl{font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;font-weight:800;}
 .screen{display:none;}
 .screen.on{display:block;animation:fadeUp .26s cubic-bezier(.2,.7,.3,1);}
