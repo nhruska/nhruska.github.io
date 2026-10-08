@@ -48,4 +48,6 @@ All encoded as permanent regression tests in test/key-spelling.test.js ("profess
 
 ---
 
+
+**Chord tones (S-TONES, PR #372 G3, 2026-10-08):** `Theory.chordNotesInKey(chord, keyRoot, keyMode)` (theory.js, re-exported as `Songbook.chordNotesInKey`) spells every chord TONE by function: the root is named by `Circle.noteInKey` (the same path the chord name takes), each 3rd/5th/7th takes the letter a third/fifth/seventh above the root's letter with the accidental that hits the pitch (intervals from `Circle.MODE_STEPS.ionian` + the quality's alterations). Never a pitch-class respell: Bb in F = Bb D F, E#dim in F# = E# G# B, Adim in Bb = A C Eb. Keyless: the canonical-sharp token, like the name. Surface: the Compose maximize overlay "Notes:" line. Canon: [test/chord-notes-in-key.test.js](../../../test/chord-notes-in-key.test.js) (14 cases + two 12x2x12 sweeps).
 **Anchors verified:** circle.js (ROOTS/norm/F2S; spellScaleKeyAware/spellRootInKey; preferredTonicName/scaleInKey/diatonicInKey/soloScaleInKey/noteInKey), tracks.js (studioTheory/soloBundle notes, dispChord/dispKeyRoot, chip + panel seams), songbook.js (dispChordName, packDiagram displayName, soloChipScale, key chip), test/key-spelling.test.js (kernel + professor traps), test/pw/scenarios/solo-skip-mixolydian.json (pixel gate: Bb in the Studio notes line)
