@@ -31,7 +31,7 @@ Order: U6 runs in parallel with U1+U3 (no shared files). U2 and U4 run in parall
 | G1 tab bar icons | Migrate the ♪ ✎ ◴ text glyphs to SVG per the icon-density standard? It is the primary nav look. | PICKED 2026-10-08: migrate (note / pencil / tuning fork, 22px) |
 | G2 tuner idle state (PICKED: now) | The idle card shows a middle-dot placeholder and ~500px of reserved space before Start. #348's guided flow is still awaiting device UAT - polish now, or after that UAT? | after UAT / now |
 | G3 S-TONES (PICKED: ship in this PR) | Chord detail shows correctly spelled tones (E#dim = E# G# B). Small, unblocked since #199, theory-coach consult required. | ship in this PR / later |
-| G4 S-GUIDE-CONTEXT, S-POSTPROG-FLOW, S-AUDITION-CAPTURE, M-13 tutor polish, M-PERFORM, desktop layout | Vision items from QUEUE - each needs its own interview. | interview next / park |
+| G4 S-GUIDE-CONTEXT, S-POSTPROG-FLOW, S-AUDITION-CAPTURE, M-13 tutor polish, M-PERFORM, desktop layout | PICKED 2026-10-08 (interview): S-GUIDE-CONTEXT = in-context hints REPLACE the ? button (medium unit, copy-coach gated); S-POSTPROG-FLOW = lead with "practice over a track" (Studio bridge primary, save secondary); S-AUDITION-CAPTURE = queue SHORT behind post-prog (same bridge); M-13 tutor-guided entry + desktop layout = own interview sessions next; M-PERFORM stays parked. | recorded in QUEUE SHORT |
 
 ## Dropped (already shipped - the QUEUE rows were stale)
 
