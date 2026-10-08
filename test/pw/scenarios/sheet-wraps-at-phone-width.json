@@ -1,0 +1,117 @@
+{
+  "name": "sheet-wraps-at-phone-width",
+  "persona": "beginner",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "note": "U5 (ui-ux-polish-20261008): the song-view practice sheet wraps chord-lyric rows at the measured character budget (sheetWrapMaxChars, shared with the Stage) instead of overflowing sideways inside its overflow-x:auto box. Measured pre-change at Pixel 5: Mr. Jones 742px in a 329px box, Refugee 723, Roxanne 704. Pins the Lyrics/Both view (default) on three long-line catalog songs.",
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/"
+    },
+    {
+      "action": "wait",
+      "ms": 800
+    },
+    {
+      "action": "tap",
+      "selector": "#segAll"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Mr. Jones\")"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "screenshot",
+      "name": "sheet-wrap-mr-jones"
+    },
+    {
+      "action": "evalAssert",
+      "label": "U5: Mr. Jones - #sheetBox does not scroll sideways at 412 (scrollWidth <= clientWidth + 1). Pre-change the sheet rendered unwrapped white-space:pre rows, ~700px in a ~329px box",
+      "js": "(function(){var b=document.getElementById('sheetBox');return !!b && b.scrollWidth<=b.clientWidth+1;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "U5: Mr. Jones - every .lyrLine fits inside the sheet box (row scrollWidth <= box clientWidth), and the sheet holds rows",
+      "js": "(function(){var b=document.getElementById('sheetBox');if(!b)return false;var L=b.querySelectorAll('.lyrLine');if(!L.length)return false;for(var i=0;i<L.length;i++){if(L[i].scrollWidth>b.clientWidth+1)return false;}return true;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#backLib"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Refugee\")"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "screenshot",
+      "name": "sheet-wrap-refugee"
+    },
+    {
+      "action": "evalAssert",
+      "label": "U5: Refugee - #sheetBox does not scroll sideways at 412 (scrollWidth <= clientWidth + 1). Pre-change the sheet rendered unwrapped white-space:pre rows, ~700px in a ~329px box",
+      "js": "(function(){var b=document.getElementById('sheetBox');return !!b && b.scrollWidth<=b.clientWidth+1;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "U5: Refugee - every .lyrLine fits inside the sheet box (row scrollWidth <= box clientWidth), and the sheet holds rows",
+      "js": "(function(){var b=document.getElementById('sheetBox');if(!b)return false;var L=b.querySelectorAll('.lyrLine');if(!L.length)return false;for(var i=0;i<L.length;i++){if(L[i].scrollWidth>b.clientWidth+1)return false;}return true;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#backLib"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": "#songsList .listItem:has-text(\"Roxanne\")"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "screenshot",
+      "name": "sheet-wrap-roxanne"
+    },
+    {
+      "action": "evalAssert",
+      "label": "U5: Roxanne - #sheetBox does not scroll sideways at 412 (scrollWidth <= clientWidth + 1). Pre-change the sheet rendered unwrapped white-space:pre rows, ~700px in a ~329px box",
+      "js": "(function(){var b=document.getElementById('sheetBox');return !!b && b.scrollWidth<=b.clientWidth+1;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "U5: Roxanne - every .lyrLine fits inside the sheet box (row scrollWidth <= box clientWidth), and the sheet holds rows",
+      "js": "(function(){var b=document.getElementById('sheetBox');if(!b)return false;var L=b.querySelectorAll('.lyrLine');if(!L.length)return false;for(var i=0;i<L.length;i++){if(L[i].scrollWidth>b.clientWidth+1)return false;}return true;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#backLib"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    }
+  ]
+}
