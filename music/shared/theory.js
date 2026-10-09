@@ -274,6 +274,53 @@
     return C.noteInKey(keyRoot, keyMode, m[1]) + m[2];
   }
 
+  // Key-aware chord TONES (S-TONES / G3): the note names of a chord's triad (+7th),
+  // spelled by the conservatory rule - the root takes its key-aware name
+  // (Circle.noteInKey), then each chord tone takes the letter a 3rd / 5th / 7th
+  // above the root's letter with the accidental chosen to hit its pitch. So E#dim
+  // in F# major is E# G# B (never the pitch-class respell F G# B), Bb in F is
+  // Bb D F, Adim in Bb is A C Eb. Intervals derive from Circle.MODE_STEPS.ionian
+  // (the interval SSOT) with the chord quality's flats/sharps applied.
+  // Keyless (no keyRoot) -> canonical-sharp pitch-class names, matching what the
+  // chord NAME shows in that context. Unknown suffix -> the bare triad of its
+  // quality (same fallback as Circle.chordTones). Unparseable input -> [].
+  var CT_LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+  function ctAccidental(semis) {
+    var d = ((semis % 12) + 12) % 12; if (d > 6) d -= 12;
+    if (d === 0) return '';
+    return d > 0 ? new Array(d + 1).join('#') : new Array(-d + 1).join('b');
+  }
+  function chordNotesInKey(chord, keyRoot, keyMode) {
+    var C = global.Circle;
+    var m = /^([A-Ga-g][#b]?)(.*)$/.exec(String(chord == null ? '' : chord).trim());
+    if (!m) return [];
+    var rootTok = m[1].charAt(0).toUpperCase() + m[1].slice(1), suf = m[2] || '';
+    var keyed = !!(keyRoot && C && C.noteInKey);
+    var rootName = keyed ? C.noteInKey(keyRoot, keyMode, rootTok) : (F2S[rootTok] || rootTok);
+    var rootPc = noteToPc(rootName);
+    if (rootPc == null) return [];
+    var ion = (C && C.MODE_STEPS && C.MODE_STEPS.ionian) || [0, 2, 4, 5, 7, 9, 11];
+    var dim = /^(dim|°|o)/i.test(suf) || /^m7?b5|^m7-5|^ø/.test(suf);
+    var aug = !dim && /^(aug|\+)/i.test(suf);
+    var min = !dim && !aug && /^m(?!aj)/.test(suf);
+    var third = ion[2] - ((min || dim) ? 1 : 0);
+    var fifth = ion[4] - (dim ? 1 : 0) + (aug ? 1 : 0);
+    // sus2 / sus4 (pack vocabulary via QUAL_FALLBACK): the third is REPLACED by
+    // the 2nd or 4th degree - never added beside it.
+    var sus2 = /sus2/i.test(suf), sus4 = !sus2 && /sus(4)?(?![0-9])/i.test(suf);
+    var parts = sus2 ? [[0, 0], [1, ion[1]], [4, fifth]] : sus4 ? [[0, 0], [3, ion[3]], [4, fifth]] : [[0, 0], [2, third], [4, fifth]];
+    if (/^(dim|°|o)7/i.test(suf)) parts.push([6, ion[6] - 2]);      // fully diminished: bb7
+    else if (/(maj7|M7)/.test(suf)) parts.push([6, ion[6]]);
+    else if (/7/.test(suf)) parts.push([6, ion[6] - 1]);            // 7, m7, m7b5
+    var li = CT_LETTERS.indexOf(rootName.charAt(0).toUpperCase());
+    return parts.map(function (p) {
+      var pc = (rootPc + p[1]) % 12;
+      if (!keyed) return ROOTS[pc];
+      var L = CT_LETTERS[(li + p[0]) % 7];
+      return L + ctAccidental(pc - LETTER_PC[L]);
+    });
+  }
+
   global.SongbookTheory = {
     ROOTS: ROOTS,
     F2S: F2S,
@@ -298,7 +345,8 @@
     romanChordSuffix: romanChordSuffix,
     realizeRoman: realizeRoman,
     realizeSection: realizeSection,
-    dispChordNameInKey: dispChordNameInKey
+    dispChordNameInKey: dispChordNameInKey,
+    chordNotesInKey: chordNotesInKey
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = global.SongbookTheory;
 

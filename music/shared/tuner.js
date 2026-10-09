@@ -428,11 +428,43 @@
     flow.on('done', function () { finishGuided(); });
     return flow;
   }
+  /* IDLE chrome (G2, UI/UX polish 2026-10-08). Before Start (and after Stop) the
+   * card carries NO live readout, so it must not reserve one: setIdle() toggles
+   * .idle on #micBox + #micNote, and the portrait CSS then collapses the card to
+   * its content, hides the runway (no target yet) and dims the big-note slot.
+   * The slot names what Start will ask for - the first string, with a small
+   * "next" cue (guided) or the whole string sequence (free) - never a bare dot.
+   * Live phases never carry .idle, so their geometry is untouched. */
+  function idleNote() {
+    if (!STRINGS.length) return 'Tune';
+    if (mode === 'free') return STRINGS.map(function (s) { return s.n; }).join(' ');
+    return STRINGS[0].n;
+  }
+  function idleHint() {
+    if (mode === 'free') return 'tap Start mic, then play any string';
+    // Name the string the way the live hint does (t.l: "6th string (low E)") - a
+    // guitar has two E strings, so the bare note name was ambiguous (review fix).
+    var s0 = STRINGS[0];
+    return s0 ? 'tap Start, then play the ' + (s0.l || (s0.n + ' string')) + ' - the tuner walks the rest in order' : 'tap Start, then play a string';
+  }
+  // One idle render for every path that lands in idle (buildMic, setMode,
+  // stopFree) so the placeholder, hint and .idle class can never drift apart.
+  function renderIdle() {
+    var nn = el('micNote'); if (nn) { nn.textContent = idleNote(); nn.classList.remove('intune'); }
+    var cc = el('micCents'); if (cc) cc.textContent = idleHint();
+    lastCentsTxt = ''; lastNoteTxt = '';
+    setIdle(true);
+  }
+  function setIdle(on) {
+    var n = el('micNote'), b = n && n.parentNode;
+    if (b) b.classList.toggle('idle', on);
+    if (n) { n.classList.toggle('idle', on); n.classList.toggle('seq', on && mode === 'free'); }
+  }
   function renderGuided(st) {
     var noteEl = el('micNote'), centsEl = el('micCents'), rw = el('micRunway'), puck = el('micPuck'), hold = el('micHold');
     if (!noteEl || !centsEl || !rw || !puck) return;
     var t = st.target, phase = st.phase, txt, note;
-    if (phase === 'idle') { note = t ? t.n : '·'; txt = 'tap Start - the tuner walks every string, low to high'; }
+    if (phase === 'idle') { note = idleNote(); txt = idleHint(); }
     else if (phase === 'done') { note = '✓'; txt = 'all ' + STRINGS.length + ' strings in tune'; }
     else if (phase === 'landed') { note = t.n; txt = '✓ ' + t.n + ' in tune' + (flow && flow.params().autoAdvance === false ? ' - staying here: tune down, try again' : (st.progress.every(function (d) { return d; }) ? '' : ' - next string coming up')); }
     else if (st.cents == null) { note = t.n; txt = 'play the ' + t.l; }
@@ -447,6 +479,7 @@
     if (note !== lastNoteTxt) { noteEl.textContent = note; lastNoteTxt = note; }
     if (txt !== lastCentsTxt) { centsEl.textContent = txt; lastCentsTxt = txt; }
     noteEl.classList.toggle('intune', phase === 'landed' || phase === 'done');
+    setIdle(phase === 'idle');
     rw.classList.toggle('waiting', phase !== 'landed' && phase !== 'done' && st.cents == null);
     rw.classList.toggle('arriving', phase === 'arriving');
     rw.classList.toggle('landed', phase === 'landed' || phase === 'done');
@@ -550,6 +583,7 @@
         micBand = bandLimits(STRINGS);
         src.connect(micAnalyser);
         micOn = true;
+        setIdle(false);
         var t = el('micToggle'); if (t) t.textContent = 'Stop mic';
         freeLoop();
       })
@@ -558,8 +592,7 @@
   function stopFree() {
     releaseMic();
     var t = el('micToggle'); if (t) t.textContent = 'Start mic';
-    var nn = el('micNote'); if (nn) { nn.textContent = '·'; nn.classList.remove('intune'); }
-    var cc = el('micCents'); if (cc) cc.textContent = 'mic stopped';
+    renderIdle();
     needleEMA = 50; freqHist = []; lockedString = null; switchFrames = 0; quietFrames = 0;
     inTuneHold = 0; reading = false; freeTxt = ''; glitchFrames = 0; prevShown = null;
     var nd = el('micNeedle');
@@ -675,9 +708,7 @@
     if (m) m.style.display = mode === 'free' ? '' : 'none';
     if (tone) tone.style.display = mode === 'guided' ? '' : 'none';
     if (t) t.textContent = mode === 'guided' ? 'Start' : 'Start mic';
-    var cc = el('micCents'); if (cc) cc.textContent = mode === 'guided' ? 'tap Start - the tuner walks every string, low to high' : 'tap Start mic, then play any string';
-    lastCentsTxt = ''; lastNoteTxt = '';
-    var nn = el('micNote'); if (nn) nn.textContent = '·';
+    renderIdle();
     document.querySelectorAll('.micModes .chip').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-mode') === mode); });
     document.querySelectorAll('#tStrings .tStr').forEach(function (b) { b.classList.remove('cur'); b.classList.remove('done'); });
   }
@@ -695,7 +726,7 @@
       return;
     }
     box.innerHTML = '<div class="chips micModes"><button class="chip on" data-mode="guided">Guided</button><button class="chip" data-mode="free">Any string</button></div>'
-      + '<div class="micNote" id="micNote">·</div><div class="micCents" id="micCents">tap Start - the tuner walks every string, low to high</div>'
+      + '<div class="micNote idle" id="micNote">' + idleNote() + '</div><div class="micCents" id="micCents">' + idleHint() + '</div>'
       // the runway: approach from the flat side toward the post at 60%
       + '<div class="runway waiting" id="micRunway"><div class="rwTrack"></div><div class="rwPost" id="micPost"></div><div class="rwHold" id="micHold"></div><div class="rwPuck" id="micPuck" style="left:6%"></div><div class="fl">♭ flat</div><div class="sh">sharp ♯</div></div>'
       // the legacy needle meter (free mode only)
@@ -703,6 +734,7 @@
       // Primary CTA: .btn.red (the app's canonical accent-fill primary); the
       // tone toggle rides beside it as a ghost
       + '<div class="actions micActions"><button class="btn red" id="micToggle">Start</button><button class="btn ghost" id="toneToggle">Tone: on</button></div>';
+    box.classList.add('idle');
     el('micToggle').onclick = micToggle;
     el('toneToggle').onclick = toggleTone;
     renderToneBtn();

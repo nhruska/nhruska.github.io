@@ -1,8 +1,16 @@
 # Repo Command Center - nhruska/nhruska.github.io - Problem Solutions (agent-readable brief)
-Generated: 2026-10-08T16:37:13Z
-Status: ok
+Generated: 2026-10-09T01:52:02Z
+Status: partial
+  warning: velocity merged-count search failed - count line omitted this run
+  warning: Pages status fetch failed - deploy.pages.status is unknown this run
 
 ## NOW
+- Queue NOW: PR [#372](https://github.com/nhruska/nhruska.github.io/pull/372) OPEN (draft) - 6 LAUNCH units (touch floors, icon SVG, tune copy, chord-chip primitive, lyric clip, docs reconcile) + 4 GATED picks
+- Queue NOW: The Tune card's Guided / Any string chips have NO click handler: `Tuner.setMode` is only called from `Tuner._sim.start` (tuner.js ~790), so "Any string" (free mode) is unreachable from the UI and its idle placeholder path is untested. Pre-existing, not touched by #372. Fix: wire `.micModes .chip[data-mode]` to `setMode`, add a scenario that taps Any string and asserts the free-mode hint.
+- Queue NOW: LAUNCH-READY: in-context hints replace the generic ? button, one line per surface (song view, Studio, Compose); copy-coach budget per level; the ? affordance goes away. Next polish PR after #372.
+- Queue NOW: LAUNCH-READY: after a progression is built the primary action is "practice over a track" (Studio bridge), save/name secondary.
+- Queue NOW: SEQUENCED behind S-POSTPROG-FLOW (same Studio <-> Compose bridge). Spec: [design-audition-first-composing-20260903](design-audition-first-composing-20260903.md).
+- Queue NOW: INTERVIEW NEXT (picked 2026-10-08): each gets its own vision interview session. M-PERFORM stays parked.
 - Queue NOW: **8 of 10 done** (re-verified 2026-10-08 against GitHub): #350 closed; #355, #348, #357, #360, #351, #358, **[#346](https://github.com/nhruska/nhruska.github.io/pull/346) (2026-10-06)** merged. Remaining: [#347](https://github.com/nhruska/nhruska.github.io/pull/347) (open, ready) - Nik merges; [#356](https://github.com/nhruska/nhruska.github.io/pull/356) SBS plan (draft) last. Owned by the nh-pages Project since the sprint orchestrator retired.
 - Open draft PR #374 (CI green): fix(music): NH-12 save truth - roll back failed saves and tell the user on all 5 save paths - https://github.com/nhruska/nhruska.github.io/pull/374
 - Open draft PR #372 (CI green): ui/ux: nh-pages polish enhancements mission (plan + execution) - https://github.com/nhruska/nhruska.github.io/pull/372
@@ -17,13 +25,13 @@ Status: ok
 
 ## Recent work products
 - #373 - docs(queue): NH-7 groom - move shipped NOW/SHORT rows to a DONE archive with verified merged-PR citations (2026-10-08) - https://github.com/nhruska/nhruska.github.io/pull/373
-- #371 - fix(theory): F major's B tile reads B, not Cb (music-v371) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/371
-- #370 - test(pw): bring 4 stale scenarios up to the shipped app (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/370
-- #369 - feat(shell): landscape phones get a side rail and one-row player (music-v369) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/369
-- #368 - fix(player): video window never covers the mini-player controls or tab bar (music-v368) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/368
-- #367 - feat(tune): two-pane landscape Tune for every instrument, one screen, no scroll (music-v367) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/367
-- #366 - fix(tune): landscape mini-player no longer buries the bottom string row (music-v366) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/366
+- #346 - docs: calibrate Thought-Ware public claims (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/346
 - #365 - cc: REST fallback so the session-start sweep sees open PRs; stop run-all dropping test summaries; reconcile QUEUE and the handoff doc (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/365
+- #370 - test(pw): bring 4 stale scenarios up to the shipped app (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/370
+- #371 - fix(theory): F major's B tile reads B, not Cb (music-v371) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/371
+- #364 - docs(plans): nh-pages Project handoff 2026-10-05 (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/364
+- #368 - fix(player): video window never covers the mini-player controls or tab bar (music-v368) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/368
+- #369 - feat(shell): landscape phones get a side rail and one-row player (music-v369) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/369
 
 ## Links
 - Repo Command Center: https://nhruska.github.io/docs/artifacts/cc/repo.html
@@ -36,6 +44,6 @@ Status: ok
 ## Conventions
 - Payload: docs/artifacts/cc/payload-repo.json
 - Regen: python3 scripts/command-center-gen.py (rewrites the payload AND this file together)
-- Suite: node test/run-all.js (4345 cases / 81 suites)
+- Suite: node test/run-all.js (4409 cases / 87 suites)
 - CACHE discipline: music/shared|play changes require a music/sw.js CACHE bump - scripts/check-cache-bump.sh
 - Public repo: payload + this brief carry public data only (no session-file content)

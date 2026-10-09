@@ -51,6 +51,8 @@ idle -start-> approach -(|cents| <= 2 c)-> arriving -(held 600 ms, voiced)-> lan
 landed -(700 ms)-> approach on the next undone string ... -> done (last string)
 ```
 
+**Idle state (G2, UI/UX polish 2026-10-08):** before Start the `.micBox` carries the `idle` class: the card hugs its content, the runway and needle are not rendered, the big-note slot shows the FIRST target string dimmed with a small "next" cue (`idleNote()`), and the hint reads "tap Start, then play the <string> string - the tuner walks the rest in order" (`idleHint()`). Live phases keep their geometry byte for byte (measured: 0 boxes differ > 1px, docs/artifacts/ui-polish-20261008/live-{before,after}.json), so Start shifts the chips down ~180px and the strings ~290px - the accepted cost of not reserving a dead readout. Scoped off the landscape two-pane (`@media not ((orientation:landscape) and (max-height:560px))`) and `?tunerlab=1`. Pins: test/tune-idle-pin.test.js, scenario tune-idle-compact. Known gap: the Guided / Any string chips have no click handler (`setMode` is only called from `Tuner._sim.start`) - QUEUE row S-TUNER-MODE-CHIPS.
+
 - **Approach from flat is the designed path** (operator model: nobody tunes
   down - slack settles flat). Hints: `flat` <= -4 c, `sharp` >= +3 c, else
   `near`. Sharp is overshoot: normal, never an advance.

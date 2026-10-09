@@ -1,0 +1,115 @@
+# UI/UX Polish Mission - 2026-10-08
+
+> Goal spec for the nh-pages UI/UX polish pass launched by Nik on 2026-10-08. PR [#372](https://github.com/nhruska/nhruska.github.io/pull/372). Base: main at v371.
+
+## Completion condition
+
+Every LAUNCH unit below is merged into PR #372 as its own commit with its own cache-bump pair, `node test/run-all.js` is green, `scripts/check-cache-bump.sh` passes, `scripts/a11y-check.py` passes, and each unit carries a 412x915 render proof under `docs/artifacts/ui-polish-20261008/`. GATED units ship only after Nik picks a direction.
+
+## How the candidates were found
+
+- Session-start sweep + a read-only inventory of QUEUE.md, docs/plans/*uat*|*polish*|*friction*, the engineering-wiki findings register, and the app CSS/JS (most old rows had already shipped - see "Dropped" below).
+- Measured capture with `.claude/skills/ux-coach/scripts/web-ux-capture.js` at 412x915 on Songs / Compose / Tune / Settings, light and dark: 0 sub-44px targets on those screens, worst text contrast 4.58:1 light and 5.5:1 dark (the 1.63:1 and 2.94:1 dark-Compose rows are disabled controls at 0.4 alpha). The floors that fail live on overlays the capture did not open (units U1).
+
+## LAUNCH units (no taste call needed - conventions already decide them)
+
+| Unit | What | Files | Verify | Size |
+|---|---|---|---|---|
+| U1 touch-floor sweep | `#maxClose` gets `type=button`, `aria-label`, 44x44. `.invModal-x` 38 -> 44. `.searchClear` 26 -> 44 halo (house pattern: invisible 44px halo over the visual). `.li-up`/`.li-dn` 40x32 -> 44 min height + `--r-btn-sm` radius token (register row "li-up/dn below 44px floor"). | music/play/index.html, music/shared/songbook.css | a11y-check.py, consistency-lint, geometry probe on each control at 412 | S |
+| U2 icon glyph -> SVG | Bar menu, mini x, sound toggle, banner x, `.songCanvasClose`, `.welcomeCard .x` migrate from text glyphs to inline SVG at the icon-density standard (22-28px ink in 44-56px boxes). Tab bar glyphs stay (GATED G1). | songbook.js, tracks.js, index.html, songbook.css | ui-icon-density scenario, unit suite, screenshot per surface | M |
+| U3 tune copy dedupe | The Tune card h3 subNote repeats the header purpose line word for word. Drop the card subNote (the purpose line is the system-wide carrier). | music/play/index.html | screenshot 412, grep no second copy | S |
+| U4 chord-chip primitive | `.bt-st-chordchip` (40px, Studio) and `.chordChips .c` (44px, song view) carry one meaning with two looks. Compose the Studio chip from the song-view primitive (Element Consistency Law: fix at the primitive). Confine edits to tracks.css / tracks.js so it can run beside U2. | music/shared/tracks.css, tracks.js | Studio scenarios (cockpit-*, studio-*), 44px probe, both themes | M |
+| U5 lyric clip hint | `.sheet` lines clip at the right edge with no scroll sign. Render-check first at 412 with a long-lyric song. Only if it reproduces: opt the sheet into scroll-hint.js. | songbook.css (+ sheet-render.js if needed) | screenshot before/after | S |
+| U6 docs reconcile | test/pw/README persona coverage line (measured 25 of 133 scenarios carry a persona, not "2 of 8"). Wiki findings register `.helpIcon` row (applied at tracks.js). QUEUE.md: mark S3/S4/S5/S8/S9, S-TYPEFILTER-ACCENT, S-OVERLAY-HITTEST-SWEEP (#352), the two video scenarios (#344) as shipped. | test/pw/README.md, music/engineering-wiki/ux-philosophy/component-conventions.md, docs/plans/QUEUE.md | link check, no app files touched (no bump) | S |
+
+Order: U6 runs in parallel with U1+U3 (no shared files). U2 and U4 run in parallel after U1 lands (U4 confined to tracks.*). U5 last.
+
+## GATED units (Nik picks - one AskUserQuestion at the rest point)
+
+| Id | Decision | Options |
+|---|---|---|
+| G1 tab bar icons | Migrate the ♪ ✎ ◴ text glyphs to SVG per the icon-density standard? It is the primary nav look. | PICKED 2026-10-08: migrate (note / pencil / tuning fork, 22px) |
+| G2 tuner idle state (PICKED: now) | The idle card shows a middle-dot placeholder and ~500px of reserved space before Start. #348's guided flow is still awaiting device UAT - polish now, or after that UAT? | after UAT / now |
+| G3 S-TONES (PICKED: ship in this PR) | Chord detail shows correctly spelled tones (E#dim = E# G# B). Small, unblocked since #199, theory-coach consult required. | ship in this PR / later |
+| G4 S-GUIDE-CONTEXT, S-POSTPROG-FLOW, S-AUDITION-CAPTURE, M-13 tutor polish, M-PERFORM, desktop layout | PICKED 2026-10-08 (interview): S-GUIDE-CONTEXT = in-context hints REPLACE the ? button (medium unit, copy-coach gated); S-POSTPROG-FLOW = lead with "practice over a track" (Studio bridge primary, save secondary); S-AUDITION-CAPTURE = queue SHORT behind post-prog (same bridge); M-13 tutor-guided entry + desktop layout = own interview sessions next; M-PERFORM stays parked. | recorded in QUEUE SHORT |
+
+## Dropped (already shipped - the QUEUE rows were stale)
+
+S3/S4/S5/S8/S9, S-TYPEFILTER-ACCENT (songbook.css `.catTabRow .chip.on`), S-OVERLAY-HITTEST-SWEEP (#352), video scenarios (#344), ux-findings F1-F11, every pr65 item, S-COMPOSE-CALM, setlist gestures. The scroll-hint chevron overlapping the 4th progression chip is the designed fade + chevron affordance, not a defect.
+
+## Verify commands
+
+```
+node test/run-all.js
+bash scripts/check-cache-bump.sh
+python3 scripts/a11y-check.py
+python3 test/pw/run-scenario.py test/pw/scenarios/ui-icon-density.json
+NODE_PATH=/opt/node-tools/node_modules node .claude/skills/ux-coach/scripts/web-ux-capture.js --root . --path "/music/play/index.html?p=ukulele-gcea" --out <dir>
+```
+
+## Never-do / abort
+
+Never merge (Nik merges). Never change tuner flow semantics (G2). Never bump the cache in a worker branch - the orchestrator bumps at integration, one version per integrated commit (`music-v372`, `-2`, `-3` ...). The bump is a TRIPLE plus one: `music/sw.js` CACHE, `shared/build-stamp.js` VERSION + UPDATED_ISO, `python3 scripts/stamp-asset-versions.py` (53 asset URLs in play/index.html + 5 in triad-inversions.html), and `math/version.js` MATH_VERSION whenever songbook.css / theme.js / esc.js / toast.js change (Math precaches them). `scripts/check-cache-bump.sh` judges all four. Abort a unit after 3 failed gate attempts and record the evidence here.
+
+## Tooling fixed on the way
+
+- `scripts/a11y-check.py` and `scripts/layout-check.py` now resolve Chromium like `test/pw/run-scenario.py` ($PW_CHROME > /opt/pw-browsers > Playwright default), so both run directly in a Claude web container. a11y gate proven: `PASS a11y gate: 0 total, 0 baselined, 0 new` (A2/A3/A4 examined zero elements - the script's own WARN, pre-existing).
+- `scripts/layout-check.py` seeds the welcome tour + callouts done (the `#welcomeOv` overlay intercepted every click).
+- DEFERRED (scope stated, not fixed here): `layout-check.py`'s Compose key-picker flow is stale against the app - a Playwright mouse click on `#keyRoots .rootChip` never selects a root (probe: no `.on` root, flyout stays open), so `wait_for_function(keyFlyout.hidden)` times out at the first width. The script predates the current flyout. It is manual and not in CI. Re-author its picker steps as a pw scenario verb instead.
+- U5 probe (scratchpad u5-sheet-clip.py): at Pixel 5 width the practice sheet is 742px wide in a 329px box on Mr. Jones (723 Refugee, 704 Roxanne), `overflow-x:auto`, no affordance. The Stage already wraps at a measured budget (CW-1, `perfWrapMaxChars`) - the song view never passes one. U5 = pass the budget in the song view too.
+
+## Code review (orchestrator, /code-review main medium, 11 findings)
+
+| # | Finding | Disposition |
+|---|---|---|
+| 1 | Song-view sheet budget measured before Space Mono swaps in (cold load) | FIXED: the Stage's font-refit hook now re-fills the song sheet too |
+| 2 | sus2/sus4 got a major third | FIXED in chordNotesInKey (degree swap), 4 unit cases |
+| 3 | Landscape maximize overlay could clip the Notes line | DOES NOT REPRODUCE: scenario chord-detail-landscape-fit measures every card + Notes line inside the grid at 851x393, PASS, no CSS change |
+| 4 | Idle hint says "the E string" on a two-E-string guitar | FIXED: uses the string label (t.l), e.g. "6th string (low E)" |
+| 5 | Studio chip ellipsis at 360 with 6-char names | NOT A PATH: the chords-in-key strip carries diatonic triads only (5 chars max); U4 measured C#dim/D#dim/Bbdim at 360 with zero clipping |
+| 6 | .search padding-right 40 under the 44px clear box | FIXED: 48px |
+| 7 | SVG strings duplicated across 12 places, pinned by equality tests | DEFERRED: a shared icons.js cannot serve the static HTML copies without runtime injection; the pins are the drift guard. Queue row if it bites |
+| 8 | chrome_path() triplicated across gates | DEFERRED: one-module import is a scripts/ refactor outside this PR; noted on the tooling row |
+| 9 | Idle render triplet repeated in 3 places | FIXED: renderIdle() funnel, pin test updated |
+| 10 | MATH_VERSION bumped with no math/ change | NOT A BUG: Math precaches songbook.css / theme.js / esc.js / toast.js; check-cache-bump.sh FAILS without the bump when songbook.css changes (observed at U1) |
+| 11 | MQ4 `@media not (...)` unsupported on old WebKit/Blink | NOT A NEW FLOOR: the app already requires `:has()` (Chrome 105+ / Safari 15.4+), above MQ4 `not` (Chrome 104+ / Safari 16.4) - noted, no change |
+
+## Adversarial pass 2 (orchestrator, /code-review main high, 9 findings; codex volley NOT runnable in-container - no codex binary/auth)
+
+| # | Finding | Disposition |
+|---|---|---|
+| 1 | Song sheet keeps the old orientation's wrap budget after a rotation while the Stage was open | FIXED: rawCloseStage re-fits the song sheet when its width changed |
+| 2 | chordNotesInKey re-parses chord quality instead of taking intervals from Circle.chordTones | DEFERRED: the letter-per-degree spelling needs the degree, which chordTones' pitch classes do not carry (9 = 6th or bb7); the unit test pins pitch-class equality with chordTones so divergence is caught |
+| 3 | `@media not ((a) and (b))` is MQ4-only; older engines drop the block, leaving a half-applied idle card | FIXED: Level-3 form `@media not all and (a) and (b)`; pin updated; two-pane scenario green |
+| 4 | Font-refit re-renders the sheet on every `loadingdone` | FIXED: re-render only when the probe's budget moved (`ctx.measured`) |
+| 5 | SVG strings duplicated (2 scripts + 6 inline copies) | DEFERRED (again): static HTML copies need runtime injection; pins guard drift |
+| 6 | chrome_path + tour seed duplicated; a11y gate audited the first-run overlay | FIXED the gate: tour seed added; the gate now examines the real routes (A2 coverage 0 -> 1) and found one pre-existing violation, fixed at the source (offline toast host gets role=status + aria-live). Helper extraction DEFERRED (scripts refactor) |
+| 7 | MATH_VERSION bumped with no math/ change | NOT A BUG (as pass 1): Math precaches songbook.css; the gate fails without the bump |
+| 8 | Idle hint "follows you up" is wrong for re-entrant tunings (ukulele G4 C4 E4 A4) | FIXED: "the tuner walks the rest in order" (tuner.js + tuner.md) |
+| 9 | Studio chip ellipsis at 360 with 6-char names | NOT A PATH (as pass 1): the strip carries diatonic triads only (5 chars max), measured at 360 in U4 |
+
+## Ledger
+
+| Unit | State | Commit | Version |
+|---|---|---|---|
+| U1 | integrated | squash of claude/polish-u1 @ b9228a0 | music-v372 |
+| U2 | integrated | squash of claude/polish-u2 @ 247dae4 | music-v372-3 |
+| U3 | integrated | with U1 | music-v372 |
+| U4 | integrated | squash of claude/polish-u4 @ 9502714 | music-v372-2 |
+| U5 | integrated | squash of claude/polish-u5 @ 0432822 | music-v372-5 |
+| review 2 | integrated | orchestrator commit (fixes 1,3,4,6,8 + offline toast live region) | music-v372-9 |
+| review | integrated | orchestrator commit (fixes 1,2,4,6,9 + landscape scenario) | music-v372-8 |
+| G3 | integrated (Nik: ship here) | squash of claude/polish-g3 @ 9558cfd | music-v372-7 |
+| G2 | integrated (Nik: now) | squash of claude/polish-g2 @ 85f8067 | music-v372-6 |
+| G1 | integrated (Nik: migrate) | orchestrator commit | music-v372-4 |
+| U6 | integrated | squash of claude/polish-u6 @ be8c890 | n/a |
+
+## Session record (2026-10-08, orchestrator session, status: units complete - PR awaits Nik)
+
+- **Shipped on PR #372 (draft, CI green on every push):** U6 docs reconcile; U1+U3 touch floors + Tune copy (v372); U4 Studio chord-chip primitive + Studio icons (v372-2); U2 icon glyphs to SVG (v372-3); G1 tab bar SVG (v372-4); U5 song-view sheet wraps at the measured budget (v372-5); G2 tuner idle state (v372-6); G3 chord-detail spelled notes (v372-7); review fixes (v372-8). Plus gate tooling (a11y + layout gates resolve the container Chromium), wiki sync (findings register, note-spelling, tuner idle contract), QUEUE rows for Nik's G4 picks and the S-TUNER-MODE-CHIPS bug.
+- **Decisions taken by Nik this session:** G1 migrate, G2 now, G3 ship here; S-GUIDE-CONTEXT = in-context hints replace ?, S-POSTPROG-FLOW = lead with practice over a track, S-AUDITION-CAPTURE behind post-prog, M-13 + desktop layout get interviews, M-PERFORM parked.
+- **Open for Nik:** merge #372 (repo rule: Nik merges); the G2 layout-shift taste item (one word flips it); phone UAT on the v372-8 link in the PR.
+- **Method notes:** workers ran in isolated worktrees, one unit per branch, squash-integrated with one version per integrated commit (the bump is CACHE + build stamp + stamp-asset-versions.py + MATH_VERSION when songbook.css/theme.js/esc.js/toast.js change). One worker-process restart killed two in-flight workers; their worktrees kept the uncommitted work and it was resumed, not redone. githack is egress-blocked from the container, so UAT links are unverified by curl; local render-verify stood in.
+- **Deferred (not in this PR):** layout-check.py key-picker flow is stale (manual gate); duplicated SVG strings / triplicate chrome_path (review 7, 8); S-TUNER-MODE-CHIPS (bug, QUEUE); G4 build units (QUEUE SHORT).
+- **Worktrees left registered** (not removed - deletion needs approval): .claude/worktrees/agent-* (7) and the review scratch worktree at the session scratchpad basewt. `git worktree prune` after the agent dirs are gone.
+

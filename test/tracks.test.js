@@ -1347,7 +1347,9 @@ test('the Studio fly-out trigger is the song view\'s overflow primitive, not a h
   var src = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'tracks.js'), 'utf8');
   assert.strictEqual(src.indexOf('aria-label="More options">&#9776;'), -1, 'the hamburger glyph must be gone from the rendered trigger');
   assert.ok(/class="iconBtn moreBtn bt-st-np-menu" data-stmenu/.test(src), 'the trigger composes .iconBtn.moreBtn - the same control the song view wears');
-  assert.ok(/data-stmenu[^>]*><span aria-hidden="true">⋯<\/span>/.test(src), 'and carries the same overflow glyph');
+  // U4: the overflow glyph is the three-dots SVG (DOTS_SVG) now, not the ⋯ text glyph (icon-density standard).
+  assert.ok(/data-stmenu[^>]*>' \+ DOTS_SVG \+ '<\/button>/.test(src), 'and carries the overflow dots glyph (as inline SVG)');
+  assert.ok(/var DOTS_SVG = '<svg [^']*<circle cx="5" cy="12" r="2"\/><circle cx="12" cy="12" r="2"\/><circle cx="19" cy="12" r="2"\/><\/svg>';/.test(src), 'DOTS_SVG is three dots');
   var sb = require('fs').readFileSync(require('path').join(__dirname, '..', 'music', 'shared', 'songbook.js'), 'utf8');
   assert.ok(/class="iconBtn moreBtn" id="moreBtn"/.test(sb), 'the song view is the other half of that SSOT - a rename there must fail here, not diverge silently');
 });

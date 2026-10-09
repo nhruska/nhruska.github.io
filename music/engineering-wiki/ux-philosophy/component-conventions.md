@@ -80,7 +80,7 @@ Any card/caption/notable copy that references a derivable musical object (relati
 - **Modal:** composeModalBackdrop standard (U7): dim backdrop, centered dialog, role=dialog + aria-modal, focus into dialog, Esc/hardware-Back/backdrop-tap all dismiss through NavHistory (no ghost history entries). Second consumer SHIPPED M-DESIGN-ENFORCE wave 2 (UAT U19): `openConfirmModal()` in play/index.html, the Settings backup/restore restore-confirm decision (was a native `confirm()`) - confirms the pattern generalizes beyond Compose. Layering a NavHistory-registered modal on top of a NON-NavHistory panel (Settings) needs `e.stopPropagation()` in the modal's own Escape handler so the panel's own document-level Escape listener doesn't ALSO fire.
 - **Disclosure (single):** the why-toggle/Guide-toggle family (.bt-st-why-toggle pattern): collapsed by default, text toggle, per-open state only, never persisted.
 - **Accordion (EXCLUSIVE disclosure group, M-SETTINGS-CLARITY 2026-07-05):** [shared/accordion.js](../../shared/accordion.js) + the `.accSec`/`.accBtn`/`.accBody` family (songbook.css) - one open section at a time, zero-open allowed, per-open state only (reset to all-collapsed at every panel open). For PANEL surfaces (sheets/dialogs) with a single scroller ONLY - decision D6 (Compose = flattened, no accordions) still governs screen scrollers. Header = real button, 44px floor, `aria-expanded` + rotating caret; body carries the `.accBody[hidden]{display:none}` U24 guard. First consumer: the Settings sheet sections. Full taxonomy entry: [ui-primitives.md](ui-primitives.md) ACCORDION.
-- **Help icon (M-DESIGN-ENFORCE wave 2, UAT U19 - "help panels clearly noted with an icon"):** when a HELP-nature disclosure toggle (ui-primitives.md HELP primitive) could otherwise read as ambiguous, add the `.helpIcon` class ALONGSIDE the toggle's own class (songbook.css `::before{content:'\24D8'}` - a small circled-i glyph, no markup change). Declared in songbook.css (not tracks.css) since it loads app-wide - the class is portable to any toggle in any file. Application to the existing why-toggle/Guide family (tracks.js, `.bt-st-why-toggle`) is DEFERRED-TO-SIBLING (M-EAR-1.6 grant) - see Findings register below.
+- **Help icon (M-DESIGN-ENFORCE wave 2, UAT U19 - "help panels clearly noted with an icon"):** when a HELP-nature disclosure toggle (ui-primitives.md HELP primitive) could otherwise read as ambiguous, add the `.helpIcon` class ALONGSIDE the toggle's own class (songbook.css `::before{content:'\24D8'}` - a small circled-i glyph, no markup change). Declared in songbook.css (not tracks.css) since it loads app-wide - the class is portable to any toggle in any file. Application to the existing why-toggle/Guide family (tracks.js, `.bt-st-why-toggle`) is SHIPPED - applied at tracks.js (`.helpIcon` on the Studio guide toggle, PR #372 U6 reconcile) (M-EAR-1.6 grant) - see Findings register below.
 - **Tabs:** bottom nav = top-level surfaces ONLY; segmented controls = view switches within a surface. Never nest segmented inside segmented.
 
 ## Forms
@@ -138,12 +138,14 @@ Declared: tracks.css (`--kx-chord`/`--kx-blue`, right after their literal-hex fa
 | Guidance notable shares the selection surface (U10 camouflage) | HIGH (operator UAT) | SHIPPED (M-DESIGN-ENFORCE wave 1): distinct `--guide-bg`/`--guide-line` guidance-surface tokens, computed off `--txt-dim` (accent-independent) + a `--brass` left accent stripe; screenshot-verified both themes |
 | Selected-state dual grammar (chips vs modeSwitch) | MED | SHIPPED (M-DESIGN-ENFORCE wave 1): D-SELECTED-ACCENT - `.modeSwitch button.on` / `.viewToggle button.on` now use the same accent-fill grammar as `.chip.on` |
 | Radius scatter | LOW | SHIPPED (M-DESIGN-ENFORCE wave 1): 5 radius-by-role tokens, migrated button/chip/card oddballs - see the Radius line above |
-| li-up/dn below 44px floor | MED | registered debt (setlist-edit rider) |
+| li-up/dn below 44px floor | MED | SHIPPED (PR #372 U1, 2026-10-08): 44x44 + `--r-btn-sm` + `flex:0 0 auto`; `.searchClear` 26 -> 44 halo, `#maxClose` 40 -> 44 + aria-label, `.invModal-x` 38 -> 44 - pinned by [test/touch-floor-pin.test.js](../../../test/touch-floor-pin.test.js) |
 | kx ink vars theme-fragility | MED | correct today ([tracks.css](../../shared/tracks.css) + diagram.js per U3); any fill change re-verifies >=4.5:1 |
 | Two stacked, visually inconsistent feedback surfaces on the same action (amber toast + gray inline undo panel) | HIGH (operator UAT, U19 screenshot) | SHIPPED (M-DESIGN-ENFORCE wave 2): TOAST+ACTION primitive (toast.js `Toast.showAction`) - one taxonomy, one visual signature (message + Undo + countdown bar), migrated both the setlist item-remove undo and the Compose Clear undo onto it; see decisions.md D-ENFORCE-2 |
 | Native `confirm()`/`alert()` in the Settings backup/restore flow | HIGH (U19-named KNOWN offender) | SHIPPED (M-DESIGN-ENFORCE wave 2): `showSettingsToast()` (outcomes/errors) + `openConfirmModal()` (the restore decision), reusing the existing TOAST/MODAL primitives - zero native dialogs remain in play/index.html; guarded by [test/no-native-dialog-lint.test.js](../../../test/no-native-dialog-lint.test.js) |
 | Native `confirm()` elsewhere in songbook.js (delete a custom item, clear the whole setlist) and repertoire-form.js (delete confirmation) | LOW-MED (pre-existing, "backlog: SETX phase 2" per this page's Buttons/Modal sections before wave 2) | NOT fixed this wave - out of the U19 grant (backup/restore flow only); count pinned by [test/no-native-dialog-lint.test.js](../../../test/no-native-dialog-lint.test.js) so it can't silently grow |
-| Help-nature disclosure toggles (Guide / "Why these notes?" / "Find a jam") have no visual marker distinguishing them from a functional control | LOW | Convention DRAFTED this wave (`.helpIcon`, songbook.css) - not yet APPLIED; the toggles themselves live in tracks.js (M-EAR-1.6 grant), DEFERRED-TO-SIBLING |
+| Help-nature disclosure toggles (Guide / "Why these notes?" / "Find a jam") have no visual marker distinguishing them from a functional control | LOW | SHIPPED: convention in songbook.css (`.helpIcon::before`, :1894), applied to the Studio Guide toggle at [tracks.js](../../shared/tracks.js) :1297 (`bt-st-guidebtn helpIcon`) |
+
+| Two chord-chip primitives for one meaning (`.chordChips .c` 44px song view vs `.bt-st-chordchip` 40px Studio) | MED (S-UI-RECONCILE C2 #3) | SHIPPED (PR #372 U4): the Studio chip mirrors the primitive's declarations in tracks.css, pinned equal by [test/studio-chip-primitive.test.js](../../../test/studio-chip-primitive.test.js) |
 
 ## Icon density standard (round 6, operator UAT 2026-08-09)
 
@@ -157,9 +159,13 @@ Mechanics that matter:
   shuffle, the li-lead info glyph).
 - **Text glyphs under-render their font-size** (ink is ~60-70% of the em box,
   font-dependent), so a symbol glyph needs font-size >= 20px to LOOK ~14-16px,
-  and can never be trusted at the 22px-ink standard. Remaining symbol-text
-  buttons (bar menu, mini x, sound toggle, banner x) are floor-bumped, not
-  standard-met - migrate them to SVG when touched.
+  and can never be trusted at the 22px-ink standard. The former symbol-text
+  buttons (bar menu, mini x, sound toggle, song-view overflow, the close
+  family, the tab bar) MIGRATED to inline SVG in PR #372 (U2/U4/G1,
+  2026-10-08) - pinned by [test/icon-svg-pin.test.js](../../../test/icon-svg-pin.test.js)
+  and [test/studio-chip-primitive.test.js](../../../test/studio-chip-primitive.test.js).
+  Deliberate exceptions: `.prog .slot .rm` (24px halo) and `.cueDismiss`
+  (20px halo) - compact-halo pattern, below the 18px ink floor by design.
 - **Gate:** [test/pw/scenarios/ui-icon-density.json](../../../test/pw/scenarios/ui-icon-density.json)
   sweeps Library / Studio / Stage: visible-svg ink >= 18px AND >= 40% of
   min(box, 56); symbol-text font-size >= 20px; alphanumeric labels (chord

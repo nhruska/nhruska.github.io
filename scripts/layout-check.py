@@ -48,6 +48,7 @@
 # MOOT as of F19 (operator UAT 2026-07-05): that row no longer renders chord
 # diagrams at all, only name-only chips - there is no SVG canvas left to spill.
 # =====================================================================
+import glob
 import argparse
 import functools
 import http.server
@@ -65,6 +66,18 @@ VIEWPORTS = [
 ]
 FONT_SCALES = [1.0, 1.3]
 EPS = 1.0  # px tolerance for "spill"/"overlap"/"overflow" assertions
+
+
+def chrome_path():
+    """Chromium resolution, same convention as test/pw/run-scenario.py:
+    $PW_CHROME > /opt/pw-browsers/chromium-*/chrome-linux/chrome (Claude web
+    container) > None (Playwright's own default on the laptop shared install).
+    Without this the bare launch() looks for a headless shell the container
+    does not ship and the gate cannot run where CI parity is checked."""
+    if os.environ.get('PW_CHROME'):
+        return os.environ['PW_CHROME']
+    hits = sorted(glob.glob('/opt/pw-browsers/chromium-*/chrome-linux/chrome'))
+    return hits[-1] if hits else None
 
 
 def start_server(port):
@@ -196,6 +209,10 @@ def run_one_config(browser, base_url, width, height, font_scale, failures_all):
     label = f'{width}x{height} @ {font_scale}x font'
     failures = []
     ctx = browser.new_context(viewport={'width': width, 'height': height})
+    # First-run tour + per-tab callouts would intercept every click (the
+    # #welcomeOv overlay) - seed them done, like web-ux-capture.js does.
+    ctx.add_init_script("try{localStorage.setItem('music.welcomeDone.v1','1');"
+        "localStorage.setItem('music.calloutsShown.v1',JSON.stringify({library:1,jam:1,compose:1,tune:1}));}catch(e){}")
     page = ctx.new_page()
     console_errors = []
     page.on('console', lambda m: console_errors.append(m.text) if m.type == 'error' else None)
@@ -311,7 +328,7 @@ def main():
     all_failures = []
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
+            browser = p.chromium.launch(headless=True, executable_path=chrome_path())
             for width, height in VIEWPORTS:
                 for scale in FONT_SCALES:
                     run_one_config(browser, base_url, width, height, scale, all_failures)

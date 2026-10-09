@@ -103,13 +103,13 @@ test('CORE INVARIANT: .pSheet overflow-x is hidden (never auto/scroll) - a wide 
     '.pSheet still allows horizontal scrolling');
 });
 
-test('CORE INVARIANT: perfWrapMaxChars always returns a usable budget (no null sanity-floor bail back to an unwrapped overflow render)', function () {
-  var m = /function perfWrapMaxChars\s*\([\s\S]*?\n    \}/.exec(sbCode);
-  assert.ok(m, 'perfWrapMaxChars not found');
+test('CORE INVARIANT: sheetWrapMaxChars always returns a usable budget (no null sanity-floor bail back to an unwrapped overflow render)', function () {
+  var m = /function sheetWrapMaxChars\s*\([\s\S]*?\n    \}/.exec(sbCode);
+  assert.ok(m, 'sheetWrapMaxChars not found');
   assert.ok(!/chars\s*>=\s*12/.test(m[0]),
-    'perfWrapMaxChars still bails to null below a 12-char budget - that path rendered UNWRAPPED overflowing rows');
+    'sheetWrapMaxChars still bails to null below a 12-char budget - that path rendered UNWRAPPED overflowing rows');
   assert.ok(/Math\.max\(\s*1\s*,\s*chars\s*\)/.test(m[0]),
-    'perfWrapMaxChars does not floor the budget at 1 char (the budget must always exist so wrapping always absorbs width)');
+    'sheetWrapMaxChars does not floor the budget at 1 char (the budget must always exist so wrapping always absorbs width)');
 });
 
 /* ---------- goalpost 1: the v3 AUTO-FIT model exists ---------- */
@@ -133,7 +133,7 @@ test('auto-fit v3: fitStageSheet resolves the scale by MODE - manual uses the us
   // (the budget is measured at the applied --pscale), and the budget must be
   // passed into the wrapped render.
   var applyIdx = body.indexOf('applyScale');
-  var budgetIdx = body.indexOf('perfWrapMaxChars');
+  var budgetIdx = body.indexOf('sheetWrapMaxChars');
   assert.ok(applyIdx !== -1, 'fitStageSheet never applies the resolved scale (applyScale)');
   assert.ok(budgetIdx !== -1, 'fitStageSheet never computes the wrap budget');
   assert.ok(applyIdx < budgetIdx, 'fitStageSheet probes the wrap budget BEFORE applying the resolved scale - the budget would be measured at a stale size');

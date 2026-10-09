@@ -3,7 +3,7 @@
  * lyric wrapping (CW-1: a long line must WRAP, not hard-overflow the stage
  * viewport, while staying column-aligned). No DOM needed - wrapChordLyricPair
  * and renderLyricLine's wrap path are pure string math; the DOM caller
- * (songbook.js showPerform/perfWrapMaxChars) measures the real viewport and
+ * (songbook.js showPerform/sheetWrapMaxChars) measures the real viewport and
  * passes maxChars in. Mirrors the fitScale Node-testability precedent.
  * Run: node test/sheet-render.test.js
  * ===================================================================== */

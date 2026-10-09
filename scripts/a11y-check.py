@@ -38,6 +38,7 @@
 #   python3 scripts/a11y-check.py --strict            # report ALL, non-gating
 #   python3 scripts/a11y-check.py --update-baseline   # accept current (after review)
 # =====================================================================
+import glob
 import argparse
 import functools
 import re
@@ -57,6 +58,18 @@ VIEWPORT = (412, 915)
 ROUTES = [
     ('/music/play/', 'play'),
 ]
+
+
+def chrome_path():
+    """Chromium resolution, same convention as test/pw/run-scenario.py:
+    $PW_CHROME > /opt/pw-browsers/chromium-*/chrome-linux/chrome (Claude web
+    container) > None (Playwright's own default on the laptop shared install).
+    Without this the bare launch() looks for a headless shell the container
+    does not ship and the gate cannot run where CI parity is checked."""
+    if os.environ.get('PW_CHROME'):
+        return os.environ['PW_CHROME']
+    hits = sorted(glob.glob('/opt/pw-browsers/chromium-*/chrome-linux/chrome'))
+    return hits[-1] if hits else None
 
 
 def start_server(port):
@@ -225,8 +238,13 @@ def main():
     coverage = {}
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch()
+            browser = p.chromium.launch(executable_path=chrome_path())
             ctx = browser.new_context(viewport={'width': VIEWPORT[0], 'height': VIEWPORT[1]})
+            # First-run tour + per-tab callouts (#welcomeOv) would otherwise be what this
+            # gate audits on every route - seed them done, like layout-check.py and the
+            # ux-capture harness do (review fix, high pass).
+            ctx.add_init_script("try{localStorage.setItem('music.welcomeDone.v1','1');"
+                "localStorage.setItem('music.calloutsShown.v1',JSON.stringify({library:1,jam:1,compose:1,tune:1}));}catch(e){}")
             page = ctx.new_page()
             for path, label in ROUTES:
                 page.goto(base + path, wait_until='networkidle')

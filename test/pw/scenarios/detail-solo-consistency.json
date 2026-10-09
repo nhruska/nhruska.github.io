@@ -1,6 +1,6 @@
 {
   "name": "detail-solo-consistency",
-  "note": "UAT batch 3 items 4+6. RED-FIRST vs main: (a) the song view's back wore .backArrowBtn (accent-filled) while the Studio's wore a bare .iconBtn (surface-2) - two looks for one meaning, so the computed-background equality below fails; (b) the Studio's fly-out trigger was a hamburger sitting exactly where the app Settings gear lives, on a screen that COVERS the appbar (the operator flagged that slot twice); (c) the large sheet chord chips were inert <span>s, so the tagName/data-c asserts fail. Geometry is measured with offsetWidth/offsetHeight, never getBoundingClientRect, because the rect is the TRANSFORMED box and a chip's own :active scale(.9) makes a compliant 44px control read 39.6px.",
+  "note": "UAT batch 3 items 4+6. RED-FIRST vs main: (a) the song view's back wore .backArrowBtn (accent-filled) while the Studio's wore a bare .iconBtn (surface-2) - two looks for one meaning, so the computed-background equality below fails; (b) the Studio's fly-out trigger was a hamburger sitting exactly where the app Settings gear lives, on a screen that COVERS the appbar (the operator flagged that slot twice); (c) the large sheet chord chips were inert <span>s, so the tagName/data-c asserts fail. Geometry is measured with offsetWidth/offsetHeight, never getBoundingClientRect, because the rect is the TRANSFORMED box and a chip's own :active scale(.9) makes a compliant 44px control read 39.6px. U2 (ui-ux-polish-20261008): the overflow trigger is an inline-SVG icon button (DOTS_SVG, aria-label \"More actions\") on BOTH surfaces - the pin asserts svg + accessible name + empty text, not the old ⋯ text glyph.",
   "viewport": {
     "width": 412,
     "height": 915
@@ -47,7 +47,7 @@
     {
       "action": "evalAssert",
       "label": "the overflow trigger is top-RIGHT on the song view - the slot the Studio must mirror",
-      "js": "(function(){var m=document.getElementById('moreBtn'),h=document.querySelector('.detailHead');if(!m||!h)return false;return m.classList.contains('moreBtn')&&m.textContent.trim()==='⋯'&&(h.getBoundingClientRect().right-m.getBoundingClientRect().right)<=4;})()"
+      "js": "(function(){var m=document.getElementById('moreBtn'),h=document.querySelector('.detailHead');if(!m||!h)return false;return m.classList.contains('moreBtn')&&m.textContent.trim()===''&&!!m.querySelector('svg')&&!!m.getAttribute('aria-label')&&(h.getBoundingClientRect().right-m.getBoundingClientRect().right)<=4;})()"
     },
     {
       "action": "tap",

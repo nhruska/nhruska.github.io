@@ -198,18 +198,26 @@ body.studioopen .tabbar{position:relative;z-index:55;}
    stays put (padding-bottom absorbs the reclaimed space); corners stay fully
    rounded (it is an inset pill, not an edge-anchored tab). */
 .tabbar button.on{color:var(--accent-ink);background:var(--accent-deep);margin-bottom:calc(-1 * max(env(safe-area-inset-bottom,0px), 8px));padding-bottom:calc(6px + max(env(safe-area-inset-bottom,0px), 8px));}
-.tabbar button .icn{font-size:1.28rem;line-height:1;}
+.tabbar button .icn{line-height:1;display:block;}
+.tabbar button .icn svg{display:block;width:22px;height:22px;pointer-events:none;} /* G1: 22px ink in a 44px+ tab (icon-density standard) */
 .tabbar button .lbl{font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;font-weight:800;}
 .screen{display:none;}
 .screen.on{display:block;animation:fadeUp .26s cubic-bezier(.2,.7,.3,1);}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
 .searchWrap{position:relative;margin-bottom:11px;}
-.search{width:100%;background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;padding:12px 40px 12px 14px;font-family:inherit;font-size:.92rem;color:var(--txt);}
+.search{width:100%;background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;padding:12px 48px 12px 14px;font-family:inherit;font-size:.92rem;color:var(--txt);} /* 48 = the 44px .searchClear box + 4 (review fix) */
 .search::placeholder{color:var(--txt-dim);}
 .search:focus{outline:none;border-color:var(--accent-ink);}
 /* clear (x) button - shown only when the search field has text (toggled in JS via [hidden]) */
-.searchClear{position:absolute;top:50%;right:8px;transform:translateY(-50%);width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:none;border-radius:50%;background:transparent;color:var(--txt-dim);font-size:.85rem;line-height:1;cursor:pointer;padding:0;}
-.searchClear:hover{color:var(--txt);background:var(--surface-2);}
+/* 44x44 tap box (a11y floor) over a 26px visual: the ::before circle is the hover
+   fill (the house invisible-halo pattern, like .cueDismiss); the glyph stays small.
+   transform makes this button its own stacking context, so the z-index:-1 circle
+   paints behind the glyph but above the field. right:0 keeps the glyph centre where
+   the old 26px box at right:8px had it (21px from the edge). */
+.searchClear{position:absolute;top:50%;right:0;transform:translateY(-50%);width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:none;border-radius:50%;background:transparent;color:var(--txt-dim);line-height:1;cursor:pointer;padding:0;}
+.searchClear::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:26px;height:26px;z-index:-1;border-radius:50%;background:transparent;}
+.searchClear:hover{color:var(--txt);}
+.searchClear:hover::before{background:var(--surface-2);}
 .searchClear[hidden]{display:none;}
 .chips{display:flex;gap:6px;overflow-x:auto;margin-bottom:14px;padding-bottom:3px;scrollbar-width:none;touch-action:pan-x;}
 .chips[hidden]{display:none;}
@@ -351,10 +359,9 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 /* li-up/li-dn: the setlist reorder a11y fallback (S-SETLIST-GESTURES, below -
  * .li-a11yctrl keeps them out of the sighted-pointer view since press-and-hold
  * covers that case). .li-ctrl (the old edit-mode stacked-column wrapper) is
- * unused now - these render as flat siblings. NOTE: 40x32, below the 44px
- * floor - a pre-existing gap this mission did not introduce or grow (tracked
- * separately; the buttons are keyboard-reachable, not a new tap surface). */
-.listItem .li-up,.listItem .li-dn{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);width:40px;height:32px;border-radius:7px;cursor:pointer;font-size:.8rem;line-height:1;font-family:'Space Mono';font-weight:700;transition:background .15s,transform .08s,color .15s;}
+ * unused now - these render as flat siblings. 44x44 (U1 touch-floor sweep): the
+ * revealed-on-focus box meets the floor like every other thumb target. */
+.listItem .li-up,.listItem .li-dn{flex:0 0 auto;border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt-soft);width:44px;height:44px;min-width:44px;min-height:44px;border-radius:var(--r-btn-sm);cursor:pointer;font-size:.8rem;line-height:1;font-family:'Space Mono';font-weight:700;transition:background .15s,transform .08s,color .15s;}
 .listItem .li-up:active,.listItem .li-dn:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);}
 .listItem .li-up:disabled,.listItem .li-dn:disabled{opacity:.3;cursor:default;}
 /* >=44x44 via padding (NOT a bigger glyph - the "x" stays font-size:1.2rem).
@@ -387,11 +394,11 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 .listItem .li-a11yctrl{position:absolute;width:1px;height:1px;min-width:0;min-height:0;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 /* On focus: restore each control's OWN real size (not a shared guess). CSS
  * `revert` looks like the right tool here but is NOT - it skips every other
- * AUTHOR rule (li-up/li-dn's 40x32, li-rm's 44px floor) straight to the
+ * AUTHOR rule (li-up/li-dn's 44x44, li-rm's 44px floor) straight to the
  * user-agent default, landing on the button's bare shrink-to-fit content
  * width (~13px, caught by the setlist-gestures pw scenario) instead of
  * either control's real size. Naming each size explicitly is the fix. */
-.listItem .li-up.li-a11yctrl:focus,.listItem .li-dn.li-a11yctrl:focus{position:static;width:40px;height:32px;min-width:0;min-height:0;margin:0;overflow:visible;clip:auto;white-space:normal;}
+.listItem .li-up.li-a11yctrl:focus,.listItem .li-dn.li-a11yctrl:focus{position:static;width:44px;height:44px;min-width:0;min-height:0;margin:0;overflow:visible;clip:auto;white-space:normal;}
 .listItem .li-rm.li-a11yctrl:focus{position:static;width:auto;height:auto;min-width:44px;min-height:44px;margin:0;overflow:visible;clip:auto;white-space:normal;}
 /* S-SETLIST-GESTURES swipe shell (operator UAT 2026-09-03, "like outlook and
  * Gmail mobile"): .li-inner carries the row's real look (background/border/
@@ -515,8 +522,14 @@ body.studioopen .tabbar{position:relative;z-index:55;}
    accent-fill selected grammar (same as .iconBtn.setBtn.on above) - "while
    playing" is a selected/active state. Compact so it fits inline beside the
    "Solo over it" label without pushing content below the fold. */
-.soundToggle{width:32px;height:32px;font-size:1.05rem;}
+/* U2: inline-SVG play/stop at the icon-density standard - a full 44x44 box (the 32px
+   + font-size text-glyph hack is gone; the svg renders its stated 22px). */
+.soundToggle{width:44px;height:44px;min-width:44px;min-height:44px;}
 .soundToggle.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent-ink);}
+/* U2: ONE shared rule for every inline-SVG icon-only button (no per-button svg rules):
+   block-level so the line box adds no descender gap, and pointer-events:none so the tap
+   target is always the button itself (composeWireTap / wireTapCancel see the button). */
+.iconBtn > svg,.searchClear > svg,.songCanvasClose > svg,.maxClose > svg,.invModal-x > svg,.welcomeCard .x > svg,.setHd .x > svg,.songSect .rm > svg{display:block;pointer-events:none;}
 /* The per-note "currently sounding" marker, on both the notes line and the
    degrees line, on both surfaces (Studio + Compose). ONE primitive
    (--sound-bg/--sound-line, declared above) - not the SELECTION or GUIDANCE
@@ -929,6 +942,27 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 .micNote{font-family:'Space Mono',monospace;text-align:center;font-weight:700;font-size:1.95rem;line-height:1;margin:2px 0;color:var(--txt);transition:color .15s,text-shadow .15s;}
 .micNote.intune{color:var(--good);text-shadow:0 0 22px rgba(94,234,212,.4);}
 .micCents{font-family:'Space Mono',monospace;text-align:center;font-size:.76rem;color:var(--txt-dim);min-height:18px;}
+/* IDLE tuner card (G2, 2026-10-08): before Start / after Stop nothing is live, so
+   the card hugs its content instead of reserving the live readout's room (it was
+   ~540px with ~110px of blank above the chips and ~115px below Start). JS toggles
+   .idle on #micBox + #micNote (tuner.js setIdle); live phases never carry it, so
+   their geometry is untouched. The runway/needle need a target, so they wait for
+   Start. The big-note slot holds the first string, dimmed, with a "next" cue (free
+   mode: the whole string sequence). The strings follow the card directly (a pinned-to-bottom variant left a ~450px void between two islands, worse than the card it replaced). Portrait/desktop only - the short-landscape
+   two-pane keeps its own grid - and not under the tuning lab (it scrolls). */
+/* Level-3 negation (`not all and ...`) so browsers without nested-condition
+   support still parse the block - the MQ4 `not ((a) and (b))` form was dropped
+   wholesale by older WebKit/Blink, leaving a half-applied idle card. */
+@media not all and (orientation:landscape) and (max-height:560px){
+  #s-tune:not(.labOn) .tCard:has(.micBox.idle){flex:0 0 auto;}
+  #s-tune:not(.labOn) .micBox.idle{flex:0 0 auto;justify-content:flex-start;}
+  #s-tune:not(.labOn) .micBox.idle > .runway,
+  #s-tune:not(.labOn) .micBox.idle > .micMeter{display:none;}
+  #s-tune:not(.labOn) .micBox.idle > .micModes{margin-bottom:10px;}
+}
+.micNote.idle{color:var(--txt-dim);}
+.micNote.idle:not(.seq)::before{content:"next";font-family:inherit;font-size:.62rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;margin-right:10px;vertical-align:middle;}
+.micNote.idle.seq{letter-spacing:.12em;}
 .micMsg{background:var(--bg-2);border:1px solid var(--line-strong);border-radius:11px;padding:12px;font-size:.76rem;line-height:1.55;color:var(--txt-soft);margin-top:8px;}
 .micMsg b{color:var(--txt);}
 .progHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
@@ -1042,7 +1076,7 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 /* The jam surface carries zero song chrome - the canvas opens on demand (Save
    sheet / Library) and carries its own close: */
 .songCanvasClose{align-self:flex-end;flex:0 0 auto;background:none;border:0;color:var(--txt-dim);
-  font-size:1.05rem;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;
+  cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;
   min-width:44px;min-height:44px;margin:-4px -6px -10px 0;}
 /* Song mode hides the editor + picker but must keep .progBox itself DISPLAYED:
    the save-name modal (.composeRow.asModal), its backdrop and the compose toast
@@ -1164,7 +1198,7 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 /* The delete X joins the SAME control row as play/edit/up/dn (not absolutely
    positioned against the whole card, which sat it vertically off-center from its
    siblings). One row, five aligned 44px targets, matching 36px visible halos. */
-.songSect .rm{position:relative;z-index:0;flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--txt-soft);font-size:1.05rem;line-height:1;cursor:pointer;}
+.songSect .rm{position:relative;z-index:0;flex:0 0 auto;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;background:none;border:none;color:var(--txt-soft);line-height:1;cursor:pointer;}
 .songSect .rm::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;z-index:-1;border-radius:50%;border:1px solid var(--line-strong);background:var(--bg-2);}
 .songSect .rm.armed{color:var(--on-danger);}
 .songSect .rm.armed::before{background:var(--bad);border-color:var(--bad);}
@@ -1658,7 +1692,7 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 /* keep the "All chords" category chips on the same 44px touch floor as the key controls */
 .maxOv{position:fixed;inset:0;z-index:70;background:var(--bg);display:none;flex-direction:column;padding:calc(max(env(safe-area-inset-top,0px), 30px) + 12px) calc(env(safe-area-inset-right,0px) + 14px) calc(env(safe-area-inset-bottom,0px) + 14px) calc(env(safe-area-inset-left,0px) + 14px);}
 .maxOv.on{display:flex;animation:fadeUp .24s ease;}
-.maxClose{align-self:flex-end;border:1px solid var(--line-strong);background:var(--surface-2);width:40px;height:40px;border-radius:var(--r-btn-sm);font-size:1.1rem;cursor:pointer;color:var(--txt);}
+.maxClose{align-self:flex-end;border:1px solid var(--line-strong);background:var(--surface-2);width:44px;height:44px;min-width:44px;min-height:44px;border-radius:var(--r-btn-sm);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;color:var(--txt);}
 /* Chord-expand grid fills the screen per orientation (one screen, no scroll):
    portrait = 2 per row, rows scroll; landscape = 4 across in a single row that
    fits the height. SVG diagrams scale to their cell via the viewBox. */
@@ -1678,6 +1712,7 @@ body.studioopen .tabbar{position:relative;z-index:55;}
 .bigC{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;border-radius:var(--r-card);padding:8px;transition:transform .08s,background .15s;}
 .bigC:active{transform:scale(.94);background:var(--surface);}
 .bigC .nm{font-family:'Space Mono',monospace;font-weight:700;font-size:1.7rem;color:var(--accent-ink);}
+.bigC .bigNotes{font-size:.9rem;color:var(--txt-soft);text-transform:none;text-align:center;}
 @media (orientation:landscape){.bigC .nm{font-size:1.35rem;}}
 .perform{position:fixed;inset:0;z-index:60;background:var(--bg);display:none;flex-direction:column;padding:calc(max(env(safe-area-inset-top,0px), 8px) + 8px) calc(env(safe-area-inset-right,0px) + 16px) 0 calc(env(safe-area-inset-left,0px) + 16px);}
 .perform.on{display:flex;}
@@ -1855,7 +1890,7 @@ footer{display:none;}
 .invModal{position:fixed;inset:0;z-index:70;display:none;align-items:stretch;justify-content:center;background:rgba(0,0,0,.6);}
 .invModal.on{display:flex;}
 .invModal-box{position:relative;width:100%;max-width:600px;height:100%;background:var(--bg);display:flex;flex-direction:column;box-shadow:0 0 40px rgba(0,0,0,.5);}
-.invModal-x{position:absolute;top:calc(max(env(safe-area-inset-top,0px),8px));right:10px;z-index:2;width:38px;height:38px;border-radius:var(--r-btn-sm);border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);font-size:1.05rem;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.invModal-x{position:absolute;top:calc(max(env(safe-area-inset-top,0px),8px));right:10px;z-index:2;width:44px;height:44px;min-width:44px;min-height:44px;border-radius:var(--r-btn-sm);border:1px solid var(--line-strong);background:var(--surface-2);color:var(--txt);line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
 .invModal-x:active{transform:scale(.9);background:var(--accent);color:var(--on-accent);}
 .invModal-frame{flex:1;width:100%;border:0;background:var(--bg);}
 
@@ -2034,7 +2069,7 @@ footer{display:none;}
   background:var(--surface-2);border:1px solid var(--line-strong);border-radius:16px;
   box-shadow:0 14px 40px rgba(0,0,0,.55);padding:14px 0 14px;}
 .welcomeCard .x{position:absolute;top:4px;right:4px;z-index:1;background:none;border:0;color:var(--txt-dim);
-  font-size:1.1rem;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;
+  cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;
   min-width:44px;min-height:44px;}
 .wPanels{display:flex;overflow-x:auto;overflow-y:auto;scroll-snap-type:x mandatory;scrollbar-width:none;
   -webkit-overflow-scrolling:touch;min-height:0;}
@@ -2111,7 +2146,7 @@ footer{display:none;}
 .setHd{display:flex;align-items:center;justify-content:space-between;flex:0 0 auto;
   padding:16px 16px 10px;border-bottom:1px solid var(--line-strong);}
 .setHd h2{margin:0;font-size:1.15rem;}
-.setHd .x{background:none;border:0;color:var(--txt);font-size:1.3rem;cursor:pointer;padding:0;
+.setHd .x{background:none;border:0;color:var(--txt);cursor:pointer;padding:0;
   display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;}
 .setPanelBody{flex:1 1 auto;min-height:0;overflow-y:auto;padding:0 16px;-webkit-overflow-scrolling:touch;}
 /* Sections are .accSec/.accBtn/.accBody (the shared accordion primitive); every

@@ -49,6 +49,7 @@
   var realizeRoman = T.realizeRoman;
   var realizeSection = T.realizeSection;
   var dispChordNameInKey = T.dispChordNameInKey;
+  var chordNotesInKey = T.chordNotesInKey;
   /* ---------- suggestion / progression / key-inference model ----------
    * Extracted to suggest-model.js (loaded before this file). Rebind as locals
    * so call sites + the Songbook.* re-exports are unchanged.
@@ -80,6 +81,13 @@
    * ------------------------------------------------------------------- */
   var SR = global.SongbookSheet || (typeof require === 'function' ? require('./sheet-render.js') : null);
   var escHTML = SR.escHTML;
+  // U2 icon-density standard: icon-only buttons carry inline SVG (renders its stated
+  // size; text glyphs under-render). tracks.js (Studio) carries the identical strings.
+  var PLAY_SVG = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"/></svg>';
+  var STOP_SVG = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg>';
+  var CLOSE_SVG = '<svg viewBox="0 0 24 24" width="23" height="23" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  var CLOSE_SVG_SM = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  var DOTS_SVG = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
   var chordSpeller = SR.chordSpeller;
   var renderLyricLine = SR.renderLyricLine;
   var deleteBtnClass = SR.deleteBtnClass;
@@ -1375,6 +1383,34 @@
       if (chipsEl && chipsEl.parentNode) chipsEl.parentNode.insertBefore(bannerEl, chipsEl.nextSibling);
     }
 
+    // U5 (ui-ux-polish-20261008): the song view's practice sheet wraps its
+    // chord-over-lyric rows at the MEASURED character budget, exactly like the
+    // Stage - one measurement (sheetWrapMaxChars, below) serves both. Before
+    // this the sheet rendered unwrapped white-space:pre rows (renderSheet got no
+    // budget because the element was not in the DOM yet to measure), so on a
+    // phone a long line ran ~700px wide inside a ~329px overflow-x:auto box
+    // (Mr. Jones 742, Refugee 723, Roxanne 704 at Pixel 5) with no sign that it
+    // scrolled. The box is mounted EMPTY, measured, then filled once with the
+    // budget. The 'chords' view wraps via flex and never comes through here.
+    // A bold chord label can render a touch wider than the plain-weight probe,
+    // so the render is re-measured and the budget shrunk proportionally (bounded
+    // retries, floor 1 char) - same convergence as fitStageSheet. The sheet keeps
+    // its overflow-x:auto in CSS as a last-resort safety net.
+    var songSheetCtx = null; // {box, s, view, map, w} for the mounted song-view sheet, re-fit on resize
+    function fillSongSheet(ctx) {
+      var box = ctx.box;
+      var chars = sheetWrapMaxChars(box); // null only when the DOM is unmeasurable (hidden / no layout)
+      ctx.measured = chars; // the probe's answer at this font + width - the font-refit guard compares against it
+      for (var attempts = 0; attempts < 4; attempts++) {
+        box.innerHTML = renderSheet(ctx.s, STATE.transpose, ctx.view, ctx.map, chars || undefined);
+        if (!chars || box.scrollWidth <= box.clientWidth) break;
+        var next = Math.floor(chars * (box.clientWidth / box.scrollWidth) * 0.97);
+        if (next >= chars) next = chars - 1; // forward progress on a 1-2px rounding overshoot
+        if (next < 1) break;
+        chars = next;
+      }
+      ctx.w = box.clientWidth;
+    }
     function renderPractice() {
       if (!el.practiceBody) return;
       if (!STATE.current) {
@@ -1443,7 +1479,7 @@
         + '<div class="ti"><h2>' + escHTML(s.t) + '</h2><p>' + (s.a ? escHTML(s.a) + ' · ' : '') + escHTML(s.y) + '</p></div>'
         + '<div class="headActions">'
         + '<button class="iconBtn setBtn' + (inSet ? ' on' : '') + '" id="setToggle" title="' + (inSet ? 'Remove from setlist' : 'Add to setlist') + '">' + (inSet ? '✓' : '+') + '</button>'
-        + '<div class="moreWrap"><button class="iconBtn moreBtn" id="moreBtn" type="button" title="More actions" aria-label="More actions" aria-haspopup="true" aria-expanded="false"><span aria-hidden="true">⋯</span></button>'
+        + '<div class="moreWrap"><button class="iconBtn moreBtn" id="moreBtn" type="button" title="More actions" aria-label="More actions" aria-haspopup="true" aria-expanded="false">' + DOTS_SVG + '</button>'
         + '<div class="moreMenu" id="moreMenu" hidden>' + overflowItems + '</div></div>'
         + '</div></div>';
       // View row: just Lyrics / Chords / Both + the transpose chip now (Stage +
@@ -1514,11 +1550,15 @@
           + actions;
       } else {
         body = chips
-          + '<div class="sheet" id="sheetBox">' + renderSheet(s, STATE.transpose, view, dispMap) + '</div>'
+          + '<div class="sheet" id="sheetBox"></div>'
           + actions
           + '<p class="note">Sheet shows a short representative snippet. Full lyrics open on a licensed site.</p>';
       }
       el.practiceBody.innerHTML = '<div class="detail">' + head + switcher + songActRow + queueNav + body + '</div>';
+      // U5: fill the sheet now that #sheetBox is in the DOM and measurable (Lyrics/Both views).
+      var sheetBoxEl = view === 'chords' ? null : el.practiceBody.querySelector('#sheetBox');
+      songSheetCtx = sheetBoxEl ? { box: sheetBoxEl, s: s, view: view, map: dispMap, w: 0 } : null;
+      if (songSheetCtx) fillSongSheet(songSheetCtx);
       renderSaveBasicsNotable(); // M-GUIDANCE: one-shot beginner cue, prepended above the card
       renderChordTapNotable(); // S-CHORDCHIP-A11Y: one-shot tap-to-hear cue, under the chip row
       var qPrev = el.practiceBody.querySelector('#qPrev'); if (qPrev) qPrev.onclick = function () { navQueue(-1); };
@@ -1670,6 +1710,15 @@
         // canonical token and shows the key-aware name (Bb, not A#), fallback
         // branch included. Was `pack.diagram(c,'big')` with a raw `c` label.
         var bd = packDiagram(c, 'big', dispChordName(c));
+        // G3 S-TONES: the chord's notes, spelled in the active key (Bb D F in F,
+        // E# G# B for the vii of F#). textContent only - names are never HTML.
+        var tones = chordNotesInKey(c, songKey.root, songKey.mode);
+        if (tones.length) {
+          var tl = document.createElement('div');
+          tl.className = 'bigNotes';
+          tl.textContent = 'Notes: ' + tones.join(' ');
+          bd.appendChild(tl);
+        }
         bd.onclick = function () { packPlayChord(c); };
         el.maxGrid.appendChild(bd);
       });
@@ -2283,7 +2332,13 @@
     function onStageVisibility() { if (document.visibilityState === 'visible' && performEl && performEl.classList.contains('on')) reqWake(); }
     // Raw DOM close for the Stage overlay - idempotent, must NOT call
     // NavHistory.dismiss (that's the button/back-button path, not this).
-    function rawCloseStage() { relWake(); stageReleaseWarm(); document.removeEventListener('visibilitychange', onStageVisibility); if (performEl) performEl.classList.remove('on'); }
+    function rawCloseStage() { relWake(); stageReleaseWarm(); document.removeEventListener('visibilitychange', onStageVisibility); if (performEl) performEl.classList.remove('on');
+      // Review fix (high pass): a rotation while the Stage was open took the
+      // resize handler's Stage branch, so the song-view sheet under it kept the
+      // old orientation's wrap budget. Re-fit it now that it is visible again.
+      var sc = songSheetCtx;
+      if (sc && sc.box.isConnected && sc.box.clientWidth > 0 && sc.box.clientWidth !== sc.w) fillSongSheet(sc);
+    }
     // Launch fullscreen perform mode for any list of song ids (the setlist, or a
     // single song straight from Practice / the "Play now" hero). seedTpose carries
     // the song view's transpose into the opening song (absent = original key);
@@ -2416,6 +2471,11 @@
     // shares that width, which is what lets wrapChordLyricPair's
     // character-index cuts land in the same pixel column for the chord row
     // and the lyric row.
+    // U5 (ui-ux-polish-20261008): this is THE one wrap-budget measurement. The
+    // song view's practice sheet (#sheetBox, renderPractice) calls the same
+    // helper, so the two surfaces can never wrap at different widths. Pass any
+    // element carrying the sheet's padding and font (the probe is appended to it
+    // and removed again, so it can be empty).
     // CW-1 operator-UAT fix (defect 1): clientWidth INCLUDES the sheet's own
     // horizontal padding, and that padding is NOT symmetric across
     // orientations - portrait is ~4px total, but the landscape media query
@@ -2425,9 +2485,9 @@
     // column, since a wide-enough `.pInner{width:max-content}` simply grows
     // into the padding rather than being clipped by it - is clientWidth minus
     // the REAL computed padding, not a flat guess. Shared by both the wrap
-    // BUDGET (perfWrapMaxChars, chars-based) and the fit CHECK (fitStageSheet,
+    // BUDGET (sheetWrapMaxChars, chars-based) and the fit CHECK (fitStageSheet,
     // pixels-based) so the two can never drift into checking two different
-    // widths (that mismatch was itself a second bug: perfWrapMaxChars alone
+    // widths (that mismatch was itself a second bug: sheetWrapMaxChars alone
     // computing the right budget didn't help while fitStageSheet still judged
     // "fits" against the full clientWidth, which the padding-right region is
     // part of).
@@ -2436,7 +2496,7 @@
       var hPad = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
       return sheetEl.clientWidth - hPad;
     }
-    function perfWrapMaxChars(sheetEl) {
+    function sheetWrapMaxChars(sheetEl) {
       var probe = document.createElement('div');
       probe.className = 'lyrLine';
       probe.style.cssText = 'position:absolute;visibility:hidden;left:-9999px;top:-9999px;white-space:pre;';
@@ -2488,7 +2548,7 @@
     //            floor NOTHING should wrap - wrap is the floor's last
     //            resort, not a fitted render's rounding artifact).
     // Then WRAP to the applied scale: the character budget
-    // (perfWrapMaxChars, padding-aware, at the applied --pscale) is computed
+    // (sheetWrapMaxChars, padding-aware, at the applied --pscale) is computed
     // BEFORE the wrapped render. The render is re-MEASURED and the budget
     // shrunk proportionally if a row still lands over (a bold chord label,
     // .crd{font-weight:700}, renders a touch wider per character than the
@@ -2528,7 +2588,7 @@
         scale = clampFontScale(w1 > 0 ? ((avail - 2) / w1) * 0.99 : 1);
       }
       applyScale(scale); // size FIRST - the budget probe below measures at this --pscale
-      var wrapChars = perfWrapMaxChars(pSheet); // null only when the DOM is unmeasurable (no layout at all)
+      var wrapChars = sheetWrapMaxChars(pSheet); // null only when the DOM is unmeasurable (no layout at all)
       for (var attempts = 0; attempts < 6; attempts++) {
         pSheet.innerHTML = '<div class="pInner">' + renderSheet(ctx.s, STATE.performTpose, ctx.view, ctx.stageDisp, wrapChars || undefined) + '</div>';
         inertStageChords();
@@ -2547,7 +2607,7 @@
         if (STATE.fontMode !== 'manual' && scale > FONT_MIN + 0.001) {
           scale = clampFontScale(scale * (avail / stageInner.scrollWidth) * 0.99);
           applyScale(scale);
-          wrapChars = perfWrapMaxChars(pSheet); // budget moves with the size
+          wrapChars = sheetWrapMaxChars(pSheet); // budget moves with the size
           continue;
         }
         var next = Math.floor(wrapChars * (avail / stageInner.scrollWidth) * 0.97);
@@ -2651,7 +2711,7 @@
     }
     // Re-wrap the stage sheet on orientation change / resize: a rotation
     // changes the content width, and a wrap computed for one orientation's
-    // width (and its reserved padding, see perfWrapMaxChars) must never
+    // width (and its reserved padding, see sheetWrapMaxChars) must never
     // silently carry into the other. Routes through the SAME
     // fitStageSheet() a song-change uses (via refitStage), preserving scroll
     // position (a rotation shouldn't jump the reader back to the top). Runs
@@ -2666,7 +2726,13 @@
       window.addEventListener('resize', function () {
         if (stageResizeTimer) clearTimeout(stageResizeTimer);
         stageResizeTimer = setTimeout(function () {
-          if (!(performEl && performEl.classList.contains('on'))) return;
+          if (!(performEl && performEl.classList.contains('on'))) {
+            // U5: the song view's sheet re-wraps on the same debounced resize, but only
+            // while it is mounted, visible, and its width actually changed (a rotation).
+            var sc = songSheetCtx;
+            if (sc && sc.box.isConnected && sc.box.clientWidth > 0 && sc.box.clientWidth !== sc.w) fillSongSheet(sc);
+            return;
+          }
           refitStage(true);
         }, 150);
       });
@@ -2680,7 +2746,13 @@
     // harness has no document.fonts.
     if (typeof document !== 'undefined' && document.fonts) {
       var stageFontRefit = function () {
-        if (performEl && performEl.classList.contains('on')) refitStage(true);
+        if (performEl && performEl.classList.contains('on')) { refitStage(true); return; }
+        // U5 review fix: the song view's sheet measured its budget before Space
+        // Mono swapped in on a cold load - re-fill at the real font like the Stage.
+        // Guarded: any later font load fires 'loadingdone' too, so re-render only
+        // when the probe's budget actually moved (review fix, high pass).
+        var sc = songSheetCtx;
+        if (sc && sc.box.isConnected && sc.box.clientWidth > 0 && sheetWrapMaxChars(sc.box) !== sc.measured) fillSongSheet(sc);
       };
       if (document.fonts.ready && typeof document.fonts.ready.then === 'function') document.fonts.ready.then(stageFontRefit);
       if (typeof document.fonts.addEventListener === 'function') document.fonts.addEventListener('loadingdone', stageFontRefit);
@@ -3265,7 +3337,7 @@
       var songCloseEl = document.createElement('button');
       songCloseEl.type = 'button'; songCloseEl.id = 'songCanvasClose'; songCloseEl.className = 'songCanvasClose';
       songCloseEl.setAttribute('aria-label', 'Close the song canvas');
-      songCloseEl.textContent = '\u2715';
+      songCloseEl.innerHTML = CLOSE_SVG;
       composeWireTap(songCloseEl, function () { returnToSong = false; setComposeMode('chords'); });
       composeSongEl.appendChild(songCloseEl);
       // Operator UAT: the canvas never showed WHICH song you're building - you saw
@@ -3710,7 +3782,7 @@
           renderSongTray();
         }; })(i));
         chip.appendChild(dup);
-        var rm = document.createElement('button'); rm.type = 'button'; rm.className = 'rm'; rm.textContent = '×';
+        var rm = document.createElement('button'); rm.type = 'button'; rm.className = 'rm'; rm.innerHTML = CLOSE_SVG_SM;
         rm.setAttribute('aria-label', 'Remove ' + sec.label + ' section');
         // Reuse the ONE inline-remove grammar (armRm/disarmRm): quiet at rest,
         // first tap arms red (1600ms auto-disarm), second tap removes.
@@ -4756,7 +4828,7 @@
         var soundToggle = document.createElement('button');
         soundToggle.type = 'button'; soundToggle.className = 'iconBtn soundToggle keySoloSoundToggle';
         soundToggle.setAttribute('aria-label', 'Hear this scale'); soundToggle.setAttribute('aria-pressed', 'false');
-        soundToggle.innerHTML = '&#9658;';
+        soundToggle.innerHTML = PLAY_SVG;
         var curNotes = null; // the currently-selected chip's note names (for the toggle to derive pcs from)
         function renderNoteTokens(notes) {
           return notes.map(function (n, i) { return '<span class="soundNote" data-i="' + i + '">' + escHTML(n) + '</span>'; }).join(' ');
@@ -4779,7 +4851,7 @@
           soundToggle.classList.toggle('on', on);
           soundToggle.setAttribute('aria-pressed', on ? 'true' : 'false');
           soundToggle.setAttribute('aria-label', on ? 'Stop' : 'Hear this scale');
-          soundToggle.innerHTML = on ? '&#9632;' : '&#9658;';
+          soundToggle.innerHTML = on ? STOP_SVG : PLAY_SVG;
         }
         // Chip switch and any renderKeyView() re-render (key/mode change, the
         // popover closing - see the MutationObserver below) all stop playback
@@ -4897,7 +4969,7 @@
           ov.id = 'invModal';
           ov.className = 'invModal';
           ov.innerHTML = '<div class="invModal-box" role="dialog" aria-modal="true" aria-label="Triads & Inversions">'
-            + '<button class="invModal-x" type="button" aria-label="Close">✕</button>'
+            + '<button class="invModal-x" type="button" aria-label="Close">' + CLOSE_SVG + '</button>'
             + '<iframe class="invModal-frame" title="Triads & Inversions"></iframe></div>';
           document.body.appendChild(ov);
           var close = function () { ov.classList.remove('on'); var f = ov.querySelector('.invModal-frame'); if (f) f.removeAttribute('src'); };
@@ -7286,6 +7358,7 @@
     realizeRoman: realizeRoman,
     realizeSection: realizeSection,
     dispChordNameInKey: dispChordNameInKey,
+    chordNotesInKey: chordNotesInKey, // G3 S-TONES: key-aware chord tones
     sectionConnectScore: sectionConnectScore, // UAT: adjacent-section fit ranking
     // M-13 g3: competency-profile-driven suggestion re-rank + why-cue, exposed
     // for unit tests (pure - no DOM, no localStorage).

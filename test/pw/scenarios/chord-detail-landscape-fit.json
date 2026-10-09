@@ -1,0 +1,110 @@
+{
+  "name": "chord-detail-landscape-fit",
+  "description": "G3 review follow-up (ui-ux-polish-20261008): the maximize overlay's new Notes line must stay inside the grid in the 4-across landscape layout (overflow:hidden, svg max-height 62vh) - measured, not eyeballed.",
+  "persona": "intermediate",
+  "url": "/music/play/",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar button[data-tab=compose]"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#catChips .chordSegBtn"
+    },
+    {
+      "action": "tapIfVisible",
+      "text": "I know some chords",
+      "scope": "#guidanceAskSlot"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#keyPickerCompact"
+    },
+    {
+      "action": "tap",
+      "selector": "#keyPickerCompact"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tapText",
+      "text": "F",
+      "scope": "#keyRoots"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tap",
+      "selector": "#keyPickerCompact"
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "tapChord",
+      "name": "F"
+    },
+    {
+      "action": "tapChord",
+      "name": "Bb"
+    },
+    {
+      "action": "tapChord",
+      "name": "C"
+    },
+    {
+      "action": "resize",
+      "width": 851,
+      "height": 393
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "tap",
+      "selector": "#cMax"
+    },
+    {
+      "action": "waitFor",
+      "selector": "#maxGrid .bigNotes"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "landscape 851x393: every big card, its name and its Notes line sit inside the maximize grid (no clip by overflow:hidden)",
+      "js": "(function(){var g=document.getElementById('maxGrid');if(!g)return false;var gr=g.getBoundingClientRect();var cards=[...g.querySelectorAll('.bigC')];if(cards.length<3)return false;return cards.every(function(c){var n=c.querySelector('.bigNotes');if(!n)return false;var r=c.getBoundingClientRect(),nr=n.getBoundingClientRect();return nr.height>0&&nr.bottom<=gr.bottom+0.5&&r.bottom<=gr.bottom+0.5&&r.top>=gr.top-0.5;});})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "maxov-landscape"
+    },
+    {
+      "action": "resize",
+      "width": 412,
+      "height": 915
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "evalAssert",
+      "label": "portrait 412x915 after rotating back: the grid scrolls (overflow auto) and every Notes line is rendered",
+      "js": "(function(){var g=document.getElementById('maxGrid');if(!g)return false;return getComputedStyle(g).overflowY==='auto'&&[...g.querySelectorAll('.bigC .bigNotes')].every(function(n){return n.getBoundingClientRect().height>0;});})()"
+    }
+  ]
+}
