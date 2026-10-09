@@ -1,10 +1,13 @@
 {
-  "generatedAt": "2026-10-09T16:20:39Z",
+  "generatedAt": "2026-10-09T16:24:03Z",
   "generator": "command-center-gen.py@0.4.1 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
-  "status": "ok",
-  "warnings": [],
+  "status": "partial",
+  "warnings": [
+    "velocity merged-count search failed - count line omitted this run",
+    "Pages status fetch failed - deploy.pages.status is unknown this run"
+  ],
   "repo": {
     "owner": "nhruska",
     "name": "nhruska.github.io",
@@ -13,12 +16,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-10-08T16:37:23Z",
-    "sha": "e69213554b0ab6689cff3d9022e328bdaf4c88e5",
+    "date": "2026-10-09T16:20:50Z",
+    "sha": "b48508a79b2589a4dfdcc05a2d6278ec611dfa7c",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/e69213554b0ab6689cff3d9022e328bdaf4c88e5"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/b48508a79b2589a4dfdcc05a2d6278ec611dfa7c"
   },
   "commits": [
+    {
+      "date": "2026-10-09T16:20:50Z",
+      "sha": "b48508a79b2589a4dfdcc05a2d6278ec611dfa7c",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/b48508a79b2589a4dfdcc05a2d6278ec611dfa7c"
+    },
     {
       "date": "2026-10-08T16:37:23Z",
       "sha": "e69213554b0ab6689cff3d9022e328bdaf4c88e5",
@@ -84,12 +93,6 @@
       "sha": "4c56d101c26c4f3487fc61a21205b8149b86d0cf",
       "subject": "feat(shell): landscape phones get a side rail and one-row player (#369)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/4c56d101c26c4f3487fc61a21205b8149b86d0cf"
-    },
-    {
-      "date": "2026-10-06T01:11:34Z",
-      "sha": "dc61c70c22facee11a2b1291b3311f64ae73ce97",
-      "subject": "feat(tune): two-pane landscape Tune for every instrument (#367)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/dc61c70c22facee11a2b1291b3311f64ae73ce97"
     }
   ],
   "openPRs": [
@@ -102,18 +105,18 @@
       "ciState": "green",
       "checks": [
         {
-          "name": "preview",
-          "workflow": "PR preview link",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37731522007/job/113161477776"
-        },
-        {
           "name": "unit",
-          "workflow": "tests",
+          "workflow": null,
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
           "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37731522023/job/113161477853"
+        },
+        {
+          "name": "preview",
+          "workflow": null,
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37731522007/job/113161477776"
         }
       ]
     },
@@ -126,18 +129,18 @@
       "ciState": "green",
       "checks": [
         {
-          "name": "preview",
-          "workflow": "PR preview link",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37873281665/job/113635957900"
-        },
-        {
           "name": "unit",
-          "workflow": "tests",
+          "workflow": null,
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
           "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37873281670/job/113635958176"
+        },
+        {
+          "name": "preview",
+          "workflow": null,
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37873281665/job/113635957900"
         }
       ]
     },
@@ -150,18 +153,18 @@
       "ciState": "green",
       "checks": [
         {
-          "name": "preview",
-          "workflow": "PR preview link",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37243242166/job/111555974299"
-        },
-        {
           "name": "unit",
-          "workflow": "tests",
+          "workflow": null,
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
           "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37243242247/job/111555974406"
+        },
+        {
+          "name": "preview",
+          "workflow": null,
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37243242166/job/111555974299"
         }
       ]
     },
@@ -170,22 +173,22 @@
       "title": "docs(plans): SBS merge plan for the 6 open PRs",
       "branch": "claude/music-app-pr-merge-p4g8ji",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/356",
-      "draft": true,
+      "draft": false,
       "ciState": "green",
       "checks": [
         {
           "name": "preview",
-          "workflow": "PR preview link",
+          "workflow": null,
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37397116450/job/112055601162"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37958677525/job/113915630094"
         },
         {
           "name": "unit",
-          "workflow": "tests",
+          "workflow": null,
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37397116672/job/112055601716"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37958677557/job/113915628939"
         }
       ]
     },
@@ -199,14 +202,14 @@
       "checks": [
         {
           "name": "preview",
-          "workflow": "PR preview link",
+          "workflow": null,
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
           "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37519898302/job/112462320287"
         },
         {
           "name": "unit",
-          "workflow": "tests",
+          "workflow": null,
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
           "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37519898310/job/112462319043"
@@ -216,138 +219,160 @@
   ],
   "recentMerges": [
     {
-      "createdAt": "2026-10-08T00:33:34Z",
-      "mergedAt": "2026-10-08T02:41:57Z",
       "number": 373,
       "title": "docs(queue): NH-7 groom - move shipped NOW/SHORT rows to a DONE archive with verified merged-PR citations",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/373"
+      "mergedAt": "2026-10-08T02:41:57Z",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/373",
+      "createdAt": "2026-10-08T00:33:34Z"
     },
     {
-      "createdAt": "2026-10-06T04:05:02Z",
-      "mergedAt": "2026-10-06T19:31:03Z",
-      "number": 371,
-      "title": "fix(theory): F major's B tile reads B, not Cb (music-v371)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/371"
+      "number": 346,
+      "title": "docs: calibrate Thought-Ware public claims",
+      "mergedAt": "2026-10-06T19:31:29Z",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/346",
+      "createdAt": "2026-09-06T15:01:46Z"
     },
     {
-      "createdAt": "2026-10-06T01:08:14Z",
-      "mergedAt": "2026-10-06T19:31:09Z",
-      "number": 370,
-      "title": "test(pw): bring 4 stale scenarios up to the shipped app",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/370"
-    },
-    {
-      "createdAt": "2026-10-06T00:33:00Z",
-      "mergedAt": "2026-10-06T01:16:33Z",
-      "number": 369,
-      "title": "feat(shell): landscape phones get a side rail and one-row player (music-v369)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/369"
-    },
-    {
-      "createdAt": "2026-10-05T23:48:19Z",
-      "mergedAt": "2026-10-06T01:20:58Z",
-      "number": 368,
-      "title": "fix(player): video window never covers the mini-player controls or tab bar (music-v368)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/368"
-    },
-    {
-      "createdAt": "2026-10-05T23:46:50Z",
-      "mergedAt": "2026-10-06T01:11:34Z",
-      "number": 367,
-      "title": "feat(tune): two-pane landscape Tune for every instrument, one screen, no scroll (music-v367)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/367"
-    },
-    {
-      "createdAt": "2026-10-05T22:19:34Z",
-      "mergedAt": "2026-10-06T01:06:54Z",
-      "number": 366,
-      "title": "fix(tune): landscape mini-player no longer buries the bottom string row (music-v366)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/366"
-    },
-    {
-      "createdAt": "2026-10-05T22:00:39Z",
-      "mergedAt": "2026-10-06T19:31:16Z",
       "number": 365,
       "title": "cc: REST fallback so the session-start sweep sees open PRs; stop run-all dropping test summaries; reconcile QUEUE and the handoff doc",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/365"
+      "mergedAt": "2026-10-06T19:31:16Z",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/365",
+      "createdAt": "2026-10-05T22:00:39Z"
     },
     {
-      "createdAt": "2026-10-05T21:40:20Z",
-      "mergedAt": "2026-10-06T17:08:54Z",
+      "number": 370,
+      "title": "test(pw): bring 4 stale scenarios up to the shipped app",
+      "mergedAt": "2026-10-06T19:31:09Z",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/370",
+      "createdAt": "2026-10-06T01:08:14Z"
+    },
+    {
+      "number": 371,
+      "title": "fix(theory): F major's B tile reads B, not Cb (music-v371)",
+      "mergedAt": "2026-10-06T19:31:03Z",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/371",
+      "createdAt": "2026-10-06T04:05:02Z"
+    },
+    {
       "number": 364,
       "title": "docs(plans): nh-pages Project handoff 2026-10-05",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/364"
+      "mergedAt": "2026-10-06T17:08:54Z",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/364",
+      "createdAt": "2026-10-05T21:40:20Z"
     },
     {
-      "createdAt": "2026-10-05T13:02:09Z",
-      "mergedAt": "2026-10-05T13:17:15Z",
-      "number": 363,
-      "title": "fix(check-cache-bump): judge uncommitted changes, not just HEAD",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/363"
+      "number": 368,
+      "title": "fix(player): video window never covers the mini-player controls or tab bar (music-v368)",
+      "mergedAt": "2026-10-06T01:20:58Z",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/368",
+      "createdAt": "2026-10-05T23:48:19Z"
     },
     {
-      "createdAt": "2026-09-28T00:11:52Z",
-      "mergedAt": "2026-10-03T20:37:01Z",
-      "number": 361,
-      "title": "fix(check-cache-bump): skip pre-Math commits in the Math per-commit walk",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/361"
+      "number": 369,
+      "title": "feat(shell): landscape phones get a side rail and one-row player (music-v369)",
+      "mergedAt": "2026-10-06T01:16:33Z",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/369",
+      "createdAt": "2026-10-06T00:33:00Z"
     },
     {
-      "createdAt": "2026-09-26T16:14:09Z",
-      "mergedAt": "2026-10-05T13:01:05Z",
-      "number": 360,
-      "title": "verify: adopt the verification runtime at V2 for the Music app",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/360"
+      "number": 367,
+      "title": "feat(tune): two-pane landscape Tune for every instrument, one screen, no scroll (music-v367)",
+      "mergedAt": "2026-10-06T01:11:34Z",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/367",
+      "createdAt": "2026-10-05T23:46:50Z"
     },
     {
-      "createdAt": "2026-09-26T11:19:58Z",
-      "mergedAt": "2026-10-06T01:00:35Z",
+      "number": 366,
+      "title": "fix(tune): landscape mini-player no longer buries the bottom string row (music-v366)",
+      "mergedAt": "2026-10-06T01:06:54Z",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/366",
+      "createdAt": "2026-10-05T22:19:34Z"
+    },
+    {
       "number": 358,
       "title": "docs: propose Thought-Ware method v0.1 (base of the #346/#347 stack)",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/358"
+      "mergedAt": "2026-10-06T01:00:35Z",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/358",
+      "createdAt": "2026-09-26T11:19:58Z"
     },
     {
-      "createdAt": "2026-09-26T11:19:52Z",
-      "mergedAt": "2026-10-04T23:17:58Z",
+      "number": 351,
+      "title": "feat(profile): portable lifelong Musician Profile + VNext semantic model (unassessed everywhere, global musicianship, coach contract, Settings > Musician profile) - review-only",
+      "mergedAt": "2026-10-06T01:00:28Z",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/351",
+      "createdAt": "2026-09-13T10:10:03Z"
+    },
+    {
+      "number": 363,
+      "title": "fix(check-cache-bump): judge uncommitted changes, not just HEAD",
+      "mergedAt": "2026-10-05T13:17:15Z",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/363",
+      "createdAt": "2026-10-05T13:02:09Z"
+    },
+    {
+      "number": 360,
+      "title": "verify: adopt the verification runtime at V2 for the Music app",
+      "mergedAt": "2026-10-05T13:01:05Z",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/360",
+      "createdAt": "2026-09-26T16:14:09Z"
+    },
+    {
       "number": 357,
       "title": "test(pw): salvage the setlist-scroll regression gate from #350",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/357"
-    },
-    {
-      "createdAt": "2026-09-25T04:35:26Z",
-      "mergedAt": "2026-09-27T23:14:34Z",
-      "number": 355,
-      "title": "Math app v1: timed workouts + skills path at /math/, landing lists 2 apps",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/355"
+      "mergedAt": "2026-10-04T23:17:58Z",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/357",
+      "createdAt": "2026-09-26T11:19:52Z"
     }
   ],
   "lastCiRun": {
-    "workflowName": "cc-nightly",
-    "status": "in_progress",
-    "conclusion": null,
-    "runStartedAt": "2026-10-09T16:20:34Z",
-    "durationSeconds": 4,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37958413213",
-    "headBranch": "main"
+    "workflowName": "tests",
+    "status": "completed",
+    "conclusion": "success",
+    "runStartedAt": "2026-10-09T16:22:43Z",
+    "durationSeconds": 18,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37958677557",
+    "headBranch": "claude/music-app-pr-merge-p4g8ji"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 17,
-    "loc": null,
-    "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
+    "merged_count": null,
+    "loc": {
+      "added": 12010,
+      "deleted": 2125
+    },
+    "loc_note": null,
     "typical_merge_hours": 18.38,
-    "weekly": null
+    "weekly": [
+      {
+        "week_start": "2026-10-02",
+        "loc_added": 12010,
+        "loc_deleted": 2125
+      },
+      {
+        "week_start": "2026-09-25",
+        "loc_added": 8046,
+        "loc_deleted": 602
+      },
+      {
+        "week_start": "2026-09-18",
+        "loc_added": 127,
+        "loc_deleted": 102
+      },
+      {
+        "week_start": "2026-09-11",
+        "loc_added": 2146,
+        "loc_deleted": 320
+      }
+    ]
   },
   "deploy": {
     "pages": {
-      "status": "built",
-      "htmlUrl": "https://nhruska.github.io/",
-      "sourceBranch": "main",
-      "buildType": "legacy"
+      "status": "unknown",
+      "error": "pages API fetch failed"
     },
-    "liveCacheVersion": "music-v371",
+    "liveCacheVersion": null,
     "localCacheVersion": "music-v371",
-    "cacheMatch": true
+    "cacheMatch": null
   },
   "missions": [
     {
@@ -410,7 +435,7 @@
     "NOW": [
       {
         "Mission": "**Sprint (Math + Music), 10 PRs**",
-        "State": "**8 of 10 done** (re-verified 2026-10-08 against GitHub): #350 closed; #355, #348, #357, #360, #351, #358, **[#346](https://github.com/nhruska/nhruska.github.io/pull/346) (2026-10-06)** merged. Remaining: [#347](https://github.com/nhruska/nhruska.github.io/pull/347) (open, ready) - Nik merges; [#356](https://github.com/nhruska/nhruska.github.io/pull/356) SBS plan (draft) last. Owned by the nh-pages Project since the sprint orchestrator retired.",
+        "State": "**8 of 10 done** (re-verified 2026-10-08 against GitHub): #350 closed; #355, #348, #357, #360, #351, #358, **[#346](https://github.com/nhruska/nhruska.github.io/pull/346) (2026-10-06)** merged. Remaining: [#347](https://github.com/nhruska/nhruska.github.io/pull/347) (open, ready) - Nik merges; [#356](https://github.com/nhruska/nhruska.github.io/pull/356) SBS plan (ready, sprint close recorded 2026-10-09) last. Owned by the nh-pages Project since the sprint orchestrator retired.",
         "Spec": "[handoff](project-handoff-20261005.md)"
       }
     ],
