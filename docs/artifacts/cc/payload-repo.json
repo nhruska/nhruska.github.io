@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-08T16:37:13Z",
+  "generatedAt": "2026-10-09T16:20:39Z",
   "generator": "command-center-gen.py@0.4.1 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-10-08T02:41:57Z",
-    "sha": "196ec3fb1adeee40990e2c423ebb43b5206cdd79",
-    "subject": "docs(queue): NH-7 groom - move 64 shipped NOW/SHORT rows to a DONE archive (#373)",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/196ec3fb1adeee40990e2c423ebb43b5206cdd79"
+    "date": "2026-10-08T16:37:23Z",
+    "sha": "e69213554b0ab6689cff3d9022e328bdaf4c88e5",
+    "subject": "cc: nightly snapshot refresh",
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/e69213554b0ab6689cff3d9022e328bdaf4c88e5"
   },
   "commits": [
+    {
+      "date": "2026-10-08T16:37:23Z",
+      "sha": "e69213554b0ab6689cff3d9022e328bdaf4c88e5",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/e69213554b0ab6689cff3d9022e328bdaf4c88e5"
+    },
     {
       "date": "2026-10-08T02:41:57Z",
       "sha": "196ec3fb1adeee40990e2c423ebb43b5206cdd79",
@@ -84,12 +90,6 @@
       "sha": "dc61c70c22facee11a2b1291b3311f64ae73ce97",
       "subject": "feat(tune): two-pane landscape Tune for every instrument (#367)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/dc61c70c22facee11a2b1291b3311f64ae73ce97"
-    },
-    {
-      "date": "2026-10-06T01:06:54Z",
-      "sha": "f4bb9eb07aba895633848a9247f29ac3ade557fc",
-      "subject": "fix(tune): landscape mini-player no longer buries the bottom string row (#366)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/f4bb9eb07aba895633848a9247f29ac3ade557fc"
     }
   ],
   "openPRs": [
@@ -130,14 +130,14 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37721139935/job/113128798968"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37873281665/job/113635957900"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37721139941/job/113128799795"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37873281670/job/113635958176"
         }
       ]
     },
@@ -325,9 +325,9 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-10-08T16:37:07Z",
+    "runStartedAt": "2026-10-09T16:20:34Z",
     "durationSeconds": 4,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37810202365",
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37958413213",
     "headBranch": "main"
   },
   "velocity": {
