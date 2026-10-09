@@ -94,4 +94,20 @@ test('bundlePath is <skill-id>/SKILL.md with path separators flattened defensive
   assert.strictEqual(SkillMd.bundlePath('a/b\\c'), 'a-b-c/SKILL.md');
 });
 
+
+test('VNEXT: a never-observed row reads "unassessed" in the table (level null OR the legacy 0-with-no-evidence), while an observed row keeps its number; the embedded doc is untouched', function () {
+  var doc = { schema: 'skill-competency-profile/v1', skill: 'ukulele', discipline: 'music', updated: '2026-09-13T00:00:00Z', provenance: [],
+    competencies: [
+      { id: 'a', name: 'Never observed (null)', desc: '', level: null, target: 90, evidence_count: 0, last_evidence: null },
+      { id: 'b', name: 'Legacy zero', desc: '', level: 0, target: 85, evidence_count: 0, last_evidence: null },
+      { id: 'c', name: 'Observed', desc: '', level: 12, target: 80, evidence_count: 3, last_evidence: '2026-09-01T00:00:00Z' }
+    ] };
+  var md = SkillMd.render(doc);
+  assert.ok(md.indexOf('| Never observed (null) | unassessed | 90 |') >= 0, md);
+  assert.ok(md.indexOf('| Legacy zero | unassessed | 85 |') >= 0);
+  assert.ok(md.indexOf('| Observed | 12 | 80 | 3 |') >= 0);
+  assert.ok(!/\| 0 \| 9?0 \|/.test(md), 'no row prints a level 0');
+  assert.deepStrictEqual(SkillMd.parse(md).doc, doc);
+});
+
 run();

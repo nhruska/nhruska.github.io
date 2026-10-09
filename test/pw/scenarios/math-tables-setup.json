@@ -1,0 +1,112 @@
+{
+  "name": "math-tables-setup",
+  "description": "Times-table setup (goal-math-app-v1): picking one table offers In order; Coach hides the table picker and says what it is working on; Sprint drops the question count; Start stays on screen; the workout fits a landscape phone.",
+  "url": "/math/",
+  "seed": {
+    "math.profiles.v1": "{\"active\": \"pNik\", \"list\": [{\"id\": \"pNik\", \"name\": \"Nik\", \"color\": \"#38bdf8\", \"cfg\": {\"ops\": [\"x\"], \"addRange\": 10, \"tables\": [], \"max\": 12, \"order\": \"random\", \"coach\": false, \"mode\": \"race\", \"length\": 20}, \"created\": 1}]}"
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"setup\"]"
+    },
+    {
+      "action": "evalAssert",
+      "label": "tables preset: tables shown, add/sub hidden, max 12 selected",
+      "js": "!document.getElementById('mulSec').hidden&&document.getElementById('addSec').hidden&&document.querySelector('#maxSeg .on').textContent==='to 12'"
+    },
+    {
+      "action": "assertInViewport",
+      "selector": "#startBtn"
+    },
+    {
+      "action": "tap",
+      "selector": "#tableChips [data-table='7']"
+    },
+    {
+      "action": "evalAssert",
+      "label": "x7 selected and In order offered for a single table",
+      "js": "document.querySelector('#tableChips [data-table=\"7\"]').classList.contains('on')&&!document.getElementById('orderChip').hidden"
+    },
+    {
+      "action": "tap",
+      "selector": "#orderChip"
+    },
+    {
+      "action": "tap",
+      "selector": "#startBtn"
+    },
+    {
+      "action": "evalAssert",
+      "label": "in-order x7 starts at 1 x 7",
+      "js": "document.getElementById('problem').textContent==='1 \\u00d7 7'"
+    },
+    {
+      "action": "tap",
+      "selector": "#pauseBtn"
+    },
+    {
+      "action": "assertVisible",
+      "selector": "#pauseOv"
+    },
+    {
+      "action": "tap",
+      "selector": "#quitBtn"
+    },
+    {
+      "action": "wait",
+      "ms": 300
+    },
+    {
+      "action": "assertHidden",
+      "selector": "#runLayer"
+    },
+    {
+      "action": "tap",
+      "selector": "#coachChip"
+    },
+    {
+      "action": "evalAssert",
+      "label": "Coach on: table picker hidden, honest status line",
+      "js": "document.getElementById('tableChips').hidden&&document.getElementById('coachChip').classList.contains('on')&&/learns from every answer|working on/.test(document.getElementById('coachSub').textContent)"
+    },
+    {
+      "action": "tapText",
+      "text": "Sprint 60s"
+    },
+    {
+      "action": "assertHidden",
+      "selector": "#lenRow"
+    },
+    {
+      "action": "screenshot",
+      "name": "math-tables-setup"
+    },
+    {
+      "action": "resize",
+      "width": 915,
+      "height": 412
+    },
+    {
+      "action": "tap",
+      "selector": "#startBtn"
+    },
+    {
+      "action": "assertInViewport",
+      "selector": "#keypad [data-k='0']"
+    },
+    {
+      "action": "assertInViewport",
+      "selector": "#problem"
+    },
+    {
+      "action": "evalAssert",
+      "label": "sprint clock counts down from 1:00",
+      "js": "/^[01]:\\d\\d$/.test(document.getElementById('clock').textContent)"
+    },
+    {
+      "action": "screenshot",
+      "name": "math-landscape-sprint"
+    }
+  ]
+}

@@ -93,12 +93,13 @@ a{color:var(--accent-ink);}
 
 <p style="max-width:760px;margin:0 auto;padding:0 20px;font-family:'Inter','Segoe UI',Roboto,system-ui,sans-serif;font-size:.85rem;"><a href="gateway.html">&larr; User-Centric Development</a></p>
 <h1>The Method, in Full</h1>
-<p class="tagline">Steering agentic AI development with a wiki that makes business rules
-deterministic - proven on a real app, against real users, with a music theory engine as the judge.</p>
+<p class="tagline">Steering agent-assisted development by converting observed friction
+into versioned goalposts and fail-closed evidence - demonstrated deeply in one app and
+awaiting controlled multi-domain replication.</p>
 
 <div class="wrap">
 
-<span class="status">Candidate for global promotion - pilot in progress</span>
+<span class="status">Operational single-product method - controlled evaluation proposed; independent replication later</span>
 
 <h2>Who does which job</h2>
 <p>The human-in-the-loop is not technical, and not a subject-matter expert. A problem
@@ -106,11 +107,10 @@ gets reported as a spoken phrase or fragment - speech-to-text, not an implementa
 direction. "the studio thing is confusing when I'm playing" is a valid, sufficient
 report; nobody on the human side has to say which component, which state, or which
 fix.</p>
-<p>The agents are the CTO and the subject-matter experts. This app runs a coach suite -
-UX, accessibility, music theory - whose job is turning that fragment into a wiki entry
-written to whatever level of detail the TDD/SDD/UAT loops actually need to run live.
-The wiki is the human-computer-interaction layer's spec, authored by the SMEs, for a
-HiTL who never has to speak their language.</p>
+<p>Agents perform delegated engineering and domain-analysis work. This app runs a coach
+suite - UX, accessibility, music theory - that turns a fragment into proposed rules,
+goalposts, and scenarios. Named product and domain authorities remain accountable for
+what counts as correct; an agent's role or confidence is not authority by itself.</p>
 <svg class="diagram" viewBox="0 0 640 240" role="img" aria-labelledby="wikiDiagTitle" xmlns="http://www.w3.org/2000/svg">
   <title id="wikiDiagTitle">Human reports a spoken fragment to the agents; the agents author and check against the wiki; the wiki defines what "correct" means back to the human.</title>
   <defs>
@@ -135,26 +135,27 @@ HiTL who never has to speak their language.</p>
   <text x="110" y="211" text-anchor="middle" font-size="11" fill="var(--txt-dim)">reports a fragment</text>
   <rect x="432" y="170" width="188" height="56" rx="10" fill="var(--surface)" stroke="var(--line-strong)" stroke-width="1.5"/>
   <text x="526" y="193" text-anchor="middle" font-size="13" font-weight="700" fill="var(--txt)">AGENTS</text>
-  <text x="526" y="211" text-anchor="middle" font-size="11" fill="var(--txt-dim)">CTO + SMEs</text>
+  <text x="526" y="211" text-anchor="middle" font-size="11" fill="var(--txt-dim)">delegated analysis + build</text>
 </svg>
 
 <h2>The claim</h2>
 <p>Most "AI-assisted development" trusts the model's judgment on whether something
 works. This doesn't. The model is free to generate - guess at features, hallucinate
 task ideas, propose whatever it wants - because nothing it generates ships until it
-survives a deterministic loop that doesn't care what the model believes.</p>
+survives a versioned, fail-closed gate that does not treat model confidence as evidence.</p>
 
 <div class="callout">
 <strong>Hallucination is upstream of the gate, never inside it.</strong> An LLM
 proposing a candidate feature or task is fine - even useful, since it's cheap to
 generate many. What makes this safe is that every candidate has to become a
-<em>persona-run scenario</em> before it counts for anything, and that scenario either
-fails for a real reason or it doesn't exist yet as a goalpost worth building toward.
+<em>appropriate scenario</em> before it counts for anything. Persona scenarios cover
+declared user states; security, migration, resilience, and performance need their own
+scenario classes and graders.
 </div>
 
 <h2>The loop - red, green, regression</h2>
 <svg class="diagram" viewBox="0 0 700 190" role="img" aria-labelledby="loopDiagTitle" xmlns="http://www.w3.org/2000/svg">
-  <title id="loopDiagTitle">Friction profile leads to a goalpost scenario, which must fail red, then is built to green, then kept as a regression forever - and the next friction profile restarts the cycle.</title>
+  <title id="loopDiagTitle">Friction leads to an authorized goalpost, which must fail red, then is built to green and retained until explicit supersession or retirement.</title>
   <defs>
     <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="var(--txt-dim)"/>
@@ -173,12 +174,12 @@ fails for a real reason or it doesn't exist yet as a goalpost worth building tow
   <rect x="400" y="20" width="118" height="44" rx="9" fill="var(--surface-2)" stroke="var(--accent-ink)"/>
   <text x="459" y="46" text-anchor="middle" font-size="11" fill="var(--accent-ink)">GREEN - build</text>
   <rect x="530" y="20" width="118" height="44" rx="9" fill="var(--surface)" stroke="var(--line-strong)"/>
-  <text x="589" y="46" text-anchor="middle" font-size="11" fill="var(--txt)">Regression, forever</text>
+  <text x="589" y="46" text-anchor="middle" font-size="11" fill="var(--txt)">Active regression</text>
   <path d="M589,66 C589,158 69,158 69,66" fill="none" stroke="var(--txt-dim)" stroke-width="2" stroke-dasharray="3 4" marker-end="url(#arrow2)"/>
   <text x="329" y="178" text-anchor="middle" font-size="11" fill="var(--txt-dim)">next friction profile restarts the cycle</text>
 </svg>
 <div class="loop">
-  <span class="step">Friction profile (real user, real observed problem)</span>
+  <span class="step">Friction record (observed or labeled hypothesis)</span>
   <span class="arrow">&rarr;</span>
   <span class="step">Goalpost -&gt; persona scenario</span>
   <span class="arrow">&rarr;</span>
@@ -186,7 +187,7 @@ fails for a real reason or it doesn't exist yet as a goalpost worth building tow
   <span class="arrow">&rarr;</span>
   <span class="step">Build until it passes (green)</span>
   <span class="arrow">&rarr;</span>
-  <span class="step">Keep it as a regression, forever</span>
+  <span class="step">Retain until governed retirement</span>
 </div>
 <p>A scenario that passes before the build exists means the goalpost was already met,
 or the assertion is too weak - the fix is a sharper assertion, never a lowered bar.
@@ -211,8 +212,8 @@ by step, as it lands. The operator is never asked "run this and tell me what you
 see" - the agent watches the same evidence arrive in real time, on the same
 timeline. Fails and screenshots are accepted as the feedback itself, not
 transcribed into a bug report after the fact, and the next revision lands on the
-same PR. Deterministic on the machine side; verifiable, not just reported, on the
-human side too.</p>
+same PR. Reproducible machine evidence and identified human judgment remain separate
+evidence classes.</p>
 
 <h2>What the operator actually does, per cycle</h2>
 <p>Dev loops and UAT loops don't run once - they run 10s to 100s of times across a
@@ -226,9 +227,9 @@ to advance to - at which point the loop changes shape entirely (see below).</p>
 <h2>Personas are app states, not narratives</h2>
 <p>A persona here is <code>music.guidanceLevel.v1</code> plus an answered-ask
 notable, seeded before the script runs - not a description an LLM stays in character
-for. That's what makes "run any app user on any task" a real, replayable claim
-instead of a roleplay: the same persona against the same flow produces the same
-assertions every time.</p>
+for. That makes explicitly supported persona states replayable instead of roleplay:
+the same fixture and flow use the same assertions, while agent, browser, and service
+outcomes may still require repeated trials.</p>
 <div class="tbl-wrap">
 <table>
 <tr><th>Persona</th><th>Reads the app as</th><th>Dismisses it over</th></tr>
@@ -240,28 +241,28 @@ assertions every time.</p>
 </div>
 
 <h2>Why any of this can be checked at all</h2>
-<p>A scenario can only fail "for a real reason" if there's a written, deterministic
-statement of what correct means - a wiki, not tribal knowledge in one person's head.
-Without it, "looks right" is the only bar anyone can check against, and it moves
-depending on who's looking.</p>
+<p>A scenario needs a written statement of what acceptable means - a governed registry,
+not tribal knowledge in one person's head. The statement may be exact or may identify
+an authorized human rubric; either way its authority, version, and lifecycle must be
+inspectable.</p>
 <p><strong>The wiki is the shared abstraction, not a document for one side of the
 loop.</strong> The human reads it to know what "correct" was supposed to mean; the
 agent reads the same page to know what to build and what to check. Same source, both
-readers - that symmetry is what makes the loop deterministic. Neither side is
-verifying the other against a private understanding; both are verifying against the
-one thing actually written down. The wiki-as-institutional-memory idea traces to
+readers - that symmetry makes disagreement inspectable. The registry must still be
+checked against current decisions, primary authority, code, and tests. The
+wiki-as-institutional-memory idea traces to
 <a href="https://gist.github.com/karpathy" target="_blank" rel="noopener">Andrej
 Karpathy's llm-wiki gist</a> - applied here to business rules instead of general
 knowledge, not reinvented.</p>
 
 <h2>When there's no goalpost left</h2>
 <p>Once every goalpost passes, the loop's shape changes: PR, then CI, then an
-adversarial volley between two different vendors' models, not one model checking its
-own work. The highest-thinking Claude tier writes; a skeptical Codex pass reviews -
-and denies any claim that isn't backed by deterministic, TDD-proven evidence. "It
-should work" and "it looks right" are not evidence. A passing scenario is.</p>
+adversarial volley between two different vendors' models. That diversity can expose
+assumptions, but vendor difference is not scientific independence. "It should work"
+and "it looks right" are not evidence; the release decision still requires the
+declared graders and accountable approval.</p>
 <svg class="diagram" viewBox="0 0 700 260" role="img" aria-labelledby="volleyDiagTitle" xmlns="http://www.w3.org/2000/svg">
-  <title id="volleyDiagTitle">Once every goalpost passes: PR opens, CI goes green, Claude and Codex volley until Codex stops refusing, a separate bot identity formally approves, the PR merges, and the next cycle begins.</title>
+  <title id="volleyDiagTitle">Once required goalposts pass: a pull request opens, continuous integration runs, an adversarial model review challenges the evidence, an accountable approval is recorded, and release may proceed.</title>
   <defs>
     <marker id="arrow3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0,0 L10,5 L0,10 z" fill="var(--txt-dim)"/>
@@ -288,16 +289,15 @@ should work" and "it looks right" are not evidence. A passing scenario is.</p>
   <text x="329" y="110" text-anchor="middle" font-size="10" font-weight="700" fill="var(--bad)">CODEX</text>
   <text x="329" y="124" text-anchor="middle" font-size="9" fill="var(--txt-dim)">refuses unproven</text>
   <rect x="400" y="62" width="118" height="44" rx="9" fill="var(--surface)" stroke="var(--line-strong)"/>
-  <text x="459" y="88" text-anchor="middle" font-size="11" fill="var(--txt)">Bot approves</text>
+  <text x="459" y="88" text-anchor="middle" font-size="11" fill="var(--txt)">Approval</text>
   <rect x="530" y="62" width="118" height="44" rx="9" fill="var(--accent-deep)" stroke="var(--accent-ink)"/>
   <text x="589" y="88" text-anchor="middle" font-size="11" fill="var(--accent-ink)">Merge</text>
   <path d="M589,120 C589,210 69,210 69,120" fill="none" stroke="var(--txt-dim)" stroke-width="2" stroke-dasharray="3 4" marker-end="url(#arrow3)"/>
   <text x="329" y="230" text-anchor="middle" font-size="11" fill="var(--txt-dim)">next cycle, back into the loop</text>
 </svg>
-<p>Only after that survives does a GitHub App bot identity file the formal approve -
-a separate identity from the one that authored the PR, because a model cannot
-credibly approve its own work under its own name. Merge, then back into the TDD/UAT
-loop for the next cycle. The volley is a gate on the way out, not a courtesy step.</p>
+<p>In the pilot, cross-vendor review is an adversarial practice. It becomes a release
+gate only when repository controls or an accountable approver enforce it. Advisory,
+required, and technically enforced reviews are reported separately.</p>
 
 <h2>The proof case: a song about friction, written by the loop testing itself</h2>
 <p>The pilot's sharpest artifact wasn't a bug fix - it was using the app's own music
@@ -310,12 +310,15 @@ before a single lyric was written. The verse leans the minor's shade; the chorus
 the Mixolydian door. The song is about the loop. The loop wrote the song's harmony.</p>
 
 <h2>Status, honestly</h2>
-<p>This is a pilot on one real app (the music app hosted here), not yet a portable
-methodology. The USDD skill that runs this loop already says so itself: "candidate
-for global promotion after the music-app pilot." A related discipline - simulation-driven
-development on real deterministic tests, not just personas - has already crossed over
-into at least one other project's engineering rules. That crossover is the actual
-signal this is more than a one-app trick, not a claim made here in advance of it.</p>
+<p>This is an operational pilot on one real app, not yet a portable or causally
+validated methodology. Cross-project use is a promising transfer signal, not an
+independent replication. The proposed specification, controlled evaluation protocol, and
+adversarial review make the next evidence threshold explicit.</p>
+<p><a href="specification-v0.1.md">Proposed v0.1 specification</a> &middot;
+<a href="experiment-1-controlled-evaluation-protocol.md">Experiment 1 protocol</a> &middot;
+<a href="experiment-1-calibration-runbook.md">Calibration runbook</a> &middot;
+<a href="normative-review-20260907.md">Normative review</a> &middot;
+<a href="red-team-review-20260906.md">Adversarial review</a></p>
 <p>Put plainly: this is what "user-centric development" means when it's a method and
 not a slogan - the human at the center reports in their own fragments, never learns
 the tooling's language, and the system is what bends to meet them. That's the same

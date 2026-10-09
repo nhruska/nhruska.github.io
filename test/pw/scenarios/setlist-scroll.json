@@ -1,0 +1,64 @@
+{
+  "name": "setlist-scroll",
+  "persona": "intermediate",
+  "dismissNotables": [
+    "composeintro",
+    "transposetip",
+    "backup"
+  ],
+  "seed": {
+    "roadcase-ukulele-gcea.setlist.v1": "[\"k0\",\"k1\",\"k2\",\"k3\",\"k4\",\"k5\",\"k6\",\"k7\",\"k8\",\"k9\",\"k10\",\"k11\",\"k12\",\"k13\",\"k14\",\"k15\",\"k16\",\"k17\",\"k18\",\"k19\",\"k20\",\"k21\",\"k22\",\"k23\",\"k24\"]"
+  },
+  "note": "S-SETLIST-SCROLL (operator UAT 2026-09-13, live site): a 25-song setlist rendered every row as a hairline and the list did not scroll. Mechanism: #setBody is BOTH the flex column that stacks the rows AND the scroll container, and a set row is .listItem.swipeable with overflow:hidden, so its automatic min-height resolves to 0 - flex shrinking runs BEFORE overflow, so the rows are squashed to fit the viewport and there is never anything to scroll. The All view never showed it because there .songs stacks the rows and .libSongs (its parent) scrolls. Proof: every seeded row keeps its content height (>= 56px, the 44px tap floor plus card padding), no row clips its own content, and #setBody overflows and actually scrolls.",
+  "viewport": {
+    "width": 412,
+    "height": 915
+  },
+  "steps": [
+    {
+      "action": "tap",
+      "selector": ".tabbar [data-tab=\"library\"]"
+    },
+    {
+      "action": "tap",
+      "selector": "#segSet"
+    },
+    {
+      "action": "wait",
+      "ms": 500
+    },
+    {
+      "action": "evalAssert",
+      "label": "all 25 seeded catalog rows rendered into #setBody",
+      "js": "(function(){var b=document.getElementById('setBody');return !!b && b.querySelectorAll('.listItem').length===25;})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "no set row is squashed: every row keeps its content height (offsetHeight >= 56px, layout box not rect)",
+      "js": "(function(){var rows=Array.prototype.slice.call(document.querySelectorAll('#setBody .listItem'));var hs=rows.map(function(r){return r.offsetHeight;});window.__setRowHeights=hs;return hs.length===25 && hs.every(function(h){return h>=56;});})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "no row clips its own content (offsetHeight >= scrollHeight - 1) - the squashed state hides most of every row behind .swipeable's overflow:hidden",
+      "js": "(function(){var rows=Array.prototype.slice.call(document.querySelectorAll('#setBody .listItem'));return rows.length===25 && rows.every(function(r){return r.offsetHeight>=r.scrollHeight-1;});})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "#setBody overflows (scrollHeight > clientHeight) and is the scroll container (overflow-y auto)",
+      "js": "(function(){var b=document.getElementById('setBody');return !!b && b.scrollHeight>b.clientHeight+40 && getComputedStyle(b).overflowY==='auto';})()"
+    },
+    {
+      "action": "evalAssert",
+      "label": "the list actually scrolls: setting scrollTop moves it",
+      "js": "(function(){var b=document.getElementById('setBody');b.scrollTop=400;var moved=b.scrollTop>=200;b.scrollTop=0;return moved;})()"
+    },
+    {
+      "action": "assertInViewport",
+      "selector": "#performBtn"
+    },
+    {
+      "action": "screenshot",
+      "name": "setlist-25-scrolls"
+    }
+  ]
+}

@@ -29,6 +29,11 @@ in scenarios):
                                          INITIAL size
   tap {selector}                       - click first match
   tapText {text, scope?}               - click element whose exact trimmed text matches
+  press {key}                          - a REAL keyboard press on whatever has focus
+                                         (Playwright key name: 'Enter', '7', 'Backspace').
+                                         Synthetic KeyboardEvents from evalAssert never
+                                         activate a focused button, so keyboard-activation
+                                         bugs need this verb to be seen at all
   tapChord {name}                      - click the #buildGrid tile whose .chord-name == name
   waitFor {selector, state?}           - wait for attached+visible (default) / hidden
   assertVisible {selector}             - offsetParent-based + rendered
@@ -43,13 +48,20 @@ in scenarios):
   dragReorder {from, to, side?}        - pointer-drag from one element onto the
                                          before/after side of another (S-PROG-REORDER)
   screenshot {name}                    - PNG to test/pw/evidence/<scenario>/<name>.png
+  uploadText {selector, name, text|textFile, mimeType?}
+                                       - hand an in-memory file to an <input type=file>
+                                         (textFile = repo-relative path to a fixture)
+                                         (fires its real change handler - the import
+                                         picker's dispatch path, not an API shortcut)
 
 Top-level scenario keys (beside "steps"): "firstRun" (opt out of the runner's
 welcomeDone seed - tour scenarios), "persona" + "dismissNotables" (guidance-level
 fixture), and "seed" - a {localStorage key: string value} map applied BEFORE any
 page script runs, for persona fixtures that need app STATE (a heavy setlist, an
 in-flight song draft). Values are stored verbatim - JSON-encode structured values
-yourself in the scenario file.
+yourself in the scenario file. Seeds are init scripts, so they are RE-APPLIED on
+every navigation (goto, reload): a fixture step that edits a seeded key and then
+navigates loses its edit. Write such keys from the step itself, not "seed".
 """
 import glob
 import json
@@ -213,6 +225,8 @@ def run(scenario_path, base_url=None):
                             page.mouse.move(sx + (dx - sx) * k / 6, sy + (dy - sy) * k / 6)
                             page.wait_for_timeout(40)
                         page.mouse.up()
+                    elif act == 'press':
+                        page.keyboard.press(step['key'])
                     elif act == 'tapText':
                         scope = step.get('scope', 'body')
                         page.locator(scope).locator(
@@ -315,6 +329,18 @@ def run(scenario_path, base_url=None):
                             raise AssertionError(step.get('label', step['js']))
                     elif act == 'screenshot':
                         page.screenshot(path=os.path.join(evdir, step['name'] + '.png'))
+                    elif act == 'uploadText':
+                        # `text` inline, or `textFile` (repo-relative) so a fixture
+                        # shared with the node suite is uploaded byte-identical.
+                        if 'textFile' in step:
+                            with open(os.path.join(REPO, step['textFile']), 'rb') as fh:
+                                buf = fh.read()
+                        else:
+                            buf = step['text'].encode('utf-8')
+                        page.set_input_files(step['selector'], {
+                            'name': step['name'],
+                            'mimeType': step.get('mimeType', 'application/json'),
+                            'buffer': buf})
                     else:
                         raise AssertionError('unknown action %r' % act)
                 except Exception as e:  # collect, snapshot, and stop - later steps depend on earlier

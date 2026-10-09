@@ -1,0 +1,268 @@
+{
+  "name": "persona-intermediate-landscape-songs-list",
+  "note": "Landscape audit (2026-10-05) Direction A, Songs list. An intermediate player props the phone sideways on a stand with a backing track playing and wants to pick the next song. Before the rail the 69px header + 67px tab bar + a 68px two-row bar + a 104px .view reservation left #libSongs at 0px on a 340px-tall screen: no row was tappable and no scroll could fix it. Asserts at 915x340, 844x340 and 740x320 with the bar up (video parked) in Jams, All and Setlist: the list band above the bar is >=180px (three rows), the scroller ends above the bar, the view switcher and its row controls (Search & filter + Add, or Clear + Start) share one row, and the first two rows' body + lead hit-test to themselves at >=44px. Then 412x800 portrait keeps the stacked chrome, bottom tab bar and two-row bar (structural no-regression; box-level identity is diffed out of band).",
+  "persona": "intermediate",
+  "dismissNotables": [
+    "firstrun",
+    "whynote",
+    "composeintro",
+    "transposetip",
+    "backup",
+    "scaletip",
+    "tunefirst",
+    "savebasics"
+  ],
+  "seed": {
+    "music.vidPref.v1": "hid",
+    "music.calloutsShown.v1": "{\"library\": 1, \"compose\": 1, \"tune\": 1}",
+    "music.offlineReadyCued.v1": "1",
+    "roadcase-ukulele-gcea.setlist.v1": "[\"k0\", \"k1\", \"k2\", \"k3\", \"k4\", \"k5\", \"k6\", \"k7\"]"
+  },
+  "viewport": {
+    "width": 915,
+    "height": 340
+  },
+  "steps": [
+    {
+      "action": "goto",
+      "path": "/music/play/index.html?p=ukulele-gcea"
+    },
+    {
+      "action": "wait",
+      "ms": 1200
+    },
+    {
+      "action": "waitFor",
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major']",
+      "timeoutMs": 8000
+    },
+    {
+      "action": "tap",
+      "selector": "[data-npkey='reggae backing track in a major|petti music studios|A|major'] .li-body"
+    },
+    {
+      "action": "waitFor",
+      "selector": ".bt-player.mini .bt-st-head",
+      "timeoutMs": 6000
+    },
+    {
+      "action": "wait",
+      "ms": 400
+    },
+    {
+      "action": "evalAssert",
+      "label": "fixture: plain mini bar up (video parked by the persona's remembered choice), no theater scrim, no PIP",
+      "js": "document.body.classList.contains('miniplayer')&&!document.body.classList.contains('pipdock')&&!document.querySelector('.bt-player.vidopen')"
+    },
+    {
+      "action": "resize",
+      "width": 915,
+      "height": 340
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "tap",
+      "selector": "#segJams"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "evalAssert",
+      "label": "915x340 Jams, bar up: the list keeps >=180px (three rows) above the one-row bar, segment + Search & filter share one row, and the first two rows (body + lead) hit-test to themselves at >=44px",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var T='915x340 jams';var b=bar();if(!b)throw new Error(T+': fixture lost - mini bar is not up');var sc=document.getElementById('libSongs');sc.scrollTo({top:0,behavior:'instant'});document.getElementById('view').scrollTo({top:0,behavior:'instant'});var s=sc.getBoundingClientRect(),br=b.getBoundingClientRect();var band=Math.min(s.bottom,br.top)-Math.max(s.top,0);if(band<180)throw new Error(T+': the list shows '+Math.round(band)+'px above the mini bar (needs >=180, three rows) - list '+R(sc)+' bar '+R(b));if(s.bottom>br.top+0.5)throw new Error(T+': the list scroller runs under the mini bar - its last row could never scroll clear ('+R(sc)+' vs bar '+R(b)+')');var seg=document.getElementById('songsSeg'),ch=document.querySelector('#segAllChrome .filterBar');if(!shown(seg)||!shown(ch))throw new Error(T+': Songs chrome missing');var a=seg.getBoundingClientRect(),c=ch.getBoundingClientRect();if(Math.abs(a.top-c.top)>8||!(a.right<=c.left+0.5))throw new Error(T+': view switcher '+R(seg)+' and its row controls '+R(ch)+' are not one row');var rs=[].slice.call(document.querySelectorAll('#songsList .listItem')).slice(0,2);if(rs.length<2)throw new Error(T+': fewer than two rows rendered');rs.forEach(function(r,i){var bd=r.querySelector('.li-body'),ld=r.querySelector('.li-lead');hits(bd,T+' row '+(i+1)+' body');if(ld)hits(ld,T+' row '+(i+1)+' lead');big(ld||bd,T+' row '+(i+1)+' lead');});return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "jams-915x340"
+    },
+    {
+      "action": "tap",
+      "selector": "#segAll"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "evalAssert",
+      "label": "915x340 All, bar up: same list budget and live first rows",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var T='915x340 all';var b=bar();if(!b)throw new Error(T+': fixture lost - mini bar is not up');var sc=document.getElementById('libSongs');sc.scrollTo({top:0,behavior:'instant'});document.getElementById('view').scrollTo({top:0,behavior:'instant'});var s=sc.getBoundingClientRect(),br=b.getBoundingClientRect();var band=Math.min(s.bottom,br.top)-Math.max(s.top,0);if(band<180)throw new Error(T+': the list shows '+Math.round(band)+'px above the mini bar (needs >=180, three rows) - list '+R(sc)+' bar '+R(b));if(s.bottom>br.top+0.5)throw new Error(T+': the list scroller runs under the mini bar - its last row could never scroll clear ('+R(sc)+' vs bar '+R(b)+')');var seg=document.getElementById('songsSeg'),ch=document.querySelector('#segAllChrome .filterBar');if(!shown(seg)||!shown(ch))throw new Error(T+': Songs chrome missing');var a=seg.getBoundingClientRect(),c=ch.getBoundingClientRect();if(Math.abs(a.top-c.top)>8||!(a.right<=c.left+0.5))throw new Error(T+': view switcher '+R(seg)+' and its row controls '+R(ch)+' are not one row');var rs=[].slice.call(document.querySelectorAll('#songsList .listItem')).slice(0,2);if(rs.length<2)throw new Error(T+': fewer than two rows rendered');rs.forEach(function(r,i){var bd=r.querySelector('.li-body'),ld=r.querySelector('.li-lead');hits(bd,T+' row '+(i+1)+' body');if(ld)hits(ld,T+' row '+(i+1)+' lead');big(ld||bd,T+' row '+(i+1)+' lead');});return true;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#segSet"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "evalAssert",
+      "label": "915x340 Setlist, bar up: the 8-song set keeps >=180px above the bar, segment + Clear/Start share one row, first two set rows live",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var T='915x340 set';var b=bar();if(!b)throw new Error(T+': fixture lost - mini bar is not up');var sc=document.getElementById('setBody');sc.scrollTo({top:0,behavior:'instant'});document.getElementById('view').scrollTo({top:0,behavior:'instant'});var s=sc.getBoundingClientRect(),br=b.getBoundingClientRect();var band=Math.min(s.bottom,br.top)-Math.max(s.top,0);if(band<180)throw new Error(T+': the list shows '+Math.round(band)+'px above the mini bar (needs >=180, three rows) - list '+R(sc)+' bar '+R(b));if(s.bottom>br.top+0.5)throw new Error(T+': the list scroller runs under the mini bar - its last row could never scroll clear ('+R(sc)+' vs bar '+R(b)+')');var seg=document.getElementById('songsSeg'),ch=document.getElementById('setHead');if(!shown(seg)||!shown(ch))throw new Error(T+': Songs chrome missing');var a=seg.getBoundingClientRect(),c=ch.getBoundingClientRect();if(Math.abs(a.top-c.top)>8||!(a.right<=c.left+0.5))throw new Error(T+': view switcher '+R(seg)+' and its row controls '+R(ch)+' are not one row');var rs=[].slice.call(document.querySelectorAll('#setBody .listItem')).slice(0,2);if(rs.length<2)throw new Error(T+': fewer than two rows rendered');rs.forEach(function(r,i){var bd=r.querySelector('.li-body'),ld=r.querySelector('.li-lead');hits(bd,T+' row '+(i+1)+' body');if(ld)hits(ld,T+' row '+(i+1)+' lead');big(ld||bd,T+' row '+(i+1)+' lead');});return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "setlist-915x340"
+    },
+    {
+      "action": "tap",
+      "selector": "#segJams"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "resize",
+      "width": 844,
+      "height": 340
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "tap",
+      "selector": "#segJams"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "evalAssert",
+      "label": "844x340 Jams, bar up: the list keeps >=180px (three rows) above the one-row bar, segment + Search & filter share one row, and the first two rows (body + lead) hit-test to themselves at >=44px",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var T='844x340 jams';var b=bar();if(!b)throw new Error(T+': fixture lost - mini bar is not up');var sc=document.getElementById('libSongs');sc.scrollTo({top:0,behavior:'instant'});document.getElementById('view').scrollTo({top:0,behavior:'instant'});var s=sc.getBoundingClientRect(),br=b.getBoundingClientRect();var band=Math.min(s.bottom,br.top)-Math.max(s.top,0);if(band<180)throw new Error(T+': the list shows '+Math.round(band)+'px above the mini bar (needs >=180, three rows) - list '+R(sc)+' bar '+R(b));if(s.bottom>br.top+0.5)throw new Error(T+': the list scroller runs under the mini bar - its last row could never scroll clear ('+R(sc)+' vs bar '+R(b)+')');var seg=document.getElementById('songsSeg'),ch=document.querySelector('#segAllChrome .filterBar');if(!shown(seg)||!shown(ch))throw new Error(T+': Songs chrome missing');var a=seg.getBoundingClientRect(),c=ch.getBoundingClientRect();if(Math.abs(a.top-c.top)>8||!(a.right<=c.left+0.5))throw new Error(T+': view switcher '+R(seg)+' and its row controls '+R(ch)+' are not one row');var rs=[].slice.call(document.querySelectorAll('#songsList .listItem')).slice(0,2);if(rs.length<2)throw new Error(T+': fewer than two rows rendered');rs.forEach(function(r,i){var bd=r.querySelector('.li-body'),ld=r.querySelector('.li-lead');hits(bd,T+' row '+(i+1)+' body');if(ld)hits(ld,T+' row '+(i+1)+' lead');big(ld||bd,T+' row '+(i+1)+' lead');});return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "jams-844x340"
+    },
+    {
+      "action": "tap",
+      "selector": "#segAll"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "evalAssert",
+      "label": "844x340 All, bar up: same list budget and live first rows",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var T='844x340 all';var b=bar();if(!b)throw new Error(T+': fixture lost - mini bar is not up');var sc=document.getElementById('libSongs');sc.scrollTo({top:0,behavior:'instant'});document.getElementById('view').scrollTo({top:0,behavior:'instant'});var s=sc.getBoundingClientRect(),br=b.getBoundingClientRect();var band=Math.min(s.bottom,br.top)-Math.max(s.top,0);if(band<180)throw new Error(T+': the list shows '+Math.round(band)+'px above the mini bar (needs >=180, three rows) - list '+R(sc)+' bar '+R(b));if(s.bottom>br.top+0.5)throw new Error(T+': the list scroller runs under the mini bar - its last row could never scroll clear ('+R(sc)+' vs bar '+R(b)+')');var seg=document.getElementById('songsSeg'),ch=document.querySelector('#segAllChrome .filterBar');if(!shown(seg)||!shown(ch))throw new Error(T+': Songs chrome missing');var a=seg.getBoundingClientRect(),c=ch.getBoundingClientRect();if(Math.abs(a.top-c.top)>8||!(a.right<=c.left+0.5))throw new Error(T+': view switcher '+R(seg)+' and its row controls '+R(ch)+' are not one row');var rs=[].slice.call(document.querySelectorAll('#songsList .listItem')).slice(0,2);if(rs.length<2)throw new Error(T+': fewer than two rows rendered');rs.forEach(function(r,i){var bd=r.querySelector('.li-body'),ld=r.querySelector('.li-lead');hits(bd,T+' row '+(i+1)+' body');if(ld)hits(ld,T+' row '+(i+1)+' lead');big(ld||bd,T+' row '+(i+1)+' lead');});return true;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#segSet"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "evalAssert",
+      "label": "844x340 Setlist, bar up: the 8-song set keeps >=180px above the bar, segment + Clear/Start share one row, first two set rows live",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var T='844x340 set';var b=bar();if(!b)throw new Error(T+': fixture lost - mini bar is not up');var sc=document.getElementById('setBody');sc.scrollTo({top:0,behavior:'instant'});document.getElementById('view').scrollTo({top:0,behavior:'instant'});var s=sc.getBoundingClientRect(),br=b.getBoundingClientRect();var band=Math.min(s.bottom,br.top)-Math.max(s.top,0);if(band<180)throw new Error(T+': the list shows '+Math.round(band)+'px above the mini bar (needs >=180, three rows) - list '+R(sc)+' bar '+R(b));if(s.bottom>br.top+0.5)throw new Error(T+': the list scroller runs under the mini bar - its last row could never scroll clear ('+R(sc)+' vs bar '+R(b)+')');var seg=document.getElementById('songsSeg'),ch=document.getElementById('setHead');if(!shown(seg)||!shown(ch))throw new Error(T+': Songs chrome missing');var a=seg.getBoundingClientRect(),c=ch.getBoundingClientRect();if(Math.abs(a.top-c.top)>8||!(a.right<=c.left+0.5))throw new Error(T+': view switcher '+R(seg)+' and its row controls '+R(ch)+' are not one row');var rs=[].slice.call(document.querySelectorAll('#setBody .listItem')).slice(0,2);if(rs.length<2)throw new Error(T+': fewer than two rows rendered');rs.forEach(function(r,i){var bd=r.querySelector('.li-body'),ld=r.querySelector('.li-lead');hits(bd,T+' row '+(i+1)+' body');if(ld)hits(ld,T+' row '+(i+1)+' lead');big(ld||bd,T+' row '+(i+1)+' lead');});return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "setlist-844x340"
+    },
+    {
+      "action": "tap",
+      "selector": "#segJams"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "resize",
+      "width": 740,
+      "height": 320
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "tap",
+      "selector": "#segJams"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "evalAssert",
+      "label": "740x320 Jams, bar up: the list keeps >=180px (three rows) above the one-row bar, segment + Search & filter share one row, and the first two rows (body + lead) hit-test to themselves at >=44px",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var T='740x320 jams';var b=bar();if(!b)throw new Error(T+': fixture lost - mini bar is not up');var sc=document.getElementById('libSongs');sc.scrollTo({top:0,behavior:'instant'});document.getElementById('view').scrollTo({top:0,behavior:'instant'});var s=sc.getBoundingClientRect(),br=b.getBoundingClientRect();var band=Math.min(s.bottom,br.top)-Math.max(s.top,0);if(band<180)throw new Error(T+': the list shows '+Math.round(band)+'px above the mini bar (needs >=180, three rows) - list '+R(sc)+' bar '+R(b));if(s.bottom>br.top+0.5)throw new Error(T+': the list scroller runs under the mini bar - its last row could never scroll clear ('+R(sc)+' vs bar '+R(b)+')');var seg=document.getElementById('songsSeg'),ch=document.querySelector('#segAllChrome .filterBar');if(!shown(seg)||!shown(ch))throw new Error(T+': Songs chrome missing');var a=seg.getBoundingClientRect(),c=ch.getBoundingClientRect();if(Math.abs(a.top-c.top)>8||!(a.right<=c.left+0.5))throw new Error(T+': view switcher '+R(seg)+' and its row controls '+R(ch)+' are not one row');var rs=[].slice.call(document.querySelectorAll('#songsList .listItem')).slice(0,2);if(rs.length<2)throw new Error(T+': fewer than two rows rendered');rs.forEach(function(r,i){var bd=r.querySelector('.li-body'),ld=r.querySelector('.li-lead');hits(bd,T+' row '+(i+1)+' body');if(ld)hits(ld,T+' row '+(i+1)+' lead');big(ld||bd,T+' row '+(i+1)+' lead');});return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "jams-740x320"
+    },
+    {
+      "action": "tap",
+      "selector": "#segAll"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "evalAssert",
+      "label": "740x320 All, bar up: same list budget and live first rows",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var T='740x320 all';var b=bar();if(!b)throw new Error(T+': fixture lost - mini bar is not up');var sc=document.getElementById('libSongs');sc.scrollTo({top:0,behavior:'instant'});document.getElementById('view').scrollTo({top:0,behavior:'instant'});var s=sc.getBoundingClientRect(),br=b.getBoundingClientRect();var band=Math.min(s.bottom,br.top)-Math.max(s.top,0);if(band<180)throw new Error(T+': the list shows '+Math.round(band)+'px above the mini bar (needs >=180, three rows) - list '+R(sc)+' bar '+R(b));if(s.bottom>br.top+0.5)throw new Error(T+': the list scroller runs under the mini bar - its last row could never scroll clear ('+R(sc)+' vs bar '+R(b)+')');var seg=document.getElementById('songsSeg'),ch=document.querySelector('#segAllChrome .filterBar');if(!shown(seg)||!shown(ch))throw new Error(T+': Songs chrome missing');var a=seg.getBoundingClientRect(),c=ch.getBoundingClientRect();if(Math.abs(a.top-c.top)>8||!(a.right<=c.left+0.5))throw new Error(T+': view switcher '+R(seg)+' and its row controls '+R(ch)+' are not one row');var rs=[].slice.call(document.querySelectorAll('#songsList .listItem')).slice(0,2);if(rs.length<2)throw new Error(T+': fewer than two rows rendered');rs.forEach(function(r,i){var bd=r.querySelector('.li-body'),ld=r.querySelector('.li-lead');hits(bd,T+' row '+(i+1)+' body');if(ld)hits(ld,T+' row '+(i+1)+' lead');big(ld||bd,T+' row '+(i+1)+' lead');});return true;})()"
+    },
+    {
+      "action": "tap",
+      "selector": "#segSet"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "evalAssert",
+      "label": "740x320 Setlist, bar up: the 8-song set keeps >=180px above the bar, segment + Clear/Start share one row, first two set rows live",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var T='740x320 set';var b=bar();if(!b)throw new Error(T+': fixture lost - mini bar is not up');var sc=document.getElementById('setBody');sc.scrollTo({top:0,behavior:'instant'});document.getElementById('view').scrollTo({top:0,behavior:'instant'});var s=sc.getBoundingClientRect(),br=b.getBoundingClientRect();var band=Math.min(s.bottom,br.top)-Math.max(s.top,0);if(band<180)throw new Error(T+': the list shows '+Math.round(band)+'px above the mini bar (needs >=180, three rows) - list '+R(sc)+' bar '+R(b));if(s.bottom>br.top+0.5)throw new Error(T+': the list scroller runs under the mini bar - its last row could never scroll clear ('+R(sc)+' vs bar '+R(b)+')');var seg=document.getElementById('songsSeg'),ch=document.getElementById('setHead');if(!shown(seg)||!shown(ch))throw new Error(T+': Songs chrome missing');var a=seg.getBoundingClientRect(),c=ch.getBoundingClientRect();if(Math.abs(a.top-c.top)>8||!(a.right<=c.left+0.5))throw new Error(T+': view switcher '+R(seg)+' and its row controls '+R(ch)+' are not one row');var rs=[].slice.call(document.querySelectorAll('#setBody .listItem')).slice(0,2);if(rs.length<2)throw new Error(T+': fewer than two rows rendered');rs.forEach(function(r,i){var bd=r.querySelector('.li-body'),ld=r.querySelector('.li-lead');hits(bd,T+' row '+(i+1)+' body');if(ld)hits(ld,T+' row '+(i+1)+' lead');big(ld||bd,T+' row '+(i+1)+' lead');});return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "setlist-740x320"
+    },
+    {
+      "action": "tap",
+      "selector": "#segJams"
+    },
+    {
+      "action": "wait",
+      "ms": 250
+    },
+    {
+      "action": "resize",
+      "width": 412,
+      "height": 800
+    },
+    {
+      "action": "wait",
+      "ms": 450
+    },
+    {
+      "action": "evalAssert",
+      "label": "412x800 portrait (no regression): segment stacked ABOVE the filter row, 540px column, bottom tab bar, two-row bar above it",
+      "js": "(function(){function R(e){var b=e.getBoundingClientRect();return '['+Math.round(b.left)+','+Math.round(b.top)+' '+Math.round(b.width)+'x'+Math.round(b.height)+']';}function N(e){if(!e)return 'nothing';return (e.id?'#'+e.id:'.'+String(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className).split(' ')[0])+(e.getAttribute&&e.getAttribute('aria-label')?' ['+e.getAttribute('aria-label').slice(0,16)+']':'');}function shown(e){if(!e)return false;var s=getComputedStyle(e);var b=e.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&b.width>=1&&b.height>=1;}function hits(e,why){if(!shown(e))throw new Error(why+': '+N(e)+' not rendered');var b=e.getBoundingClientRect();[[b.left+b.width/2,b.top+b.height/2],[b.left+b.width/4,b.top+b.height/2],[b.right-b.width/4,b.top+b.height/2]].forEach(function(p){var h=document.elementFromPoint(p[0],p[1]);if(!h||!(e.contains(h)||h.contains(e)&&h===e))throw new Error(why+': '+N(e)+' '+R(e)+' hit-test at '+Math.round(p[0])+','+Math.round(p[1])+' lands on '+N(h));});return true;}function big(e,why,w,h){var b=e.getBoundingClientRect();if(b.width<(w||44)-0.5||b.height<(h||44)-0.5)throw new Error(why+': '+N(e)+' '+R(e)+' below the '+(w||44)+'x'+(h||44)+' floor');return true;}function apart(a,b){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();return p.right<=q.left+0.5||q.right<=p.left+0.5||p.bottom<=q.top+0.5||q.bottom<=p.top+0.5;}function inside(a,b,t){var p=a.getBoundingClientRect(),q=b.getBoundingClientRect();t=t||0.5;return p.left>=q.left-t&&p.right<=q.right+t&&p.top>=q.top-t&&p.bottom<=q.bottom+t;}function bar(){return document.querySelector('.bt-player.mini .bt-st-head');}var a=document.getElementById('songsSeg').getBoundingClientRect(),c=document.querySelector('#segAllChrome .filterBar').getBoundingClientRect();if(!(c.top>=a.bottom-0.5))throw new Error('portrait: filter row no longer under the segment');var tb=document.querySelector('.tabbar').getBoundingClientRect();if(!(tb.width>tb.height&&tb.bottom>=innerHeight-1))throw new Error('portrait: tab bar is not the bottom bar '+R(document.querySelector('.tabbar')));var b=bar().getBoundingClientRect();if(!(b.bottom<=tb.top+0.5))throw new Error('portrait: bar not above the tab bar');if(!(getComputedStyle(bar()).flexDirection==='column'))throw new Error('portrait: bar is no longer the two-row stack');return true;})()"
+    },
+    {
+      "action": "screenshot",
+      "name": "portrait-412x800"
+    }
+  ]
+}

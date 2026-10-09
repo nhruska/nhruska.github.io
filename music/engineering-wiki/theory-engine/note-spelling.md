@@ -19,6 +19,9 @@ Kernel (circle.js, unit-tested in test/key-spelling.test.js incl. the 12 profess
 | `diatonicInKey(root, mode)` | Diatonic triads with key-aware letters (F major IV = Bb) |
 | `soloScaleInKey(root, scaleId, keyMode)` | SOLO_SCALES (pents/blues/modes) spelled by DEGREE number |
 | `noteInKey(keyRoot, keyMode, noteRoot)` | Single chord-root display name by chromatic-degree function |
+| `chromaticRomanInKey(chord, keyRoot, keyMode)` | Compose numeral for a keyed chromatic chord, agreeing with its `noteInKey` name (B in F reads #IV) |
+
+**Chromatic roots (NH-2, 2026-10-06):** a diatonic root takes the mode's own letter-per-degree (F# major's 7th is E#, F lydian's 4th is B). A chromatic root starts from the flat-degree convention (bVII of C = Bb) but takes the neighbouring letter when that needs FEWER accidentals, tie -> flat-degree. So F major's tritone reads B (#IV), never Cb, and flat keys never show Ebb/Bbb/Fb. Swept for every key x mode in test/key-spelling.test.js. [STABLE]
 
 ## The token-vs-display split (what made the flip safe) [STABLE]
 

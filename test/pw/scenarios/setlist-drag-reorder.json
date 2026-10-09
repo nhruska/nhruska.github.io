@@ -10,7 +10,7 @@
   "seed": {
     "roadcase-ukulele-gcea.setlist.v1": "[\"k0\",\"k1\",\"k2\"]"
   },
-  "note": "Setlist rows are ALWAYS reorderable (grip drag) and removable - there is no edit mode. REWRITTEN 2026-07-26 (SONGS-MERGE phase 1): this scenario asserted the RETIRED edit-mode contract (#setEdit revealing up/dn arrows, a body-tap that must NOT open while arranging). #setEdit has not existed for some time, so the scenario was failing on main and guarding nothing - a dead guard on the setlist, found while merging Library+Setlist. It now asserts today's contract: drag from the grip reorders and persists, and a body tap always opens the song.",
+  "note": "Setlist rows are ALWAYS reorderable and removable - there is no edit mode. REWRITTEN 2026-07-26 (SONGS-MERGE phase 1): this scenario asserted the RETIRED edit-mode contract (#setEdit revealing up/dn arrows, a body-tap that must NOT open while arranging). #setEdit has not existed for some time, so the scenario was failing on main and guarding nothing - a dead guard on the setlist, found while merging Library+Setlist. It now asserts today's contract: drag from the grip reorders and persists, and a body tap always opens the song. UPDATED 2026-10-06: S-SETLIST-GESTURES (#342) retired the .li-grip handle - the ROW itself lifts for reorder (press-and-hold on touch, movement-lift on mouse), so the drags start from the row body. setlist-gestures.json proves the gesture mechanics (incl. swipe-delete); THIS scenario keeps the reorder OUTCOME contract it alone carries: the order PERSISTS to storage both directions, the position numbers re-render, and a body tap still opens the song.",
   "viewport": {
     "width": 412,
     "height": 915
@@ -35,8 +35,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "today's contract: every row carries a grip, and there is no edit-mode toggle to enter",
-      "js": "(function(){var rows=document.querySelectorAll('#setBody .listItem');if(rows.length!==3)return false;var grips=document.querySelectorAll('#setBody .li-grip');return grips.length===3 && !document.getElementById('setEdit');})()"
+      "label": "today's contract (S-SETLIST-GESTURES, #342): no resting grip and no edit-mode toggle - every row is itself the drag surface (swipeable .li-inner)",
+      "js": "(function(){var rows=document.querySelectorAll('#setBody .listItem');if(rows.length!==3)return false;if(document.querySelectorAll('#setBody .li-grip').length||document.getElementById('setEdit'))return false;return Array.prototype.every.call(rows,function(r){return r.classList.contains('swipeable')&&!!r.querySelector('.li-inner');});})()"
     },
     {
       "action": "evalAssert",
@@ -45,7 +45,7 @@
     },
     {
       "action": "dragReorder",
-      "from": "#setBody .listItem:nth-child(1) .li-grip",
+      "from": "#setBody .listItem:nth-child(1)",
       "to": "#setBody .listItem:nth-child(3)",
       "side": "below"
     },
@@ -74,7 +74,7 @@
     },
     {
       "action": "dragReorder",
-      "from": "#setBody .listItem:nth-child(3) .li-grip",
+      "from": "#setBody .listItem:nth-child(3)",
       "to": "#setBody .listItem:nth-child(1)",
       "side": "above"
     },

@@ -77,7 +77,7 @@ REPO_ROOT = SCRIPT_DIR.parent
 # 0.4.0 = position 1b velocity (interview ruling): merged count via one
 # search-API call, LOC from THIS local clone (git log --numstat, shallow-
 # guarded), typical-merge median from recentMerges createdAt (additive).
-GEN_VERSION = "0.4.0"
+GEN_VERSION = "0.4.1"
 
 VELOCITY_WINDOW_DAYS = 7
 VELOCITY_WEEKS = 4
@@ -117,6 +117,8 @@ def fetch_open_prs(envelope):
         "pr", "list", "-R", REPO_SLUG, "--state", "open", "--limit", "50",
         "--json", "number,title,headRefName,url,statusCheckRollup,isDraft",
     )
+    if not isinstance(prs, list):
+        prs = _rest_open_prs()
     if not isinstance(prs, list):
         panelkit.mark_partial(envelope, "open-PR list fetch failed - openPRs is empty this run")
         return []
@@ -160,9 +162,73 @@ def fetch_recent_merges(envelope, limit=15):
         "--json", "number,title,mergedAt,url,createdAt",
     )
     if not isinstance(merges, list):
+        merges = _rest_recent_merges(limit)
+    if not isinstance(merges, list):
         panelkit.mark_partial(envelope, "merged-PR list fetch failed - recentMerges is empty this run")
         return []
     return merges
+
+
+# REST fallbacks for the two `gh pr list` fetchers. `gh pr list` rides
+# GraphQL, which Claude Code cloud sessions' proxy refuses (HTTP 403), so
+# the session-start sweep wrote "0 open PRs / 0 merges" - a wrong snapshot,
+# not a partial one. The fallbacks rebuild the SAME locked key shape from
+# repository-scoped REST; the cc-nightly Action keeps the GraphQL path.
+
+def _rest_checks_rollup(sha):
+    """check-runs for `sha` in statusCheckRollup shape (UPPERCASE enums,
+    which panelkit.classify_ci_status_rollup expects). None on failure."""
+    res = panelkit.gh_json("api", f"repos/{REPO_SLUG}/commits/{sha}/check-runs?per_page=100")
+    if not isinstance(res, dict):
+        return None
+    return [
+        {
+            "name": c.get("name"),
+            "workflowName": None,
+            "status": (c.get("status") or "").upper() or None,
+            "conclusion": (c.get("conclusion") or "").upper() or None,
+            "detailsUrl": c.get("html_url"),
+        }
+        for c in res.get("check_runs", [])
+    ]
+
+
+def _rest_open_prs():
+    pulls = panelkit.gh_json("api", f"repos/{REPO_SLUG}/pulls?state=open&per_page=50")
+    if not isinstance(pulls, list):
+        return None
+    return [
+        {
+            "number": p["number"],
+            "title": p["title"],
+            "headRefName": p["head"]["ref"],
+            "url": p["html_url"],
+            "isDraft": p.get("draft", False),
+            "statusCheckRollup": _rest_checks_rollup(p["head"]["sha"]) or [],
+        }
+        for p in pulls
+    ]
+
+
+def _rest_recent_merges(limit):
+    pulls = panelkit.gh_json(
+        "api", f"repos/{REPO_SLUG}/pulls?state=closed&sort=updated&direction=desc&per_page=100",
+    )
+    if not isinstance(pulls, list):
+        return None
+    merged = sorted(
+        (p for p in pulls if p.get("merged_at")), key=lambda p: p["merged_at"], reverse=True,
+    )[:limit]
+    return [
+        {
+            "number": p["number"],
+            "title": p["title"],
+            "mergedAt": p["merged_at"],
+            "url": p["html_url"],
+            "createdAt": p["created_at"],
+        }
+        for p in merged
+    ]
 
 
 def fetch_latest_ci_run(envelope):

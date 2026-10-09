@@ -5,8 +5,13 @@ argument-hint: <path to the export folder, or a skill id to focus on>
 
 Build a practice plan from: $ARGUMENTS
 
-Read the export per the `music-interchange` skill (competency levels are
-ground truth for what the user can already do - never assume less or more).
+Read the export per the `music-interchange` skill. Assessments (with their
+method + confidence) are what is known; the app's counters are evidence of
+doing; an unassessed competency is unknown - never assume less or more, and
+never plan as if a musician with sparse app evidence were a beginner. Build
+on the transferable musicianship the profile already shows (an advanced
+improviser new to the ukulele practices the instrument's mechanics UNDER the
+musicianship they have, not from scratch).
 Apply `pedagogy-coach` for how to sequence it:
 
 - One new element at a time, against an otherwise-mastered background.
@@ -23,6 +28,17 @@ owns.
 
 Honor `preferences[]` from the profile doc (e.g. a stated instrument, a
 disliked drill style, a genre lean) - state which preferences shaped the plan.
+
+When `profile.json` is present, build the plan against its `goals` (they come
+first) and write it INTO the profile's `plan` (`updated`, `steward:
+"agent:<your-tool-name>"`, a one-line `focus`, `items[]` each with `id`,
+`kind` (`focus` | `activity` | `edge` - an edge is the next useful thing, not
+yet an activity), `statement`, `competencies`, `goal`, `status: "todo"`, and a
+`deep_link` copied from `capabilities.json` when a capability fits - the app
+renders only links into itself). Hand back profile.json with nothing removed -
+you are the steward of that section; the plan is distinct from assessment and
+never carries a level. Explain the plan in plain language. Ask the human before
+parking or replacing a goal.
 
 Output: a numbered plan (3-5 items) - each item names the ONE new thing, the
 mastered background it builds on, and how it will be marked done. If a plan

@@ -167,8 +167,8 @@
     },
     {
       "action": "evalAssert",
-      "label": "all 5 generic frameworks render as skill rows",
-      "js": "document.querySelectorAll('#accBodySkills .skillRow').length === 5"
+      "label": "every framework + the Musicianship group render as rows (M-MUSICIAN-PROFILE-VNEXT)",
+      "js": "document.querySelectorAll('#accBodySkills .skillRow').length === window.Competency.FRAMEWORKS.length + 1"
     },
     {
       "action": "screenshot",
@@ -176,7 +176,7 @@
     },
     {
       "action": "tap",
-      "selector": "#accBodySkills .skillRow .skillHead"
+      "selector": "#accBodySkills .skillRow[data-skill=\"ukulele\"] .skillHead"
     },
     {
       "action": "wait",

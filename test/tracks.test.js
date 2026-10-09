@@ -1152,6 +1152,20 @@ test('round 19: the dock reserves space where content is pinned to the bottom', 
   assert.ok(/body\.pipdock #s-tune \.tunerWrap\{padding-bottom:\d+px;\}/.test(book.replace(/\s*\n\s*/g, '')),
     'the Tune tab must reserve the dock height so every string stays tappable');
 });
+test('video window never covers the player chrome: dvh budget + scrim stops at the bar and tabbar', function () {
+  var css = readSrc('music/shared/tracks.css').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\s*\n\s*/g, '');
+  // Operator UAT (phone landscape ~915x340): the theater covered the mini-player's
+  // transport. Headless Chromium has no URL bar, so 100vh === innerHeight there and
+  // the scenario (video-window-clear) cannot see the unit mismatch - this pins it.
+  var theater = css.match(/\.bt-player\.vidopen \.bt-st-media:not\(\.min\):not\(\.hid\)\{[^}]*\}/);
+  assert.ok(theater, 'theater rule present');
+  assert.ok(/100dvh/.test(theater[0]) && !/100vh/.test(theater[0]),
+    'the theater budget must read 100dvh like the .app shell the bar lives in - 100vh is the LARGE viewport on Android Chrome and grows the card over the bar');
+  assert.ok(/\.bt-player\.mini\.vidopen \.bt-st-head\{z-index:(\d+);\}/.test(css) && Number(RegExp.$1) > 94,
+    'the now-playing bar must paint above the z-94 scrim, or every transport tap docks the video instead of acting');
+  assert.ok(/body:has\(\.bt-player\.mini\.vidopen\) \.tabbar\{position:relative;z-index:55;\}/.test(css),
+    'the tabbar must paint above the scrim while a mini theater is up (the same z-55 raise body.studioopen gives it)');
+});
 test('round 17: the idle clock starts on a REAL stop, and the signals are module-scoped', function () {
   var src = readSrc('music/shared/tracks.js');
   var close = extractFunctionBody(src, /function closePlayer\(\) \{/);
