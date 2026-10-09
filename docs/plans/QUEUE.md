@@ -16,7 +16,7 @@
 
 | Mission | State | Spec |
 |---|---|---|
-| **Sprint (Math + Music), 10 PRs** | **8 of 10 done** (re-verified 2026-10-08 against GitHub): #350 closed; #355, #348, #357, #360, #351, #358, **[#346](https://github.com/nhruska/nhruska.github.io/pull/346) (2026-10-06)** merged. Remaining: [#347](https://github.com/nhruska/nhruska.github.io/pull/347) (open, ready) - Nik merges; [#356](https://github.com/nhruska/nhruska.github.io/pull/356) SBS plan (draft) last. Owned by the nh-pages Project since the sprint orchestrator retired. | [handoff](project-handoff-20261005.md) |
+| **Sprint (Math + Music), 10 PRs** | **8 of 10 done** (re-verified 2026-10-08 against GitHub): #350 closed; #355, #348, #357, #360, #351, #358, **[#346](https://github.com/nhruska/nhruska.github.io/pull/346) (2026-10-06)** merged. Remaining: [#347](https://github.com/nhruska/nhruska.github.io/pull/347) (open, ready) - Nik merges; [#356](https://github.com/nhruska/nhruska.github.io/pull/356) SBS plan (ready, sprint close recorded 2026-10-09) last. Owned by the nh-pages Project since the sprint orchestrator retired. | [handoff](project-handoff-20261005.md) |
 
 ## SHORT (launch-ready - gated, fire when capacity frees)
 

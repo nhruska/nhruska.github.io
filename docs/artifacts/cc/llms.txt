@@ -1,13 +1,15 @@
 # Repo Command Center - nhruska/nhruska.github.io - Problem Solutions (agent-readable brief)
-Generated: 2026-10-09T16:20:39Z
-Status: ok
+Generated: 2026-10-09T16:24:03Z
+Status: partial
+  warning: velocity merged-count search failed - count line omitted this run
+  warning: Pages status fetch failed - deploy.pages.status is unknown this run
 
 ## NOW
-- Queue NOW: **8 of 10 done** (re-verified 2026-10-08 against GitHub): #350 closed; #355, #348, #357, #360, #351, #358, **[#346](https://github.com/nhruska/nhruska.github.io/pull/346) (2026-10-06)** merged. Remaining: [#347](https://github.com/nhruska/nhruska.github.io/pull/347) (open, ready) - Nik merges; [#356](https://github.com/nhruska/nhruska.github.io/pull/356) SBS plan (draft) last. Owned by the nh-pages Project since the sprint orchestrator retired.
+- Queue NOW: **8 of 10 done** (re-verified 2026-10-08 against GitHub): #350 closed; #355, #348, #357, #360, #351, #358, **[#346](https://github.com/nhruska/nhruska.github.io/pull/346) (2026-10-06)** merged. Remaining: [#347](https://github.com/nhruska/nhruska.github.io/pull/347) (open, ready) - Nik merges; [#356](https://github.com/nhruska/nhruska.github.io/pull/356) SBS plan (ready, sprint close recorded 2026-10-09) last. Owned by the nh-pages Project since the sprint orchestrator retired.
 - Open draft PR #374 (CI green): fix(music): NH-12 save truth - roll back failed saves and tell the user on all 5 save paths - https://github.com/nhruska/nhruska.github.io/pull/374
 - Open draft PR #372 (CI green): ui/ux: nh-pages polish enhancements mission (plan + execution) - https://github.com/nhruska/nhruska.github.io/pull/372
 - Open draft PR #362 (CI green): chore(claude): allow merge-resolution commands on PR branches in sprint sessions - https://github.com/nhruska/nhruska.github.io/pull/362
-- Open draft PR #356 (CI green): docs(plans): SBS merge plan for the 6 open PRs - https://github.com/nhruska/nhruska.github.io/pull/356
+- Open PR #356 (CI green): docs(plans): SBS merge plan for the 6 open PRs - https://github.com/nhruska/nhruska.github.io/pull/356
 - Open PR #347 (CI green): docs: enforce engineering-wiki lifecycle integrity - https://github.com/nhruska/nhruska.github.io/pull/347
 
 ## Open gaps / to-wire
@@ -17,13 +19,13 @@ Status: ok
 
 ## Recent work products
 - #373 - docs(queue): NH-7 groom - move shipped NOW/SHORT rows to a DONE archive with verified merged-PR citations (2026-10-08) - https://github.com/nhruska/nhruska.github.io/pull/373
-- #371 - fix(theory): F major's B tile reads B, not Cb (music-v371) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/371
-- #370 - test(pw): bring 4 stale scenarios up to the shipped app (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/370
-- #369 - feat(shell): landscape phones get a side rail and one-row player (music-v369) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/369
-- #368 - fix(player): video window never covers the mini-player controls or tab bar (music-v368) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/368
-- #367 - feat(tune): two-pane landscape Tune for every instrument, one screen, no scroll (music-v367) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/367
-- #366 - fix(tune): landscape mini-player no longer buries the bottom string row (music-v366) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/366
+- #346 - docs: calibrate Thought-Ware public claims (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/346
 - #365 - cc: REST fallback so the session-start sweep sees open PRs; stop run-all dropping test summaries; reconcile QUEUE and the handoff doc (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/365
+- #370 - test(pw): bring 4 stale scenarios up to the shipped app (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/370
+- #371 - fix(theory): F major's B tile reads B, not Cb (music-v371) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/371
+- #364 - docs(plans): nh-pages Project handoff 2026-10-05 (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/364
+- #368 - fix(player): video window never covers the mini-player controls or tab bar (music-v368) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/368
+- #369 - feat(shell): landscape phones get a side rail and one-row player (music-v369) (2026-10-06) - https://github.com/nhruska/nhruska.github.io/pull/369
 
 ## Links
 - Repo Command Center: https://nhruska.github.io/docs/artifacts/cc/repo.html
