@@ -15,8 +15,13 @@
 | Marker | Meaning |
 |---|---|
 | `[STABLE]` | Load-bearing contract; change requires a decision entry |
-| `[TRACKS-#98]` | Statement flips when PR #98 (key-aware spelling) merges - re-verify then |
+| `[ACTIVE since YYYY-MM-DD]` | Current rule whose activation date matters |
+| `[RETIRED YYYY-MM-DD -> DECISION-ID]` | Historical rule; never apply as current behavior; follow the replacement decision |
+| `[PROPOSED]` | Candidate rule with no implementation or release authority |
 | `[ROADMAP reviewed YYYY-MM-DD]` | Forward-looking; staleness measured from that date |
+
+`[STABLE]` means stable **active** behavior unless a heading explicitly marks the
+section retired. Historical content must carry `[RETIRED ...]`, not `[STABLE]` alone.
 
 ## Grounding rule
 

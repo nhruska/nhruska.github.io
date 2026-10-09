@@ -14,7 +14,10 @@ Five- and six-note SOLO scales NEVER get a diatonic triad palette (this remains 
 
 ## Mode scales (7 notes) [STABLE]
 
-Interval steps per mode (Circle.MODE_STEPS, circle.js:34-37). Studio-curated teaching set = Major (ionian), Minor (aeolian), Mixolydian, Dorian; the full 7 modes are reachable via the circle-of-fifths surfaces. Rendered in canonical-sharp spelling. [TRACKS-#98]
+Interval steps per mode (Circle.MODE_STEPS, circle.js:34-37). Studio-curated teaching
+set = Major (ionian), Minor (aeolian), Mixolydian, Dorian; the full 7 modes are
+reachable via the circle-of-fifths surfaces. Display names use `soloScaleInKey` and
+spell by degree function inside the stated key. [STABLE]
 
 | Mode | Steps | Degrees |
 |---|---|---|
@@ -55,18 +58,27 @@ Framing copy per selection (static templates; P5-fold rewrite, player-true):
 - Pent minor: "Home base over minor; the blues-rub color over dominant and major - one movable pattern, walkable up the neck."
 - Blues: "Pent minor plus the b5 - bend, slide, or pass through it; land on root, b3, 4, or 5 unless you want the rub."
 
-## Blue-note spelling - both regimes (S-BLUES §3d) [TRACKS-#98]
+## Blue-note spelling (S-BLUES §3d) [STABLE]
 
-**Regime A (current, canonical-sharp):** all names via spell(); `A blues = A C D D# E G`. The blue note renders sharp-spelled because FORK-4's one-table rule is what keeps the scale list and the fretboard in agreement. Do NOT special-case it. This is documented policy, exactly like the sharp-tie precedent the professor classified policy-not-bug. Player-honesty note (P5): the b5 SHOWS as D# today and will READ as Eb once key-aware spelling lands (S-BLUES-B, queued on #98) - the pitch is right; the letter is scheduled.
+The active key-aware provider spells each solo-scale tone by degree. The blue note is
+the fifth-degree letter flattened one semitone: `A blues = A C D Eb E G`, never D#.
+The note list and fretboard consume the same names, so they remain in agreement.
 
-**Regime B (post-#98, S-BLUES-B - queued, not built):** pentatonic names come from subsetting `spellScaleKeyAware(root, parentMode)` at the pentatonic degrees; the blue note = the key-aware 5th-degree LETTER flattened one semitone (A blues -> Eb, never D#; invariant: the blue note spells b5, never #4). Consumes ONLY the named #98 seam (`spellScaleKeyAware`, `keyLabel`); if #98 merges without them, S-BLUES-B is BLOCKED, not improvised.
+`soloScaleInKey(root, scaleId, keyMode)` is the display seam. The legacy
+`soloScale()` remains canonical-sharp for keyless identity math and compatibility;
+display code must not substitute it in a stated-key surface.
 
-Code seam: soloScale routes every name through ONE internal provider; S-BLUES-B swaps only the provider.
+The retired regime-A behavior (`A C D D# E G`) is preserved as history in
+[note-spelling.md](note-spelling.md), not as an active option.
 
 ## Testing (S-BLUES §3e) [STABLE]
 
-- test/solo-scales.test.js: 12 roots x 3 scales - pcs match steps mod 12; names match spell(); degree arrays exact; lengths 5/5/6; unknown id safe.
-- test/theory-canon.test.js: scales-canon literals (incl. `A blues = A C D D# E G` with the REGIME-A comment marking the deliberate Eb flip at S-BLUES-B); also BLUES_KEY_CANON (the SEPARATE harmonizing-model canon, W2) - 12 roots x literal `C7 F7 G7`-style chord strings + the `['I7','IV7','V7']` roman lock.
+- test/solo-scales.test.js: 12 roots x 3 scales - pcs match steps mod 12; legacy
+  canonical-token names remain stable; degree arrays exact; lengths 5/5/6; unknown id safe.
+- test/key-spelling.test.js: key-aware solo display, including the blue-note b5 rule
+  and professor traps across enharmonic-boundary keys.
+- test/theory-canon.test.js: pitch-class and harmonization canon plus BLUES_KEY_CANON
+  for the separate I7/IV7/V7 harmonizing model.
 - test/tracks.test.js: soloBundle per id; 'mode' delegates to studioTheory; harmonization-isolation (chords identical before/after any chip selection - W2 adds the inverse case: a Blues-mode Studio's own I7/IV7/V7 chords survive every solo-scale chip tap).
 - test/key-explorer-boxes.test.js (S-BLUES-BOXES): `KeyExplorer.boxes` - 12 roots x 3 scale ids x 2 tunings (guitar, ukulele) = 72 cases, asserting box count (5), startFret range (0-14), root-string anchor correctness BY PITCH-CLASS MATH (not a golden fret table), non-empty label/moveHint, pentMajor/pentMinor relative-key window equivalence, blues/pentMinor window equivalence, plus `openPcsFromPack` safety. test/key-explorer.dom.test.js covers the renderScale() pager-snap + chip DOM wiring; test/tracks.test.js covers `boxScaleIdFor`.
 

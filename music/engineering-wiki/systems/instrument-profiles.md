@@ -22,7 +22,10 @@ Fret arrays are per-string (low->high display order): -1 muted, 0 open, N frette
 
 ## Enharmonic shape lookup [STABLE]
 
-Canonical-sharp names come in (FORK-4); profile hashes may key voicings under flats (a hand-curated "Bb" fingering). Lookup: exact name first, then the enharmonic twin, then movable-template fallback. The DISPLAY name never changes - only the fingering source. [TRACKS-#98] (regime B shows conventional names; the tolerant lookup already handles both directions)
+Canonical chord tokens enter the voicing seam; profile hashes may key voicings under
+flats (a hand-curated "Bb" fingering). Lookup: exact name first, then the enharmonic
+twin, then movable-template fallback. A separate display name may be key-aware; the
+voicing lookup never rewrites it. [STABLE]
 
 The lookup (`profileVoicing` inside `buildAdapter`) lives in [music/shared/chord-pack-adapter.js](../../shared/chord-pack-adapter.js) (moved out of play/index.html's inline bootstrap by S-EXTRACT, analysis-refactor-enhance-20260704 A3) - require()-able and direct-tested against real guitar-standard/ukulele-gcea fixtures in [test/live-adapter.test.js](../../../test/live-adapter.test.js).
 

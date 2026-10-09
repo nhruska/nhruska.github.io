@@ -27,7 +27,9 @@ Evidence: sprint A3 undo contract; [list-item.js](../../shared/list-item.js) wir
 
 The app is a theory authority. One wrong chord spelling or scale note and the skilled personas dismiss it permanently as a toy ([personas P2](personas.md)). The credibility rests on one unbroken chain: pitch-class core -> spelling-as-display -> fretboard agreement.
 
-- Spelling is canonical-sharp (FORK-4): ONE sharp table app-wide; flat input normalizes, flats never render ([theory-engine/note-spelling.md](../theory-engine/note-spelling.md)). [TRACKS-#98]
+- Spelling is key-aware on every stated-key display surface; internal chord tokens and
+  keyless contexts remain canonical-sharp. The token-vs-display split is the one
+  governed seam ([theory-engine/note-spelling.md](../theory-engine/note-spelling.md)).
 - Fretboard scale view and note list agree: both fed by Circle spelling, never derived independently ([key-explorer.js](../../shared/key-explorer.js) header contract; Diagram.scale(opts.names)).
 - Progression chips, Compose palette, Studio solo scales - consistent at every surface. A player learning "Bb" from one screen and "A#" from another has left the app.
 

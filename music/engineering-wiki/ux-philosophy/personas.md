@@ -26,7 +26,8 @@ Five archetypes anchoring UX decisions. Each brings distinct needs, dismissal tr
 - **JTBD:** map known theory onto the fretboard; verify the app agrees; learn shapes without dumbing down.
 - **Sweet spot:** Compose in-key palette, key/mode picker, Studio scale display, Triads & Inversions.
 - **Dismissal triggers:** wrong enharmonic spelling for the key context, wrong roman case/quality, mislabeled modes. One error = gone.
-- **Audits:** deterministic theory audit (12 roots x 4 modes); flat-key spelling friction (FORK-4 vs convention [TRACKS-#98]); mode vocabulary accuracy.
+- **Audits:** deterministic theory audit (12 roots x 4 modes); key-aware spelling
+  regression traps across flat and sharp contexts; mode vocabulary accuracy.
 
 ## P3 - The First-Timer
 
