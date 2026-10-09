@@ -1,6 +1,6 @@
 {
  "project": "nh-pages",
- "updated_at": "2026-10-06T01:02:11Z",
+ "updated_at": "2026-10-09T16:30:00Z",
  "gates": [
   {
    "id": "357-verify-setlist-gate",
@@ -317,20 +317,20 @@
    "expect": "Docs-only diff. Merges only after #358, then retargets to main",
    "do": "Read the PR summary on #346",
    "evidence": [],
-   "ci": "none",
-   "limit": "Retargeted to main after #358 landed, main merged in as 37ac5b3 (suite 81/0, cache gate clean). Verdict PASS @ 6bbe963 carried forward (main merge only). Diff vs main: its own 3 docs pages. Docs-only: no app surface to screenshot."
+   "ci": "pass",
+   "limit": "MERGED as c475aac (2026-10-06T19:31Z) from head 37ac5b3 on Nik's typed merge list. Docs only."
   },
   {
    "id": "347-verify-docs",
    "pr": "nhruska/nhruska.github.io#347",
-   "head_sha": "e848419a41bff21cda8e1cbc305419d46128cc5b",
+   "head_sha": "b0306ce8bcc856c1848cde0bfbecf21963df9723",
    "kind": "verify",
    "title": "Engineering-wiki lifecycle docs (docs only)",
    "expect": "Docs-only diff. Merges only after #346, then retargets to main",
    "do": "Read the PR summary on #347",
    "evidence": [],
-   "ci": "none",
-   "limit": "Docs-only: no app surface to screenshot. Stacked on #346, so it is not mergeable until #346 lands."
+   "ci": "pass",
+   "limit": "Retargeted to main before #346 merged; main merged in; its own wiki-drift test caught the persona-scenario count (11 -> 13, fixed at b0306ce). CI green, READY. Nik merges."
   },
   {
    "id": "356-verify-plan",
@@ -342,7 +342,7 @@
    "do": "Read the PR summary on #356",
    "evidence": [],
    "ci": "pass",
-   "limit": "Docs-only. head_sha is the commit before this gate-file push, and it is refreshed on each push of this branch."
+   "limit": "Docs-only. Main merged in 2026-10-09 and the sprint close recorded in the SBS plan. READY; merges last, after #347."
   }
  ]
 }
