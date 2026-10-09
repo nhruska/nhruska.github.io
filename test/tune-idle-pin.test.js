@@ -59,7 +59,7 @@ test('every idle entry point flips the .idle class (build, mode switch, stop, li
 });
 
 test('CSS: idle card hugs its content, hides the runway, portrait only', function () {
-  assert.ok(/@media not \(\(orientation:landscape\) and \(max-height:560px\)\)\{[\s\S]*?\.tCard:has\(\.micBox\.idle\)\{flex:0 0 auto;\}/.test(css), 'idle card must stop growing (outside short landscape)');
+  assert.ok(/@media not all and \(orientation:landscape\) and \(max-height:560px\)\{[\s\S]*?\.tCard:has\(\.micBox\.idle\)\{flex:0 0 auto;\}/.test(css), 'idle card must stop growing (outside short landscape)');
   assert.ok(/\.micBox\.idle > \.runway/.test(css) && /display:none/.test(css.match(/\.micBox\.idle > \.runway[^{]*\{[^}]*\}/)[0]), 'idle must hide the runway');
   assert.ok(/\.micNote\.idle\{color:var\(--txt-dim\)\;\}/.test(css), 'idle note is dimmed');
 });

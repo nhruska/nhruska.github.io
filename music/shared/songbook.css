@@ -950,7 +950,10 @@ body.studioopen .tabbar{position:relative;z-index:55;}
    Start. The big-note slot holds the first string, dimmed, with a "next" cue (free
    mode: the whole string sequence). The strings follow the card directly (a pinned-to-bottom variant left a ~450px void between two islands, worse than the card it replaced). Portrait/desktop only - the short-landscape
    two-pane keeps its own grid - and not under the tuning lab (it scrolls). */
-@media not ((orientation:landscape) and (max-height:560px)){
+/* Level-3 negation (`not all and ...`) so browsers without nested-condition
+   support still parse the block - the MQ4 `not ((a) and (b))` form was dropped
+   wholesale by older WebKit/Blink, leaving a half-applied idle card. */
+@media not all and (orientation:landscape) and (max-height:560px){
   #s-tune:not(.labOn) .tCard:has(.micBox.idle){flex:0 0 auto;}
   #s-tune:not(.labOn) .micBox.idle{flex:0 0 auto;justify-content:flex-start;}
   #s-tune:not(.labOn) .micBox.idle > .runway,

@@ -240,6 +240,11 @@ def main():
         with sync_playwright() as p:
             browser = p.chromium.launch(executable_path=chrome_path())
             ctx = browser.new_context(viewport={'width': VIEWPORT[0], 'height': VIEWPORT[1]})
+            # First-run tour + per-tab callouts (#welcomeOv) would otherwise be what this
+            # gate audits on every route - seed them done, like layout-check.py and the
+            # ux-capture harness do (review fix, high pass).
+            ctx.add_init_script("try{localStorage.setItem('music.welcomeDone.v1','1');"
+                "localStorage.setItem('music.calloutsShown.v1',JSON.stringify({library:1,jam:1,compose:1,tune:1}));}catch(e){}")
             page = ctx.new_page()
             for path, label in ROUTES:
                 page.goto(base + path, wait_until='networkidle')

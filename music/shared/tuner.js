@@ -445,7 +445,7 @@
     // Name the string the way the live hint does (t.l: "6th string (low E)") - a
     // guitar has two E strings, so the bare note name was ambiguous (review fix).
     var s0 = STRINGS[0];
-    return s0 ? 'tap Start, then play the ' + (s0.l || (s0.n + ' string')) + ' - the tuner follows you up from there' : 'tap Start, then play a string';
+    return s0 ? 'tap Start, then play the ' + (s0.l || (s0.n + ' string')) + ' - the tuner walks the rest in order' : 'tap Start, then play a string';
   }
   // One idle render for every path that lands in idle (buildMic, setMode,
   // stopFree) so the placeholder, hint and .idle class can never drift apart.

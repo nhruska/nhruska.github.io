@@ -74,6 +74,20 @@ Never merge (Nik merges). Never change tuner flow semantics (G2). Never bump the
 | 10 | MATH_VERSION bumped with no math/ change | NOT A BUG: Math precaches songbook.css / theme.js / esc.js / toast.js; check-cache-bump.sh FAILS without the bump when songbook.css changes (observed at U1) |
 | 11 | MQ4 `@media not (...)` unsupported on old WebKit/Blink | NOT A NEW FLOOR: the app already requires `:has()` (Chrome 105+ / Safari 15.4+), above MQ4 `not` (Chrome 104+ / Safari 16.4) - noted, no change |
 
+## Adversarial pass 2 (orchestrator, /code-review main high, 9 findings; codex volley NOT runnable in-container - no codex binary/auth)
+
+| # | Finding | Disposition |
+|---|---|---|
+| 1 | Song sheet keeps the old orientation's wrap budget after a rotation while the Stage was open | FIXED: rawCloseStage re-fits the song sheet when its width changed |
+| 2 | chordNotesInKey re-parses chord quality instead of taking intervals from Circle.chordTones | DEFERRED: the letter-per-degree spelling needs the degree, which chordTones' pitch classes do not carry (9 = 6th or bb7); the unit test pins pitch-class equality with chordTones so divergence is caught |
+| 3 | `@media not ((a) and (b))` is MQ4-only; older engines drop the block, leaving a half-applied idle card | FIXED: Level-3 form `@media not all and (a) and (b)`; pin updated; two-pane scenario green |
+| 4 | Font-refit re-renders the sheet on every `loadingdone` | FIXED: re-render only when the probe's budget moved (`ctx.measured`) |
+| 5 | SVG strings duplicated (2 scripts + 6 inline copies) | DEFERRED (again): static HTML copies need runtime injection; pins guard drift |
+| 6 | chrome_path + tour seed duplicated; a11y gate audited the first-run overlay | FIXED the gate: tour seed added; the gate now examines the real routes (A2 coverage 0 -> 1) and found one pre-existing violation, fixed at the source (offline toast host gets role=status + aria-live). Helper extraction DEFERRED (scripts refactor) |
+| 7 | MATH_VERSION bumped with no math/ change | NOT A BUG (as pass 1): Math precaches songbook.css; the gate fails without the bump |
+| 8 | Idle hint "follows you up" is wrong for re-entrant tunings (ukulele G4 C4 E4 A4) | FIXED: "the tuner walks the rest in order" (tuner.js + tuner.md) |
+| 9 | Studio chip ellipsis at 360 with 6-char names | NOT A PATH (as pass 1): the strip carries diatonic triads only (5 chars max), measured at 360 in U4 |
+
 ## Ledger
 
 | Unit | State | Commit | Version |
@@ -83,6 +97,7 @@ Never merge (Nik merges). Never change tuner flow semantics (G2). Never bump the
 | U3 | integrated | with U1 | music-v372 |
 | U4 | integrated | squash of claude/polish-u4 @ 9502714 | music-v372-2 |
 | U5 | integrated | squash of claude/polish-u5 @ 0432822 | music-v372-5 |
+| review 2 | integrated | orchestrator commit (fixes 1,3,4,6,8 + offline toast live region) | music-v372-9 |
 | review | integrated | orchestrator commit (fixes 1,2,4,6,9 + landscape scenario) | music-v372-8 |
 | G3 | integrated (Nik: ship here) | squash of claude/polish-g3 @ 9558cfd | music-v372-7 |
 | G2 | integrated (Nik: now) | squash of claude/polish-g2 @ 85f8067 | music-v372-6 |

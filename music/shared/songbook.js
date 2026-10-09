@@ -1400,6 +1400,7 @@
     function fillSongSheet(ctx) {
       var box = ctx.box;
       var chars = sheetWrapMaxChars(box); // null only when the DOM is unmeasurable (hidden / no layout)
+      ctx.measured = chars; // the probe's answer at this font + width - the font-refit guard compares against it
       for (var attempts = 0; attempts < 4; attempts++) {
         box.innerHTML = renderSheet(ctx.s, STATE.transpose, ctx.view, ctx.map, chars || undefined);
         if (!chars || box.scrollWidth <= box.clientWidth) break;
@@ -2331,7 +2332,13 @@
     function onStageVisibility() { if (document.visibilityState === 'visible' && performEl && performEl.classList.contains('on')) reqWake(); }
     // Raw DOM close for the Stage overlay - idempotent, must NOT call
     // NavHistory.dismiss (that's the button/back-button path, not this).
-    function rawCloseStage() { relWake(); stageReleaseWarm(); document.removeEventListener('visibilitychange', onStageVisibility); if (performEl) performEl.classList.remove('on'); }
+    function rawCloseStage() { relWake(); stageReleaseWarm(); document.removeEventListener('visibilitychange', onStageVisibility); if (performEl) performEl.classList.remove('on');
+      // Review fix (high pass): a rotation while the Stage was open took the
+      // resize handler's Stage branch, so the song-view sheet under it kept the
+      // old orientation's wrap budget. Re-fit it now that it is visible again.
+      var sc = songSheetCtx;
+      if (sc && sc.box.isConnected && sc.box.clientWidth > 0 && sc.box.clientWidth !== sc.w) fillSongSheet(sc);
+    }
     // Launch fullscreen perform mode for any list of song ids (the setlist, or a
     // single song straight from Practice / the "Play now" hero). seedTpose carries
     // the song view's transpose into the opening song (absent = original key);
@@ -2742,8 +2749,10 @@
         if (performEl && performEl.classList.contains('on')) { refitStage(true); return; }
         // U5 review fix: the song view's sheet measured its budget before Space
         // Mono swapped in on a cold load - re-fill at the real font like the Stage.
+        // Guarded: any later font load fires 'loadingdone' too, so re-render only
+        // when the probe's budget actually moved (review fix, high pass).
         var sc = songSheetCtx;
-        if (sc && sc.box.isConnected && sc.box.clientWidth > 0) fillSongSheet(sc);
+        if (sc && sc.box.isConnected && sc.box.clientWidth > 0 && sheetWrapMaxChars(sc.box) !== sc.measured) fillSongSheet(sc);
       };
       if (document.fonts.ready && typeof document.fonts.ready.then === 'function') document.fonts.ready.then(stageFontRefit);
       if (typeof document.fonts.addEventListener === 'function') document.fonts.addEventListener('loadingdone', stageFontRefit);
