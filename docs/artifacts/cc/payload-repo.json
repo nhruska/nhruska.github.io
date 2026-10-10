@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-09T16:20:39Z",
+  "generatedAt": "2026-10-10T15:27:29Z",
   "generator": "command-center-gen.py@0.4.1 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-10-08T16:37:23Z",
-    "sha": "e69213554b0ab6689cff3d9022e328bdaf4c88e5",
+    "date": "2026-10-09T16:20:50Z",
+    "sha": "b48508a79b2589a4dfdcc05a2d6278ec611dfa7c",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/e69213554b0ab6689cff3d9022e328bdaf4c88e5"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/b48508a79b2589a4dfdcc05a2d6278ec611dfa7c"
   },
   "commits": [
+    {
+      "date": "2026-10-09T16:20:50Z",
+      "sha": "b48508a79b2589a4dfdcc05a2d6278ec611dfa7c",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/b48508a79b2589a4dfdcc05a2d6278ec611dfa7c"
+    },
     {
       "date": "2026-10-08T16:37:23Z",
       "sha": "e69213554b0ab6689cff3d9022e328bdaf4c88e5",
@@ -84,15 +90,33 @@
       "sha": "4c56d101c26c4f3487fc61a21205b8149b86d0cf",
       "subject": "feat(shell): landscape phones get a side rail and one-row player (#369)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/4c56d101c26c4f3487fc61a21205b8149b86d0cf"
-    },
-    {
-      "date": "2026-10-06T01:11:34Z",
-      "sha": "dc61c70c22facee11a2b1291b3311f64ae73ce97",
-      "subject": "feat(tune): two-pane landscape Tune for every instrument (#367)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/dc61c70c22facee11a2b1291b3311f64ae73ce97"
     }
   ],
   "openPRs": [
+    {
+      "number": 375,
+      "title": "cc: snapshot refresh after the sprint close",
+      "branch": "claude/cc-snapshot-20261009",
+      "url": "https://github.com/nhruska/nhruska.github.io/pull/375",
+      "draft": true,
+      "ciState": "green",
+      "checks": [
+        {
+          "name": "preview",
+          "workflow": "PR preview link",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37958967716/job/113916616349"
+        },
+        {
+          "name": "unit",
+          "workflow": "tests",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37958967653/job/113916616652"
+        }
+      ]
+    },
     {
       "number": 374,
       "title": "fix(music): NH-12 save truth - roll back failed saves and tell the user on all 5 save paths",
@@ -170,7 +194,7 @@
       "title": "docs(plans): SBS merge plan for the 6 open PRs",
       "branch": "claude/music-app-pr-merge-p4g8ji",
       "url": "https://github.com/nhruska/nhruska.github.io/pull/356",
-      "draft": true,
+      "draft": false,
       "ciState": "green",
       "checks": [
         {
@@ -178,14 +202,14 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37397116450/job/112055601162"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37958677525/job/113915630094"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37397116672/job/112055601716"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37958677557/job/113915628939"
         }
       ]
     },
@@ -325,9 +349,9 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-10-09T16:20:34Z",
-    "durationSeconds": 4,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37958413213",
+    "runStartedAt": "2026-10-10T15:27:23Z",
+    "durationSeconds": 3,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/38063678005",
     "headBranch": "main"
   },
   "velocity": {

@@ -1,13 +1,14 @@
 # Repo Command Center - nhruska/nhruska.github.io - Problem Solutions (agent-readable brief)
-Generated: 2026-10-09T16:20:39Z
+Generated: 2026-10-10T15:27:29Z
 Status: ok
 
 ## NOW
 - Queue NOW: **8 of 10 done** (re-verified 2026-10-08 against GitHub): #350 closed; #355, #348, #357, #360, #351, #358, **[#346](https://github.com/nhruska/nhruska.github.io/pull/346) (2026-10-06)** merged. Remaining: [#347](https://github.com/nhruska/nhruska.github.io/pull/347) (open, ready) - Nik merges; [#356](https://github.com/nhruska/nhruska.github.io/pull/356) SBS plan (draft) last. Owned by the nh-pages Project since the sprint orchestrator retired.
+- Open draft PR #375 (CI green): cc: snapshot refresh after the sprint close - https://github.com/nhruska/nhruska.github.io/pull/375
 - Open draft PR #374 (CI green): fix(music): NH-12 save truth - roll back failed saves and tell the user on all 5 save paths - https://github.com/nhruska/nhruska.github.io/pull/374
 - Open draft PR #372 (CI green): ui/ux: nh-pages polish enhancements mission (plan + execution) - https://github.com/nhruska/nhruska.github.io/pull/372
 - Open draft PR #362 (CI green): chore(claude): allow merge-resolution commands on PR branches in sprint sessions - https://github.com/nhruska/nhruska.github.io/pull/362
-- Open draft PR #356 (CI green): docs(plans): SBS merge plan for the 6 open PRs - https://github.com/nhruska/nhruska.github.io/pull/356
+- Open PR #356 (CI green): docs(plans): SBS merge plan for the 6 open PRs - https://github.com/nhruska/nhruska.github.io/pull/356
 - Open PR #347 (CI green): docs: enforce engineering-wiki lifecycle integrity - https://github.com/nhruska/nhruska.github.io/pull/347
 
 ## Open gaps / to-wire
