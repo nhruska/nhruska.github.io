@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-10T15:27:29Z",
+  "generatedAt": "2026-10-11T15:48:16Z",
   "generator": "command-center-gen.py@0.4.1 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-10-09T16:20:50Z",
-    "sha": "b48508a79b2589a4dfdcc05a2d6278ec611dfa7c",
+    "date": "2026-10-10T15:27:38Z",
+    "sha": "17c9607dd9a6914cafa374b5ff4588dab0b485d0",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/b48508a79b2589a4dfdcc05a2d6278ec611dfa7c"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/17c9607dd9a6914cafa374b5ff4588dab0b485d0"
   },
   "commits": [
+    {
+      "date": "2026-10-10T15:27:38Z",
+      "sha": "17c9607dd9a6914cafa374b5ff4588dab0b485d0",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/17c9607dd9a6914cafa374b5ff4588dab0b485d0"
+    },
     {
       "date": "2026-10-09T16:20:50Z",
       "sha": "b48508a79b2589a4dfdcc05a2d6278ec611dfa7c",
@@ -84,12 +90,6 @@
       "sha": "5c6fd9b252ecc7580bcf576fbd63d6be8eafe60e",
       "subject": "fix(player): video window never covers the mini-player controls or tab bar (#368)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/5c6fd9b252ecc7580bcf576fbd63d6be8eafe60e"
-    },
-    {
-      "date": "2026-10-06T01:16:32Z",
-      "sha": "4c56d101c26c4f3487fc61a21205b8149b86d0cf",
-      "subject": "feat(shell): landscape phones get a side rail and one-row player (#369)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/4c56d101c26c4f3487fc61a21205b8149b86d0cf"
     }
   ],
   "openPRs": [
@@ -349,14 +349,14 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-10-10T15:27:23Z",
+    "runStartedAt": "2026-10-11T15:48:11Z",
     "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/38063678005",
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/38152807022",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 17,
+    "merged_count": 15,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
     "typical_merge_hours": 18.38,
