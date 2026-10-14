@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-13T17:00:18Z",
+  "generatedAt": "2026-10-14T14:33:52Z",
   "generator": "command-center-gen.py@0.4.1 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-10-12T19:08:53Z",
-    "sha": "20f67a126f3428bc2ecd518fadbd8fc995f370cf",
+    "date": "2026-10-13T17:00:28Z",
+    "sha": "54fec84004ce1e169cf61ce078175cf325d4cdc8",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/20f67a126f3428bc2ecd518fadbd8fc995f370cf"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/54fec84004ce1e169cf61ce078175cf325d4cdc8"
   },
   "commits": [
+    {
+      "date": "2026-10-13T17:00:28Z",
+      "sha": "54fec84004ce1e169cf61ce078175cf325d4cdc8",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/54fec84004ce1e169cf61ce078175cf325d4cdc8"
+    },
     {
       "date": "2026-10-12T19:08:53Z",
       "sha": "20f67a126f3428bc2ecd518fadbd8fc995f370cf",
@@ -84,12 +90,6 @@
       "sha": "9b342a2538d0b4943523ba8acba3794394551ae7",
       "subject": "fix(theory): F major's B tile reads B, not Cb (music-v371) (#371)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/9b342a2538d0b4943523ba8acba3794394551ae7"
-    },
-    {
-      "date": "2026-10-06T17:08:53Z",
-      "sha": "e7d52a40cc9b26db77b4fa51ce9b49bdc6a86bc8",
-      "subject": "docs(plans): nh-pages Project coordinator handoff (2026-10-05) (#364)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/e7d52a40cc9b26db77b4fa51ce9b49bdc6a86bc8"
     }
   ],
   "openPRs": [
@@ -226,14 +226,14 @@
           "workflow": "PR preview link",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37519898302/job/112462320287"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/38464242091/job/115526938017"
         },
         {
           "name": "unit",
           "workflow": "tests",
           "status": "COMPLETED",
           "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37519898310/job/112462319043"
+          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/38464242095/job/115526937981"
         }
       ]
     }
@@ -347,16 +347,16 @@
   ],
   "lastCiRun": {
     "workflowName": "cc-nightly",
-    "status": "in_progress",
+    "status": "queued",
     "conclusion": null,
-    "runStartedAt": "2026-10-13T17:00:11Z",
-    "durationSeconds": 4,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/38435103336",
+    "runStartedAt": "2026-10-14T14:33:46Z",
+    "durationSeconds": 0,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/38581617836",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 12,
+    "merged_count": 1,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
     "typical_merge_hours": 18.38,
