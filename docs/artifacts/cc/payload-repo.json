@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-14T14:33:52Z",
+  "generatedAt": "2026-10-15T14:13:23Z",
   "generator": "command-center-gen.py@0.4.1 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-10-13T17:00:28Z",
-    "sha": "54fec84004ce1e169cf61ce078175cf325d4cdc8",
+    "date": "2026-10-14T14:34:01Z",
+    "sha": "d1df1cdbd482d9e4485a778473460fd1e0e95aa6",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/54fec84004ce1e169cf61ce078175cf325d4cdc8"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/d1df1cdbd482d9e4485a778473460fd1e0e95aa6"
   },
   "commits": [
+    {
+      "date": "2026-10-14T14:34:01Z",
+      "sha": "d1df1cdbd482d9e4485a778473460fd1e0e95aa6",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/d1df1cdbd482d9e4485a778473460fd1e0e95aa6"
+    },
     {
       "date": "2026-10-13T17:00:28Z",
       "sha": "54fec84004ce1e169cf61ce078175cf325d4cdc8",
@@ -84,12 +90,6 @@
       "sha": "87c89a1d61c6347a6805794636e4f78966adc14b",
       "subject": "test(pw): bring 4 stale scenarios up to the shipped app (#370)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/87c89a1d61c6347a6805794636e4f78966adc14b"
-    },
-    {
-      "date": "2026-10-06T19:31:03Z",
-      "sha": "9b342a2538d0b4943523ba8acba3794394551ae7",
-      "subject": "fix(theory): F major's B tile reads B, not Cb (music-v371) (#371)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/9b342a2538d0b4943523ba8acba3794394551ae7"
     }
   ],
   "openPRs": [
@@ -347,11 +347,11 @@
   ],
   "lastCiRun": {
     "workflowName": "cc-nightly",
-    "status": "queued",
+    "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-10-14T14:33:46Z",
-    "durationSeconds": 0,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/38581617836",
+    "runStartedAt": "2026-10-15T14:13:17Z",
+    "durationSeconds": 4,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/38749451424",
     "headBranch": "main"
   },
   "velocity": {
