@@ -15,7 +15,8 @@ Triads are built by stacking thirds within the mode's own scale (conservatory me
 | circle.js:107-119 (diatonic) | Per degree: stack third + fifth; measure semitone intervals; look up quality |
 | circle.js:99-105 (triadQuality) | 4 semitones = major third, 7 = perfect fifth -> major triad; etc. |
 
-Result: pitch-class-correct, mode-correct roman numeral + case, and sharp-canonical chord names (ROOTS-indexed). [STABLE]
+Result: pitch-class-correct, mode-correct roman numeral + case. Internal chord tokens
+remain sharp-canonical; displayed chord names respell by key function. [STABLE]
 
 Diminished degrees are computed correctly but dropped from the STRUMMING palette (songbook.js diatonicChords) - rarely playable on these instruments. Solo scales retain every tone for fretboard completeness. [STABLE]
 
@@ -53,7 +54,9 @@ The next-chord suggestion row is built in stages (songbook.js suggestion merge +
 
 Quality matching detail: a dominant 7th reduces to its triad for matching (D7 counts as D in G major; Dm7 does not) (songbook.js:107-139). [STABLE]
 
-All name-emitting surfaces share the same canonical-sharp ROOTS table. [STABLE]
+Suggestion and voicing tokens share the canonical-sharp identity table. Display seams
+route through the key-aware spelling provider so a displayed name agrees with its key
+and roman function. [STABLE]
 
 ## Blues palette (I7/IV7/V7) - a 3-degree harmonizing key model (M-GUIDE W2) [STABLE]
 
