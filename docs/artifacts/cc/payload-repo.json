@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-15T14:13:23Z",
+  "generatedAt": "2026-10-16T14:02:28Z",
   "generator": "command-center-gen.py@0.4.1 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-10-14T14:34:01Z",
-    "sha": "d1df1cdbd482d9e4485a778473460fd1e0e95aa6",
+    "date": "2026-10-15T14:13:34Z",
+    "sha": "8bd91a5226931d60fb64bc03a2bfb96426aed0c4",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/d1df1cdbd482d9e4485a778473460fd1e0e95aa6"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/8bd91a5226931d60fb64bc03a2bfb96426aed0c4"
   },
   "commits": [
+    {
+      "date": "2026-10-15T14:13:34Z",
+      "sha": "8bd91a5226931d60fb64bc03a2bfb96426aed0c4",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/8bd91a5226931d60fb64bc03a2bfb96426aed0c4"
+    },
     {
       "date": "2026-10-14T14:34:01Z",
       "sha": "d1df1cdbd482d9e4485a778473460fd1e0e95aa6",
@@ -84,12 +90,6 @@
       "sha": "38f98b1e894ff5506f4ae67343d1e0e36011ff31",
       "subject": "cc: REST fallback so the session-start sweep sees open PRs; stop run-all dropping test summaries; reconcile QUEUE and the handoff doc (#365)",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/38f98b1e894ff5506f4ae67343d1e0e36011ff31"
-    },
-    {
-      "date": "2026-10-06T19:31:09Z",
-      "sha": "87c89a1d61c6347a6805794636e4f78966adc14b",
-      "subject": "test(pw): bring 4 stale scenarios up to the shipped app (#370)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/87c89a1d61c6347a6805794636e4f78966adc14b"
     }
   ],
   "openPRs": [
@@ -349,14 +349,14 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-10-15T14:13:17Z",
-    "durationSeconds": 4,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/38749451424",
+    "runStartedAt": "2026-10-16T14:02:22Z",
+    "durationSeconds": 3,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/38912547014",
     "headBranch": "main"
   },
   "velocity": {
     "window_days": 7,
-    "merged_count": 1,
+    "merged_count": 0,
     "loc": null,
     "loc_note": "checkout history is too shallow to cover the 7-day window - LOC omitted, never guessed",
     "typical_merge_hours": 18.38,
