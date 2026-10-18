@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-17T13:01:58Z",
+  "generatedAt": "2026-10-18T13:22:03Z",
   "generator": "command-center-gen.py@0.4.1 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-10-16T14:02:39Z",
-    "sha": "8c5bdf852589705d7398bfe92b8b38d992657ac7",
+    "date": "2026-10-17T13:02:06Z",
+    "sha": "8ab836f59fb5269f4032e1c81f2e7a244e686156",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/8c5bdf852589705d7398bfe92b8b38d992657ac7"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/8ab836f59fb5269f4032e1c81f2e7a244e686156"
   },
   "commits": [
+    {
+      "date": "2026-10-17T13:02:06Z",
+      "sha": "8ab836f59fb5269f4032e1c81f2e7a244e686156",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/8ab836f59fb5269f4032e1c81f2e7a244e686156"
+    },
     {
       "date": "2026-10-16T14:02:39Z",
       "sha": "8c5bdf852589705d7398bfe92b8b38d992657ac7",
@@ -84,12 +90,6 @@
       "sha": "b1cba9c4ec4dce26178da2cf5dde879d1550f2fc",
       "subject": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/b1cba9c4ec4dce26178da2cf5dde879d1550f2fc"
-    },
-    {
-      "date": "2026-10-06T19:31:29Z",
-      "sha": "c475aac16508dd0900d5b34e47b3b8aa712ad6a2",
-      "subject": "docs: calibrate Thought-Ware public claims (#346)",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/c475aac16508dd0900d5b34e47b3b8aa712ad6a2"
     }
   ],
   "openPRs": [
@@ -349,9 +349,9 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-10-17T13:01:53Z",
-    "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/39034890934",
+    "runStartedAt": "2026-10-18T13:21:59Z",
+    "durationSeconds": 2,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/39131221312",
     "headBranch": "main"
   },
   "velocity": {
