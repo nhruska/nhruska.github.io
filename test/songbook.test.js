@@ -2284,9 +2284,11 @@ test('S-SET-INTEGRITY: Undo on a throwing (quota-exceeded) store shows the truth
   } finally {
     console.warn = origWarn;
   }
-  // The in-memory restore still happens (matches saveProgression/D-SAVE-TRUTH: the
-  // attempt is truthful about PERSISTENCE, not about whether the UI state changed).
-  assert.deepStrictEqual(m.ctrl.getState().setlist, ['m1']);
+  // NH-12 changed this: a restore that could not be written is rolled back, so
+  // the screen matches what is on disk (the song stays deleted) instead of
+  // showing a restore that a reload would undo.
+  assert.deepStrictEqual(m.ctrl.getState().setlist, []);
+  assert.ok(!m.ctrl.getSongs().some(function (s) { return s.id === 'm1'; }), 'the unsaved restore is rolled back');
   // showToast (the Library "Added to setlist"/failure toast host, S-TOAST)
   // lazily appends its ONE shared toast element to document.body - a
   // different host than delUndoBanner (el.libSongs), so no timer/host
@@ -3271,6 +3273,130 @@ test('Stage chord chips are disabled, not silently inert - no lying affordance o
   // it has no .bar to neutralize, so including it would make this tripwire lie.
   assert.strictEqual((src.match(/pSheet\.innerHTML = '<div class="pInner">' \+ renderSheet/g) || []).length, 2,
     'if a third renderSheet-backed stage render site appears, it needs the same call - this count is the tripwire');
+});
+
+/* =====================================================================
+ * NH-12 (S-SAVE-TRUTH completion): every one of the five save paths
+ * (saveCustom / saveSet / saveLast / savePerfPrefs / saveSongView) must,
+ * on a QuotaExceededError, (1) leave storage holding the last good value,
+ * (2) roll in-memory DATA back to what is actually stored, and (3) put a
+ * real message in front of the user. A multi-key write is all-or-nothing.
+ * ===================================================================== */
+var NH12_FAIL = "Couldn't save - storage is full or blocked. Export a backup from Settings.";
+var NH12_PASSIVE_FAIL = "Couldn't save your settings - storage is full or blocked. Export a backup from Settings.";
+function nh12Quota() { var e = new Error('The quota has been exceeded.'); e.name = 'QuotaExceededError'; return e; }
+// Fail only writes whose key contains `frag`; every other write lands.
+function nh12FailKey(frag) {
+  var store = global.localStorage, real = store.setItem;
+  var calls = { n: 0 };
+  store.setItem = function (k, v) { if (k.indexOf(frag) !== -1) { calls.n++; throw nh12Quota(); } return real.call(store, k, v); };
+  return calls;
+}
+function nh12Toast() {
+  var t = null;
+  document.body.children.forEach(function (c) { if (c.className && c.className.indexOf('toast') === 0) t = c; });
+  return t;
+}
+function nh12Quiet(fn) { var w = console.warn; console.warn = function () {}; try { return fn(); } finally { console.warn = w; } }
+function nh12ResetToast() { var t = nh12Toast(); if (t) { t.textContent = ''; t.classList.remove('err'); } }
+
+test('NH-12 saveCustom: a Compose save that hits quota rolls the new song back out of memory and storage', function () {
+  var m = mountForSaveTests();
+  var before = m.ctrl.getSongs().length;
+  var calls = nh12FailKey('.custom.');
+  nh12Quiet(function () { buildAndSave(m); });
+  assert.ok(calls.n > 0, 'the custom write was attempted');
+  assert.strictEqual(findComposeToast(m).textContent, NH12_FAIL, 'the user is told it did not save');
+  assert.strictEqual(m.ctrl.getSongs().length, before, 'rollback: the unsaved song must not linger in the Library for this session');
+  assert.strictEqual(global.localStorage.getItem('a1test.custom.v1'), null, 'storage still holds the last good value (nothing)');
+  var nb = findSaveDoneBanner(m);
+  assert.ok(!(nb && nb.hidden === false), 'no success banner');
+});
+
+test('NH-12 saveSet: a setlist Clear that hits quota rolls the setlist back and says so', function () {
+  var m = mountForSetIntegrityTests({
+    customSongs: [{ id: 'm1', t: 'Song A', a: '', y: 2026, d: 'Mine', custom: true, seq: ['C'] },
+                  { id: 'm2', t: 'Song B', a: '', y: 2026, d: 'Mine', custom: true, seq: ['G'] }],
+    setlist: ['m1']
+  });
+  nh12ResetToast();
+  var calls = nh12FailKey('.setlist.');
+  // Clear has no toast of its own - two taps (arm, then confirm) on the control.
+  var fire = function (elx) { (elx._listeners.pointerdown || []).forEach(function (f) { f({ clientX: 0, clientY: 0, pointerId: 1, button: 0 }); });
+    (elx._listeners.pointerup || []).forEach(function (f) { f({ clientX: 0, clientY: 0, pointerId: 1, button: 0 }); });
+    (elx._listeners.click || []).forEach(function (f) { f({ preventDefault: function () {}, stopPropagation: function () {} }); }); };
+  nh12Quiet(function () { fire(m.elMap.setClear); fire(m.elMap.setClear); });
+  assert.ok(calls.n > 0, 'the setlist write was attempted');
+  assert.deepStrictEqual(m.ctrl.getState().setlist, ['m1'], 'rollback: the setlist the user still has on disk is the one on screen');
+  assert.strictEqual(global.localStorage.getItem('settest.setlist.v1'), '["m1"]', 'storage untouched');
+  var t = nh12Toast();
+  assert.ok(t && t.textContent === NH12_FAIL && t.classList.contains('err'), 'the user is told the clear did not save');
+});
+
+test('NH-12 multi-key: deleting a setlisted song is all-or-nothing when the second write hits quota', function () {
+  var m = mountForSetIntegrityTests({
+    customSongs: [{ id: 'm1', t: 'Song A', a: '', y: 2026, d: 'Mine', custom: true, seq: ['C'] }],
+    setlist: ['m1']
+  });
+  nh12ResetToast();
+  nh12FailKey('.setlist.');
+  nh12Quiet(function () { m.ctrl.deleteCustomItem('m1'); });
+  assert.ok(m.ctrl.getSongs().some(function (s) { return s.id === 'm1'; }), 'rollback: the song is still in memory');
+  assert.ok(/"m1"/.test(global.localStorage.getItem('settest.custom.v1')), 'rollback: the custom write that DID land is undone in storage (no partial delete)');
+  assert.deepStrictEqual(m.ctrl.getState().setlist, ['m1']);
+  var t = nh12Toast();
+  assert.ok(t && t.textContent === NH12_FAIL, 'the user is told the delete did not save');
+  var db = findDelUndoBanner(m);
+  assert.ok(!(db && db.hidden === false), 'no "Deleted ... Undo" banner for a delete that did not happen');
+});
+
+test('NH-12 saveLast: opening a song when storage is full tells the user once, storage keeps the last good value', function () {
+  var m = mountForSetIntegrityTests({ customSongs: [{ id: 'm1', t: 'Song A', a: '', y: 2026, d: 'Mine', custom: true, seq: ['C'] }] });
+  global.localStorage.setItem('settest.last.v1', 'k0');
+  nh12ResetToast();
+  var calls = nh12FailKey('.last.');
+  nh12Quiet(function () { m.ctrl.openSong('m1'); });
+  assert.ok(calls.n > 0, 'the last-opened write was attempted');
+  assert.strictEqual(global.localStorage.getItem('settest.last.v1'), 'k0', 'storage keeps the last good value');
+  var t = nh12Toast();
+  assert.ok(t && t.textContent === NH12_PASSIVE_FAIL && t.classList.contains('err'), 'a real message, not just a console line');
+  assert.strictEqual(t.getAttribute('role'), 'alert', 'a lost save is announced to screen readers right away (a11y-coach)');
+  assert.strictEqual(t.getAttribute('aria-live'), 'assertive');
+  nh12ResetToast();
+  nh12Quiet(function () { m.ctrl.openSong('m1'); });
+  assert.strictEqual(nh12Toast().textContent, '', 'once per session - background saves never nag');
+});
+
+test('NH-12 savePerfPrefs: a scroll-speed change that hits quota tells the user once', function () {
+  global.localStorage = lsReset.fakeStore();
+  var speed = makeStubEl('input'); speed.value = '3';
+  var ctrl = Songbook.mount({ storagePrefix: 'nh12pp', el: { pSpeedR: speed, pSpeedV: makeStubEl('span') } });
+  nh12ResetToast();
+  var calls = nh12FailKey('.perfprefs.');
+  nh12Quiet(function () { speed.oninput(); });
+  assert.ok(ctrl && calls.n > 0, 'the perform-prefs write was attempted');
+  assert.strictEqual(global.localStorage.getItem('nh12pp.perfprefs.v2'), null, 'storage keeps the last good value');
+  var t = nh12Toast();
+  assert.ok(t && t.textContent === NH12_PASSIVE_FAIL && t.classList.contains('err'), 'a real message on the passive path');
+  nh12ResetToast();
+  nh12Quiet(function () { speed.value = '4'; speed.oninput(); });
+  assert.strictEqual(nh12Toast().textContent, '', 'a slider drag never repeats the message');
+});
+
+test('NH-12 saveSongView: a view toggle that hits quota tells the user once', function () {
+  global.localStorage = lsReset.fakeStore({ 'nh12sv.custom.v1': JSON.stringify([{ id: 'm1', t: 'Song A', a: '', y: 2026, d: 'Mine', custom: true, seq: ['C'] }]) });
+  var modeBtn = makeStubEl('button'); modeBtn.dataset.v = 'chords';
+  var body = makeStubEl('div');
+  body.querySelector = function () { return makeStubEl('div'); };
+  body.querySelectorAll = function (sel) { return sel === '.modeSwitch button' ? [modeBtn] : []; };
+  var ctrl = Songbook.mount({ storagePrefix: 'nh12sv', el: { practiceBody: body } });
+  nh12Quiet(function () { ctrl.openSong('m1'); });
+  nh12ResetToast();
+  var calls = nh12FailKey('.songview.');
+  nh12Quiet(function () { modeBtn.onclick(); });
+  assert.ok(calls.n > 0, 'the song-view write was attempted');
+  var t = nh12Toast();
+  assert.ok(t && t.textContent === NH12_PASSIVE_FAIL && t.classList.contains('err'), 'a real message on the passive path');
 });
 
 run();
