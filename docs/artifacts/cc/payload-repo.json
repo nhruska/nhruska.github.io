@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-02T19:36:25Z",
+  "generatedAt": "2026-11-03T17:09:28Z",
   "generator": "command-center-gen.py@0.4.1 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-11-01T16:07:56Z",
-    "sha": "d4b24bf74e6dc4eef942b41228d178c3c86c60b2",
+    "date": "2026-11-02T19:36:35Z",
+    "sha": "c0435682516e3ad5c9ef80c8e269719faa283142",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/d4b24bf74e6dc4eef942b41228d178c3c86c60b2"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/c0435682516e3ad5c9ef80c8e269719faa283142"
   },
   "commits": [
+    {
+      "date": "2026-11-02T19:36:35Z",
+      "sha": "c0435682516e3ad5c9ef80c8e269719faa283142",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/c0435682516e3ad5c9ef80c8e269719faa283142"
+    },
     {
       "date": "2026-11-01T16:07:56Z",
       "sha": "d4b24bf74e6dc4eef942b41228d178c3c86c60b2",
@@ -84,39 +90,9 @@
       "sha": "9d56881169744eab939bbeafe18e9c0d1655c742",
       "subject": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/9d56881169744eab939bbeafe18e9c0d1655c742"
-    },
-    {
-      "date": "2026-10-21T14:32:18Z",
-      "sha": "61fa00925bab3371cc0a2ae62229a39d2b33bcf4",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/61fa00925bab3371cc0a2ae62229a39d2b33bcf4"
     }
   ],
   "openPRs": [
-    {
-      "number": 375,
-      "title": "cc: snapshot refresh after the sprint close",
-      "branch": "claude/cc-snapshot-20261009",
-      "url": "https://github.com/nhruska/nhruska.github.io/pull/375",
-      "draft": true,
-      "ciState": "green",
-      "checks": [
-        {
-          "name": "preview",
-          "workflow": "PR preview link",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37958967716/job/113916616349"
-        },
-        {
-          "name": "unit",
-          "workflow": "tests",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/37958967653/job/113916616652"
-        }
-      ]
-    },
     {
       "number": 374,
       "title": "fix(music): NH-12 save truth - roll back failed saves and tell the user on all 5 save paths",
@@ -349,9 +325,9 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-11-02T19:36:19Z",
-    "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/41511483096",
+    "runStartedAt": "2026-11-03T17:09:17Z",
+    "durationSeconds": 4,
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/41681413164",
     "headBranch": "main"
   },
   "velocity": {
