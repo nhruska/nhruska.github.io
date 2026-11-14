@@ -16,6 +16,7 @@ The suite map, the canon authority, and what green means.
 |---|---|
 | circle.test.js | circle-of-fifths engine: MODE_STEPS, spelling, romans, qualities |
 | theory-canon.test.js | the 1008-check conservatory canon + scales-canon literals ([theory-verification](../theory-engine/theory-verification.md)) |
+| key-spelling.test.js / scale-in-key-canon.test.js | active key-aware display API + professor traps across key contexts |
 | solo-scales.test.js | pentatonic/blues tables: pcs, spell()-names, degrees, subset proofs |
 | songbook.test.js | engine theory helpers: chordsFromDegrees, chordInKey, romanInKey, suggestion merge, clear-undo snapshot fns, wireTapCancel |
 | songbook-firstrun.test.js | first-run notable consumer logic |
@@ -27,6 +28,7 @@ The suite map, the canon authority, and what green means.
 | key-explorer.test.js / key-explorer.dom.test.js | posWindow math + render contracts |
 | list-item.test.js | unified row rendering + wireTap movement-cancel |
 | tuner.test.js | autocorrelation smoothing chain |
+| wiki-lifecycle-drift.test.js | retired-marker exclusion, source/generated spelling agreement, inventory counts, and evidence-summary reconciliation |
 | queue.test.js / tempo.test.js / candidates.test.js / chord-pack-xss.test.js / live-adapter.test.js | supporting modules |
 
 ## Patterns [STABLE]

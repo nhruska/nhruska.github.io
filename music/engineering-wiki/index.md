@@ -7,7 +7,7 @@
 | Page | Owns |
 |---|---|
 | [architecture.md](theory-engine/architecture.md) | Pitch-class core vs spelling-as-display; the 3 name-emitting surfaces; interval SSOT (`Circle.MODE_STEPS`) |
-| [note-spelling.md](theory-engine/note-spelling.md) | FORK-4 canonical-sharp policy; the #98 key-aware regime seam; professor golden traps `[TRACKS-#98]` |
+| [note-spelling.md](theory-engine/note-spelling.md) | Active key-aware display policy; token-vs-display split; retired FORK-4 history; professor golden traps |
 | [harmonization.md](theory-engine/harmonization.md) | Diatonic triads; roman-numeral hybrid convention; suggestion engine; `chordInKey` |
 | [solo-scales.md](theory-engine/solo-scales.md) | The SOLO layer: mode scales + pentatonic major/minor + blues; blue-note spelling under both regimes; the solo-vs-harmonization boundary |
 | [theory-verification.md](theory-engine/theory-verification.md) | The 1008-check canon, audit lineage, professor verdict, scales-canon additions |

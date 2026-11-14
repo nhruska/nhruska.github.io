@@ -29,18 +29,20 @@ Locked decisions live in [decisions.md](../decisions.md) (D1 transpose==key, D3 
 | UX persona mission + Sprint 1 (2026-07-03/04) | 8 PRs live (v78): Clear undo (P0), slot removers, theory canon, notables infra, first-run cues, whynote, setlist guard, save-dialog + settings UAT fixes. 12 adversarial plan findings folded pre-code. Record: [docs/plans/ux-sprint-1-20260703.md](../../../docs/plans/ux-sprint-1-20260703.md) |
 | M2 wiki mission (2026-07-04) | This wiki + S-BLUES scales + absorb/decom of the legacy doc corpus. IA: [docs/plans/wiki-ia-20260704.md](../../../docs/plans/wiki-ia-20260704.md) |
 
-## Wave-2 deferrals (gated on PR #98 key-aware spelling) [TRACKS-#98]
+## Retired wave-2 deferral [RETIRED 2026-07-10 -> D-KEY-STORE-PREF]
 
-S-TONES (spelled chord tones), S-ROMAN + S-KEYPOLICY (roman-style setting + tie-policy note), S-GOLDEN-B (12 regime-B traps into canon), S-BLUES-B (key-aware pentatonic/blues spelling - blue note flips D# -> Eb). All consume ONLY the named seam (spellKeyAware/spellScaleKeyAware/keyLabel); if the seam is absent at merge, BLOCKED-not-improvised (A8).
+The former #98-gated work is historical: key-aware display, the golden traps, and
+S-BLUES-B shipped through the July 10 spelling change. Current behavior and APIs live
+in [note-spelling.md](../theory-engine/note-spelling.md); do not resume this deferral.
 
 ## Backlog register
 
 | Item | Note |
 |---|---|
-| M3 songs/tracks full merge | Sprint-2 PRIMARY; fresh session; post-#98; finder-rehome RESOLVED: 5A (operator 2026-07-04) - dissolve finder, curation to +Add/per-item edit, circle panel into Studio |
+| M3 songs/tracks full merge | **SHIPPED/HISTORICAL** - merged repertoire is documented in systems/data-model.md; no longer an active backlog item |
 | S-DIAGRAM-PREF | Expertise-adaptive display setting; spec home: [ux-philosophy/expertise-adaptive-display.md](../ux-philosophy/expertise-adaptive-display.md) |
 | S-CHIPS + S-EASYFILTER | fold into M3's unified filter bar (44px floor + progressive vocabulary disclosure) |
-| S-INVERSIONS | golden coverage for inversion/slash-bass spelling, post-#98 |
+| S-INVERSIONS | golden coverage for inversion/slash-bass spelling; consult current tests and queue before scheduling |
 | SETX phase 2 | app-styled confirm + edit-mode home for setlist clear |
 | li-up/dn 40x32 | pre-existing sub-floor reorder buttons (documented, out of prior scope) |
 | HSR Lens | full hammer/slide/rotate overlay ([instrument-profiles](../systems/instrument-profiles.md)) |
