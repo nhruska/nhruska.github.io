@@ -659,43 +659,56 @@
       return (seq || []).every(function (c) { return packHasChord(tpose(c, st)); });
     }
 
-    // A1 (analysis-refactor-enhance-20260704): the single write seam every save*
-    // function below routes through. Mirrors backup.js's applyAtomic quota-detect
-    // (same /quota|exceed/i test against e.name+e.message) but WITHOUT its multi-key
-    // atomic-rollback machinery - a routine save is one key, so there is nothing to
-    // roll back on failure (the prior value for that key is simply left in place,
-    // since a throwing setItem never overwrote it). Returns true on a real write,
-    // false if storage threw (quota exceeded, blocked/private-mode storage, etc.).
-    // Callers decide whether a false return needs USER-visible feedback: saveProgression
-    // (Compose "Saved to your Library", F23) does; the passive prefs/last-opened/song-view
-    // writes fail soft (console signal only) per the app's #1 fatal-dismissal trigger
-    // being an unconditional SUCCESS message on a save that silently didn't happen -
-    // not the passive writes, which never claimed success to begin with.
-    var _safeSetWarned = {}; // one console.warn per key for the life of this mount - a
-    // blocked-storage device would otherwise spam the console on every keystroke-driven
-    // passive save (e.g. the perform-speed slider firing savePerfPrefs repeatedly).
-    function safeSet(key, value) {
-      try { localStorage.setItem(key, value); return true; }
-      catch (e) {
-        if (!_safeSetWarned[key]) {
-          _safeSetWarned[key] = true;
-          var quota = e && /quota|exceed/i.test(String(e.name) + String(e.message));
-          console.warn('[songbook] storage write failed for ' + key + (quota ? ' (quota exceeded)' : '') + ' - further failures for this key are suppressed this session:', e);
+    // The single write seam every save* function routes through (A1, completed
+    // by NH-12). commitWrites() writes one or more keys ALL-OR-NOTHING, the
+    // backup.js applyAtomic pattern: on a throw (quota exceeded, blocked
+    // storage) every key this batch already wrote is put back in REVERSE order,
+    // so storage is never left half-written. Returns true on a real write.
+    var _safeSetWarned = {}; // one console.warn per key per mount - a blocked
+    // device would otherwise spam the console on every slider tick.
+    function warnWriteFail(key, e) {
+      if (_safeSetWarned[key]) return;
+      _safeSetWarned[key] = true;
+      var quota = e && /quota|exceed/i.test(String(e.name) + String(e.message));
+      console.warn('[songbook] storage write failed for ' + key + (quota ? ' (quota exceeded)' : '') + ' - further failures for this key are suppressed this session:', e);
+    }
+    function commitWrites(pairs) {
+      var prior = [], written = [], i = 0;
+      try {
+        for (; i < pairs.length; i++) {
+          prior[i] = localStorage.getItem(pairs[i][0]);
+          localStorage.setItem(pairs[i][0], pairs[i][1]);
+          written.push(i);
         }
+        return true;
+      } catch (e) {
+        for (var j = written.length - 1; j >= 0; j--) {
+          var w = written[j];
+          try { if (prior[w] === null || prior[w] === undefined) localStorage.removeItem(pairs[w][0]); else localStorage.setItem(pairs[w][0], prior[w]); } catch (e2) { /* best effort - nothing else can be done */ }
+        }
+        warnWriteFail(pairs[Math.min(i, pairs.length - 1)][0], e);
         return false;
       }
     }
-    // A1/H4 shared failure message (analysis-refactor-enhance-20260704): the one
-    // truthful "didn't actually save" message for any USER-INITIATED save whose
-    // underlying safeSet() write failed. Shared by saveProgression's create/
-    // update branches (D-SAVE-TRUTH) and toggleSet's setlist-add branch
-    // (S-HARDEN H4) so the wording can't drift between the two.
+    function safeSet(key, value) { return commitWrites([[key, value]]); }
+    // The truthful "didn't actually save" message for a USER-INITIATED save
+    // (create, edit, delete, setlist edits). One string so wording can't drift.
     var SAVE_FAIL_MSG = "Couldn't save - storage is full or blocked. Export a backup from Settings.";
+    // Background saves (last-opened song, Stage prefs, song view) never claimed
+    // success, so they tell the user ONCE per session - a slider drag must not
+    // repeat it - and only if no save failure was already shown.
+    var PASSIVE_SAVE_FAIL_MSG = "Couldn't save your settings - storage is full or blocked. Export a backup from Settings.";
+    var saveFailShown = false;
+    function savePassive(key, value) {
+      var ok = safeSet(key, value);
+      if (!ok && !saveFailShown) { saveFailShown = true; showToast(PASSIVE_SAVE_FAIL_MSG, true); }
+      return ok;
+    }
 
     /* ---------- custom (composed) progressions ---------- */
     var CUSTOM_KEY = prefix + ".custom.v1";
     function loadCustom() { try { var r = localStorage.getItem(CUSTOM_KEY); return r ? JSON.parse(r) : []; } catch (e) { return []; } }
-    function saveCustom() { return safeSet(CUSTOM_KEY, JSON.stringify(customSongs)); }
+    function saveCustom(opts) { return persistData([CUSTOM_KEY], opts); }
     var customSongs = loadCustom();
     // Fork-to-custom SHADOW + composed-custom append: the pure fold lives in the
     // module-scope buildAllSongs(catalog, customs) (exported + unit-tested). Deleting
@@ -706,14 +719,13 @@
     /* ---------- state + persistence ---------- */
     var STORE_KEY = prefix + ".setlist.v1";
     function loadSet() { try { var r = localStorage.getItem(STORE_KEY); return r ? JSON.parse(r) : []; } catch (e) { return []; } }
-    function saveSet() { return safeSet(STORE_KEY, JSON.stringify(STATE.setlist)); }
+    function saveSet(opts) { return persistData([STORE_KEY], opts); }
     // last-opened song, so the app can greet you already holding a song to play.
     var LAST_KEY = prefix + ".last.v1";
     function loadLast() { try { return localStorage.getItem(LAST_KEY) || null; } catch (e) { return null; } }
-    // Passive (no user-visible confirmation anywhere it's called) - fails soft via
-    // safeSet's console signal. See safeSet's header comment for the user-initiated
-    // vs passive split this mission drew.
-    function saveLast(id) { return safeSet(LAST_KEY, id); }
+    // Passive (no success message anywhere it's called) - a failure is told
+    // once per session via savePassive (NH-12).
+    function saveLast(id) { return savePassive(LAST_KEY, id); }
     // perform-screen prefs (scroll speed + view + fontScale + fontMode),
     // remembered per device. Sizing model v3 (operator-refined 2026-07-24):
     // fontMode 'auto' (the default - fit the viewport width) vs 'manual' (a
@@ -741,7 +753,7 @@
     // would let staging one custom song (forced 'chords') leak into every later
     // setlist Perform. (Assigned just after STATE is built, below.)
     var stageDefaultView;
-    // Passive - see safeSet's header comment (no per-slider-drag toast is wanted here).
+    // Passive - see savePassive (told once per session, never per slider drag).
     // idx: the last position reached in a SETLIST-anchored Stage session (see
     // lastSetSessionIdx below) - lets "Start" resume where the performer left
     // off instead of always reopening on song 1 (P1-4).
@@ -754,7 +766,7 @@
     // persisted user size and whether it was auto-fitted or set by hand. All
     // four fields are independent - the merge keeps every one of them.
     function setFingerprint(ids) { return (ids || []).join('|'); }
-    function savePerfPrefs() { return safeSet(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: stageDefaultView, idx: lastSetSessionIdx, setfp: setFingerprint(STATE.setlist), fontScale: STATE.fontScale, fontMode: STATE.fontMode })); }
+    function savePerfPrefs() { return savePassive(PERF_KEY, JSON.stringify({ speed: STATE.scrollSpeed, view: stageDefaultView, idx: lastSetSessionIdx, setfp: setFingerprint(STATE.setlist), fontScale: STATE.fontScale, fontMode: STATE.fontMode })); }
     var _pp = loadPerfPrefs();
     var STATE = {
       search: "", genre: "all", mineOnly: false, key: "all", current: null, transpose: 0, view: "lyrics",
@@ -775,6 +787,46 @@
       queueSkipNotice: null
     };
     STATE.setlist = loadSet();
+    // NH-12: the DATA slots (custom songs + setlist) persist through
+    // persistData(), which rolls memory back to the last value known to be on
+    // disk when a write fails - so the screen never shows a song or setlist
+    // edit that a reload would lose. lastGood is that on-disk value.
+    var DATA_SLOTS = {};
+    DATA_SLOTS[CUSTOM_KEY] = {
+      get: function () { return JSON.stringify(customSongs); },
+      set: function (raw) { customSongs = JSON.parse(raw); }
+    };
+    DATA_SLOTS[STORE_KEY] = {
+      get: function () { return JSON.stringify(STATE.setlist); },
+      set: function (raw) { STATE.setlist = JSON.parse(raw); }
+    };
+    var lastGood = {};
+    lastGood[CUSTOM_KEY] = DATA_SLOTS[CUSTOM_KEY].get();
+    lastGood[STORE_KEY] = DATA_SLOTS[STORE_KEY].get();
+    // keys: the slots this one user action changed - written all-or-nothing.
+    // opts.quiet: the caller shows its own failure message (Compose toasts).
+    // opts.passive: housekeeping - keep memory, tell the user once (savePassive rules).
+    function persistData(keys, opts) {
+      opts = opts || {};
+      var pairs = keys.map(function (k) { return [k, DATA_SLOTS[k].get()]; });
+      if (commitWrites(pairs)) {
+        pairs.forEach(function (p) { lastGood[p[0]] = p[1]; });
+        return true;
+      }
+      if (opts.passive) {
+        if (!saveFailShown) { saveFailShown = true; showToast(PASSIVE_SAVE_FAIL_MSG, true); }
+        return false;
+      }
+      keys.forEach(function (k) { DATA_SLOTS[k].set(lastGood[k]); });
+      if (keys.indexOf(CUSTOM_KEY) >= 0) {
+        rebuildAll();
+        // STATE.current may point at an object the rollback just replaced.
+        if (STATE.current && STATE.current.custom) STATE.current = songById(STATE.current.id);
+      }
+      saveFailShown = true;
+      if (!opts.quiet) showToast(SAVE_FAIL_MSG, true);
+      return false;
+    }
     stageDefaultView = STATE.performView; // persisted Stage-view default (see savePerfPrefs above)
     // Last index reached in a setlist-anchored Stage session (P1-4) - persisted
     // alongside the other perf prefs so the setlist's Start button resumes there
@@ -1253,8 +1305,8 @@
         return localStorage.getItem(CHORDVIEW_KEY) === '1' ? 'chords' : 'both';
       } catch (e) { return 'both'; }
     }
-    // Passive - see safeSet's header comment (a view-toggle tap doesn't need a toast).
-    function saveSongView(v) { return safeSet(SONGVIEW_KEY, v); }
+    // Passive - see savePassive (told once per session).
+    function saveSongView(v) { return savePassive(SONGVIEW_KEY, v); }
     STATE.songView = loadSongView();
 
     // open a song in the song screen. queueIds (optional) sets the running order:
@@ -1721,6 +1773,10 @@
         document.body.appendChild(toastEl); }
       var isErr = (kind === true || kind === 'err');
       var isWarn = (kind === 'warn');
+      // An error (e.g. a save that did not happen, NH-12) is announced right
+      // away; every other toast stays polite so it never interrupts reading.
+      toastEl.setAttribute('role', isErr ? 'alert' : 'status');
+      toastEl.setAttribute('aria-live', isErr ? 'assertive' : 'polite');
       var dur = (isErr || isWarn) ? Math.min(6000, Math.max(3200, String(msg).length * 55)) : (action ? 5200 : 1600);
       // Tap-outside-to-dismiss (operator UAT: "the add-to-setlist confirm needs
       // to be dismissed by tapping outside"). A tap anywhere off the toast clears
@@ -1783,12 +1839,9 @@
       if (pos >= 0) STATE.setlist.splice(pos, 1);
       else if (toTop) STATE.setlist.unshift(id);
       else STATE.setlist.push(id);
-      // S-HARDEN H4 (analysis-refactor-enhance-20260704 A1 bug shape): saveSet()
-      // can silently fail (quota/blocked storage) - branch the toast on its real
-      // result instead of claiming success unconditionally, same pattern as
-      // saveProgression (D-SAVE-TRUTH). Removes are unaffected (no toast either
-      // way - they rely on the persistent Undo affordance, out of this fix's scope).
-      var ok = saveSet();
+      // S-HARDEN H4 + NH-12: a failed write rolls the setlist back and the
+      // toast below says so, for an add AND a remove (D-SAVE-TRUTH).
+      var ok = saveSet({ quiet: true });
       // Operator spec 2026-07-17 (verbatim): "the list should not be
       // reordered. it should not scroll....just set item selected." An add
       // NEVER scrolls - and it CANCELS any stale post-save highlight so a
@@ -1800,8 +1853,8 @@
       if (STATE.current && STATE.current.id === id) renderPractice();
       // UAT r5 F6: the add-confirmation carries a Go to setlist action (and the
       // longer action-toast hold) so "where did it go?" is one tap, not a hunt.
-      if (adding) showToast(ok ? 'Added to setlist' : SAVE_FAIL_MSG, !ok,
-        ok ? { label: 'Go to setlist', fn: function () { switchTab('jam'); } } : null);
+      if (!ok) showToast(SAVE_FAIL_MSG, true);
+      else if (adding) showToast('Added to setlist', false, { label: 'Go to setlist', fn: function () { switchTab('jam'); } });
     }
     // S-SETADD-KEYSEED: the 'seed' Library "+" action (addAffordance()==='seed') -
     // a row with a known key but no chords. Persists through the SAME two paths
@@ -1830,7 +1883,7 @@
         });
       if (!saved) { showToast(SAVE_FAIL_MSG, true); return; }
       if (STATE.setlist.indexOf(saved.id) < 0) STATE.setlist.push(saved.id);
-      var ok = saveSet();
+      var ok = saveSet({ quiet: true });
       // Operator spec 2026-07-17: adds never scroll and never reorder - the
       // seeded copy takes the TRACK's own slot in the merge (Repertoire.build
       // track-slot rule), so the row stays exactly where the user tapped it.
@@ -2129,8 +2182,11 @@
       var i = STATE.setlist.indexOf(sid);
       if (i < 0) return;
       var wasOpen = STATE.current && STATE.current.id === sid;
+      STATE.setlist.splice(i, 1);
+      // NH-12: a failed write rolls the setlist back - nothing to undo, no banner.
+      if (!saveSet()) { renderSetlist(); renderSongs(); return; }
       STATE.lastRemoved = { sid: sid, index: i }; // enable undo
-      STATE.setlist.splice(i, 1); QUEUE.remove(sid); saveSet();
+      QUEUE.remove(sid);
       // keep the live queue + the (maybe hidden) song screen in step with the edit
       if (wasOpen) { var nid = QUEUE.current(); STATE.current = nid ? songById(nid) : null; STATE.transpose = 0; renderPractice(); }
       else syncQueueToSetlist();
@@ -2223,8 +2279,10 @@
       }
       disarmSetClear();
       var prevList = STATE.setlist.slice(); // snapshot BEFORE wiping, for the timed undo
-      dismissSetUndo(); STATE.setlist = []; STATE.lastRemoved = null; saveSet(); renderSetlist(); renderSongs();
-      showSetClearUndoBanner(prevList); // after the repaint, so the banner sits above the now-empty list
+      dismissSetUndo(); STATE.setlist = []; STATE.lastRemoved = null;
+      var cleared = saveSet(); // NH-12: false = rolled back, nothing was cleared
+      renderSetlist(); renderSongs();
+      if (cleared) showSetClearUndoBanner(prevList); // after the repaint, so the banner sits above the now-empty list
     });
 
     // Short mode labels - ONE copy, used by the narrow Compose ctrlBar readout
@@ -4040,15 +4098,16 @@
       // update-in-place precedent). The truthful-signal saveCustom() repeat
       // mirrors that branch exactly (see its comment).
       if (builderSourceId && customById(builderSourceId)) {
-        var upd = updateCustomItem(builderSourceId, { seq: built.seq, sheet: built.sheet, key: km.key, mode: km.mode });
+        var upd = updateCustomItem(builderSourceId, { seq: built.seq, sheet: built.sheet, key: km.key, mode: km.mode }, { quiet: true });
+        // NH-12: false = rolled back - the draft stays on the canvas.
+        if (upd === false) { showComposeToast(SAVE_FAIL_MSG, true); return; }
         if (upd) {
-          var updOk = saveCustom();
           songSections = []; disarmRm(); saveSongSections();
           builderSourceId = null; saveBuilderSource();
           setComposeMode('chords');
           recordComp('comp-song-form'); recordComp('comp-progressions'); recordRepertoire();
-          showComposeToast(updOk ? ('Updated ' + upd.t + ' – opening it now.') : SAVE_FAIL_MSG, !updOk);
-          if (updOk) openPractice(upd.id);
+          showComposeToast('Updated ' + upd.t + ' – opening it now.');
+          openPractice(upd.id);
           return;
         }
         builderSourceId = null; saveBuilderSource(); // the source vanished - fall through to a fresh save
@@ -4062,7 +4121,9 @@
         if (name === null) return; // cancelled - the draft stays on the canvas
         var cs = createCustomItem({
           title: name || defName, seq: built.seq, sheet: built.sheet, key: km.key, mode: km.mode
-        });
+        }, { quiet: true });
+        // NH-12: rolled back - keep the draft so nothing the user wrote is lost.
+        if (!cs) { showComposeToast(SAVE_FAIL_MSG, true); return; }
         songSections = [];
         disarmRm();
         saveSongSections();
@@ -5867,20 +5928,15 @@
       // place (no new copy, no name prompt), per the operator's "update the same
       // saved song" choice. The chord edits + any re-key flow straight onto cs.
       if (savedComposeId && customById(savedComposeId)) {
-        var upd = updateCustomItem(savedComposeId, { seq: snapSeq, key: km.key, mode: km.mode });
+        var upd = updateCustomItem(savedComposeId, { seq: snapSeq, key: km.key, mode: km.mode }, { quiet: true });
+        // false = the write failed and was rolled back (NH-12) - the saved song
+        // keeps its old chords, the draft stays on screen, and the user is told.
+        if (upd === false) { showComposeToast(SAVE_FAIL_MSG, true); done(null); return; }
         if (upd) {
-          // updateCustomItem already persisted via its own internal saveCustom() call
-          // (that function body sits outside this mission's line-region grant, shared
-          // with 2 other call sites that have different null-semantics - see PR notes).
-          // Re-invoking saveCustom() here writes the SAME already-mutated customSongs
-          // array again (a harmless repeat of the identical value) purely to observe
-          // THIS write's real success/failure - the only way to get a truthful signal
-          // for the "Updated" toast without touching updateCustomItem's body.
-          var updOk = saveCustom();
           // F31 (UAT): no persist - the confirmation always auto-dismisses now (see
           // showComposeToast's header comment + hideComposeToast() below).
-          if (updOk) recordComp('comp-progressions'); // M-COMPETENCY: a real save is progression evidence
-          showComposeToast(updOk ? ('Updated ' + upd.t) : SAVE_FAIL_MSG, !updOk);
+          recordComp('comp-progressions'); // M-COMPETENCY: a real save is progression evidence
+          showComposeToast('Updated ' + upd.t);
           renderProg(); // keep the progression draft chip current with the saved name
           done(upd); return;
         }
@@ -5901,24 +5957,24 @@
           seq: snapSeq, custom: true, key: km.key, mode: km.mode, yt: null
         };
         customSongs.push(cs);
-        var ok = saveCustom();
+        // NH-12: a failed write rolls cs back out of customSongs, so nothing
+        // below links or highlights a song that a reload would lose.
+        if (!saveCustom({ quiet: true })) {
+          renderFilterChips(); renderSongs();
+          showComposeToast(SAVE_FAIL_MSG, true);
+          done(null); return;
+        }
         rebuildAll(); renderFilterChips();
         // Post-save discoverability (B3): flag the new row for renderSongs() to
         // scroll-to + highlight - whichever call actually paints it (below, or
         // toggleSet's own renderSongs() when the checkbox added it to the set).
         pendingHighlightId = cs.id;
         if (addToSetlist) toggleSet(cs.id, true); else renderSongs(); // toTop - a just-saved progression is next up
-        // Linked regardless of write success: the record lives in customSongs for
-        // this session either way (Studio/Setlist keep working until reload), so a
-        // second Save click correctly takes the update-in-place branch above rather
-        // than creating a duplicate. It will NOT survive a reload if storage stays
-        // blocked - the failure toast below says so.
         savedComposeId = cs.id; // link the buffer to the saved song for re-save / re-solo
-        if (ok) recordComp('comp-progressions'); // M-COMPETENCY: a real save is progression evidence
+        recordComp('comp-progressions'); // M-COMPETENCY: a real save is progression evidence
         // F31 (UAT): no persist - see showComposeToast's header comment.
-        // #265-C: success gets the named-asset banner with a one-tap next step;
-        // failure keeps the truthful error toast (never dress up a failed write).
-        if (ok) showSaveDoneBanner(cs, addToSetlist); else showComposeToast(SAVE_FAIL_MSG, true);
+        // #265-C: success gets the named-asset banner with a one-tap next step.
+        showSaveDoneBanner(cs, addToSetlist);
         renderProg(); // paint the progression draft chip NOW (fixes the "shows one save late") - savedComposeId is set above
         done(cs);
       });
@@ -5927,7 +5983,7 @@
     // No seq -> a standalone custom TRACK (no chord sheet; playable straight from
     // the Studio per repertoire.js's existing playability() logic). A seq -> a
     // custom SONG (same shape saveProgression() produces).
-    function createCustomItem(f) {
+    function createCustomItem(f, opts) {
       var cs = {
         id: 'm' + Date.now(), t: f.title || 'Untitled', a: f.artist || '', y: new Date().getFullYear(),
         d: 'Mine', genre: f.genre || '', custom: true, key: f.key || null, mode: f.mode || 'major', yt: f.yt || null
@@ -5944,9 +6000,13 @@
       // Forking a SETLISTED catalog song: rebuildAll shadows the catalog kN id, so
       // the setlist slot pointing at it would go dangling (the song vanishes from
       // the set). Remap kN -> the new fork id so the entry is REPLACED, not lost.
-      if (cs.forkOf && remapSetlist(STATE.setlist, cs.forkOf, cs.id)) saveSet();
-      customSongs.push(cs); saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
-      return cs;
+      var remapped = !!(cs.forkOf && remapSetlist(STATE.setlist, cs.forkOf, cs.id));
+      customSongs.push(cs);
+      // NH-12: the fork's setlist remap and the song itself land together or not at all.
+      var ok = persistData(remapped ? [CUSTOM_KEY, STORE_KEY] : [CUSTOM_KEY], opts);
+      rebuildAll(); renderFilterChips(); renderSongs();
+      if (remapped) renderSetlist();
+      return ok ? cs : null;
     }
     // Batch create for the playlist import: createCustomItem in a loop would
     // (a) collide ids ('m'+Date.now() is per-MILLISECOND - a 17-track import
@@ -5964,11 +6024,14 @@
       });
       if (!created.length) return created;
       created.forEach(function (cs) { customSongs.push(cs); });
-      saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
-      return created;
+      var ok = saveCustom(); // NH-12: false = rolled back + the user was told
+      rebuildAll(); renderFilterChips(); renderSongs();
+      return ok ? created : null;
     }
     // Apply an edit (title/artist/genre/key/mode/seq/yt) to an EXISTING custom item.
-    function updateCustomItem(id, f) {
+    // Returns the item, null if it no longer exists, or false if the write
+    // failed and was rolled back (NH-12).
+    function updateCustomItem(id, f, opts) {
       var cs = null;
       for (var i = 0; i < customSongs.length; i++) if (customSongs[i].id === id) { cs = customSongs[i]; break; }
       if (!cs) return null;
@@ -5978,7 +6041,8 @@
       // Phase B (additive - no pre-existing caller passes sheet): Continue
       // building's update-in-place save carries the rebuilt section sheet.
       if (f.sheet && f.sheet.length) cs.sheet = f.sheet;
-      saveCustom(); rebuildAll(); renderFilterChips(); renderSongs();
+      if (!saveCustom(opts)) { renderFilterChips(); renderSongs(); renderPractice(); return false; }
+      rebuildAll(); renderFilterChips(); renderSongs();
       if (STATE.current && STATE.current.id === id) {
         if (!cs.seq || !cs.seq.length) switchTab('library'); else renderPractice();
       }
@@ -6037,8 +6101,6 @@
         if (delUndoHandle) delUndoHandle.finish();
         var atC = Math.min(customIdx < 0 ? customSongs.length : customIdx, customSongs.length);
         customSongs.splice(atC, 0, victim);
-        var custOk = saveCustom();
-        var setOk = true;
         if (setlistIdx >= 0) {
           if (revertToId != null) {
             // fork-revert: put the fork id back wherever the catalog id (that
@@ -6050,15 +6112,16 @@
             var atS = Math.min(setlistIdx, STATE.setlist.length); // clamp - a mutation mid-window may have shifted this
             STATE.setlist.splice(atS, 0, victim.id);
           }
-          setOk = saveSet();
         }
+        // NH-12: song + setlist slot restore together or not at all.
+        var undoOk = persistData(setlistIdx >= 0 ? [CUSTOM_KEY, STORE_KEY] : [CUSTOM_KEY], { quiet: true });
         rebuildAll(); renderFilterChips(); renderSongs(); renderSetlist(); syncQueueToSetlist();
         // D-SAVE-TRUTH: a restore that silently failed to persist is worse
         // than one that says so - same truthful-on-failure discipline as
         // saveProgression/toggleSet (SAVE_FAIL_MSG), on the Library toast host
         // (a different host than delUndoBanner, so no collision with its
         // own just-finished toast).
-        if (!custOk || !setOk) showToast(SAVE_FAIL_MSG, true);
+        if (!undoOk) showToast(SAVE_FAIL_MSG, true);
       };
       delUndoBanner.appendChild(msgEl); delUndoBanner.appendChild(undoBtn);
       delUndoHandle = global.Toast.showAction(msg, {
@@ -6072,7 +6135,6 @@
       var victim = customById(id);
       var customIdx = customSongs.indexOf(victim); // -1 if already gone (defensive; capture BEFORE the filter below)
       customSongs = customSongs.filter(function (cs) { return cs.id !== id; });
-      saveCustom();
       // Capture setlist membership BEFORE remapSetlist mutates it (S-SET-INTEGRITY,
       // UAT U22 delete-heal) - undo needs the ORIGINAL slot to restore into.
       var setlistIdx = STATE.setlist.indexOf(id);
@@ -6080,7 +6142,13 @@
       // Reverting a FORK: rebuildAll un-shadows the catalog original, so restore the
       // catalog id into every slot that held the fork (keep the song setlisted). A
       // plain custom delete has no original to fall back to, so drop those slots (null).
-      if (remapSetlist(STATE.setlist, id, revertToId)) saveSet();
+      var remapped = remapSetlist(STATE.setlist, id, revertToId);
+      // NH-12: the song and its setlist slots go together or not at all - a
+      // failed write rolls both back, so there is nothing to undo.
+      if (!persistData(remapped ? [CUSTOM_KEY, STORE_KEY] : [CUSTOM_KEY])) {
+        renderFilterChips(); renderSongs(); renderSetlist();
+        return false;
+      }
       // D3s (pilot UAT): a deleted song must not stay reachable via the active
       // running-order queue or a stale STATE.current. Both delete call sites
       // already switchTab('library') right after this returns, but switchTab
@@ -6094,6 +6162,7 @@
       if (STATE.current && STATE.current.id === id) STATE.current = null;
       rebuildAll(); renderFilterChips(); renderSongs(); renderSetlist();
       if (victim) showDeleteUndoBanner(victim, customIdx, setlistIdx, revertToId);
+      return true;
     }
     function customById(id) { for (var i = 0; i < customSongs.length; i++) if (customSongs[i].id === id) return customSongs[i]; return null; }
     // ---- M2 Add/Edit form entry points ----
@@ -6109,6 +6178,7 @@
         // count, never silently dropped.
         onImport: function (result) {
           var made = createCustomItems(result.entries);
+          if (!made) return; // NH-12: rolled back, and saveCustom already told the user
           var msg;
           if (!made.length) {
             msg = result.total
@@ -6509,7 +6579,7 @@
     // passive vs user-initiated feedback). Must run before the first
     // renderSongs()/renderSetlist() so the very first paint never has to
     // defend against a dangling ref either.
-    if (pruneDanglingSetlist(STATE.setlist, function (id) { return !!songById(id); })) saveSet();
+    if (pruneDanglingSetlist(STATE.setlist, function (id) { return !!songById(id); })) saveSet({ passive: true });
     renderFilterChips();
     renderSongs();
     renderSetlist();
