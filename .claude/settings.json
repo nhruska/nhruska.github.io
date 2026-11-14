@@ -14,7 +14,19 @@
       "Bash(git checkout:*)",
       "Bash(git switch:*)",
       "Bash(git branch:*)",
-      "Bash(git rev-parse:*)"
+      "Bash(git rev-parse:*)",
+      "Bash(git merge:*)",
+      "Bash(git worktree:*)",
+      "Bash(git ls-remote:*)",
+      "Bash(python3 scripts/stamp-asset-versions.py:*)",
+      "Bash(bash scripts/check-cache-bump.sh:*)",
+      "Bash(node test/run-all.js:*)"
+    ]
+  },
+  "autoMode": {
+    "allow": [
+      "$defaults",
+      "Resolving merge conflicts on a feature branch (git checkout --ours/--theirs on conflicted paths, editing the conflicted files, git add, completing the merge commit) and pushing that branch. This repo ports main into open PR branches to keep them current; it is not a merge INTO main and not a PR merge, which stay with the operator."
     ]
   }
 }
