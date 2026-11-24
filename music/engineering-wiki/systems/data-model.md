@@ -48,7 +48,7 @@ THE canonical registry of every key this app persists. Verified against `music/s
 |---|---|---|---|---|---|
 | `roadcase-<profileId>.custom.v1` | songbook.js:945 | array of composed/custom song records | **Yes - highest value** | Yes | Per-instrument namespace (`storagePrefix: 'roadcase-' + profile.id`, wired in play/index.html:698); `songbook.` is the engine's own default prefix, never used at runtime |
 | `roadcase-<profileId>.setlist.v1` | songbook.js:956 | array of song ids | Yes | Yes | The Jam set list. Referential integrity (no dangling ids) is enforced at BOTH mutation time and load time - see [Setlist referential integrity](#setlist-referential-integrity-d-set-integrity-stable) below |
-| `roadcase-<profileId>.last.v1` | songbook.js:960-965 | string (song id) | No - pref | Yes | Last-opened song; passive write (`safeSet`, D-SAVE-TRUTH) |
+| `roadcase-<profileId>.last.v1` | songbook.js:960-965 | string (song id) | No - pref | Yes | Last-opened song; passive write (`savePassive`, D-SAVE-TRUTH) |
 | `roadcase-<profileId>.perfprefs.v2` | songbook.js:970-980 | `{speed, view, fontScale, fontMode}` | No - pref | Yes | `view` is tri-state `'lyrics'\|'chords'\|'both'`; `fontScale` (wrap-first Perform sizing, 2026-07-24) persists the user's stage text size, clamped to [0.8, 2.2] on restore; `fontMode` is `'auto'|'manual'` and records whether that size was auto-fitted or set by hand (A-/A+/pinch) - both ADDITIVE fields, no migration needed |
 | `roadcase-<profileId>.perfprefs.v1` | songbook.js:971 (read-only) | `{speed, view}`, `view` 2-state | No - pref | Yes (if still present) | **Migration SOURCE only** - `loadPerfPrefs()` falls back v2->v1 with a value transform (`view:'lyrics'`->`'both'`); ad-hoc, hand-rolled, the pattern `StorageMigrate` generalizes |
 | `roadcase-<profileId>.songview.v1` | songbook.js:1210 | string | No - pref | Yes | Supersedes legacy `chordsonly.v1` |
@@ -152,21 +152,23 @@ touches songbook.js. It auto-RELEASES (not dismiss) the instant
 `markBackedUp()` runs, so the banner cannot linger showing stale advice right
 after the user acted - only the x button persists a permanent dismissal.
 
-## Routine-save write-truthfulness [D-SAVE-TRUTH, STABLE]
+## Routine-save write-truthfulness [D-SAVE-TRUTH, STABLE - completed by NH-12]
 
 songbook.js's routine saves (setlist, composed/custom songs, last-opened song, perform
-prefs, song view) are a SEPARATE write path from Backup/Restore above - one key at a
-time, not the whole-snapshot atomic apply. They share ONE write seam, `safeSet(key,
-value)`, which mirrors backup.js's `applyAtomic` quota-detection (same
-`/quota|exceed/i` test against `e.name`+`e.message`) but without its multi-key
-rollback - a single-key write has nothing to roll back, it just returns `false`.
+prefs, song view) are a SEPARATE write path from Backup/Restore above. They share ONE
+write seam, `commitWrites(pairs)` (`safeSet(key, value)` is its one-key form), which
+applies backup.js's `applyAtomic` pattern: same `/quota|exceed/i` detection, and on a
+throw every key the batch already wrote is restored in reverse order, so storage is
+never half-written. It returns `false` on failure.
 
-| Path | User-initiated? | On write failure |
+| Path | Kind | On write failure |
 |---|---|---|
-| `saveProgression` (Compose "Save to Repertoire", both the create AND update-in-place branches) | Yes | Truthful toast: `"Couldn't save - storage is full or blocked. Export a backup from Settings."` (err-styled) instead of the success message |
-| `saveCustom` / `saveSet` / `saveLast` / `savePerfPrefs` / `saveSongView` | No (passive persistence) | `console.warn` once per key (never repeats for that key this mount) - no UI nag |
+| `saveCustom` / `saveSet` (via `persistData`) | Data - the user's songs and setlist | Storage keeps the last good value, IN-MEMORY data rolls back to it (`lastGood`), and the user sees `"Couldn't save - storage is full or blocked. Export a backup from Settings."` (err toast, `role="alert"`). No success message, no Undo banner for an edit that did not happen. Compose callers pass `{ quiet: true }` and show the same string in the Compose toast |
+| Multi-key edits (fork create, delete, delete-Undo) | Data | `persistData([CUSTOM_KEY, STORE_KEY])` - the song and its setlist slots land together or not at all |
+| `saveLast` / `savePerfPrefs` / `saveSongView` (via `savePassive`) | Background setting | Storage keeps the last good value, the session value is kept, and the user is told ONCE per session: `"Couldn't save your settings - storage is full or blocked. Export a backup from Settings."` - never per slider drag, and not at all if a data-save failure was already shown |
+| Load-time setlist prune (`saveSet({ passive: true })`) | Housekeeping | Same as background settings |
 
-Why the split: the app's #1 named fatal-dismissal trigger (docs/plans/analysis-refactor-enhance-20260704.md A1) is a save the user was TOLD succeeded silently vanishing - that only applies where the UI made a claim. Passive writes (a perform-speed slider, the last-opened-song stamp) never claimed success, so failing soft with a console signal (not a toast per keystroke) is the correct- and cheaper-fidelity fix; see D-SAVE-TRUTH in [decisions.md](../decisions.md).
+Why: the app's #1 named fatal-dismissal trigger (docs/plans/analysis-refactor-enhance-20260704.md A1) is a save the user was TOLD succeeded silently vanishing. NH-12 closes the remaining gap: the screen must never show data a reload would lose, and a background setting that will not stick is worth one honest line. See D-SAVE-TRUTH in [decisions.md](../decisions.md).
 
 Known gap: `toggleSet`'s "Added to setlist" toast (songbook.js ~1248, outside this fix's
 line-region grant) has the SAME unconditional-success shape as saveProgression did -
