@@ -17,20 +17,27 @@ The engine computes on pitch classes (integers 0-11): intervals, diatonic qualit
 | Scale degrees | Interval comparison vs Major (circle.js:82-87) | "1 2 b3 4 5 b6 b7" (aeolian) |
 | Key relationships | Tonic + mode name (circle.js:206-216) | Neighbor roots (fifth up/down, relative) |
 
-Consequence: the naming policy is swappable at display time (per release, eventually per user preference) by changing the four name-emitting surfaces only - the theory computations, their tests, and stored data are untouched.
+Consequence: the naming policy is swappable at display time by changing the named
+display seams while theory computations and canonical chord tokens remain untouched.
+Track-key storage uses the preferred tonic name; identity normalization folds
+enharmonic spellings. See [note-spelling.md](note-spelling.md).
 
-## Four name-emitting surfaces (all canonical-sharp) [STABLE]
+## Naming surfaces: key-aware display, canonical internal tokens [STABLE]
 
-Every surface echoes the same sharp table (ROOTS row, circle.js:20) and normalizes flat input on entry (F2S lookup, circle.js:21-22):
+Inside a stated key, display names use the key-aware provider. Chord tokens used for
+voicing, audio, suggestions, and progression identity remain canonical-sharp. Keyless
+contexts such as the tuner and All-browse palette also remain canonical-sharp.
 
 | Surface | Source | Emits |
 |---|---|---|
-| Scale spelling | `Circle.spellScale(root, mode)` (circle.js:69-72) | Sharp note names per pitch class; mode does not affect spelling [TRACKS-#98] |
-| Diatonic chords | `Songbook.diatonicChords(root, modeKey)` (songbook.js:97-105) | Sharp-named roots from the ROOTS table (songbook.js:69, mirrors circle.js ROOTS) |
-| Suggestion seed map | `SUGG` (play/index.html:295-304) | Hand-curated progression followers; all roots are sharp-canonical |
-| Solo scales | `Circle.soloScale(root, scaleId)` (SOLO_SCALES block) | Pentatonic/blues names via the same internal spell() provider - the regime-B seam swaps only this provider [TRACKS-#98] |
+| Key and scale display | `preferredTonicName` / `scaleInKey` | Preferred key name and letter-per-degree scale spelling |
+| Diatonic chord display | `diatonicInKey` / `dispChord` / `dispChordName` | Chord names that agree with key function and roman label |
+| Solo-scale display | `soloScaleInKey` | Pentatonic, mode, and blues names spelled by degree function |
+| Canonical tokens and keyless display | `ROOTS` / `spell` / `SUGG` | Stable sharp-canonical identities for voicing, audio, suggestions, tuner, and All-browse |
 
-Flat input resolves to sharp on load: "Bb" -> "A#" (norm() / F2S lookup). Flats never appear in output or persisted data. [STABLE]
+Flat input and sharp input resolve to the same pitch-class identity. Stored track keys
+use preferred tonic names (`Bb`, `Eb`); progression chord tokens remain canonical-
+sharp. [STABLE]
 
 ## MODE_STEPS - single source of truth [STABLE]
 
@@ -52,7 +59,7 @@ All computations (diatonic, modeChange, scaleDegrees) derive from this one table
 
 Diatonic chords are numbered by their position in the selected mode's own scale (modal/conservatory convention, not parallel-major):
 
-- D minor (aeolian): F = III (the 3rd degree of aeolian), A# = VI, C = VII
+- D minor (aeolian): F = III (the 3rd degree of aeolian), Bb = VI, C = VII
 - D major (ionian): D = I, E = II, F# = III
 
 Non-diatonic/borrowed chords keep chromatic labels: C in D major = bVII (circle.js:141-151). [STABLE]
@@ -61,4 +68,7 @@ Quality casing follows the chord itself: major/augmented = upper case (V, V+); m
 
 ---
 
-**Anchors verified:** circle.js:20-37 (ROOTS, MODES, MODE_STEPS), circle.js:69-75 (spellScale/spellRoot), songbook.js:69-89 (ROOTS, MODE_STEPS sync), songbook.js:97-105 (diatonicChords), play/index.html:295-304 (SUGG), test/theory-canon.test.js
+**Anchors verified:** circle.js (ROOTS, MODES, MODE_STEPS; preferredTonicName,
+scaleInKey, diatonicInKey, soloScaleInKey, noteInKey), songbook.js (MODE_STEPS sync,
+diatonicChords, dispChordName), tracks.js (dispChord/dispKeyRoot, studioTheory),
+sugg.js (SUGG), test/theory-canon.test.js, test/key-spelling.test.js

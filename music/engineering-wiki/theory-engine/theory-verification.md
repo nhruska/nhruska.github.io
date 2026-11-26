@@ -12,15 +12,19 @@ Core suite: test/theory-canon.test.js. Node-side, dependency-free. Asserts pitch
 
 | Dimension | Checks | Never checks |
 |---|---|---|
-| Pitch class | Scale pc sequence + chord pc per mode | Spelling in the CORE 1008 checks (display policy); the S-BLUES block DOES assert regime-A spelling literals deliberately, as the change-detector for the regime flip |
+| Pitch class | Scale pc sequence + chord pc per mode | Spelling in the CORE 1008 checks; the S-BLUES block separately locks the legacy canonical-token provider |
 | Quality | Triad quality from stacked thirds | - |
 | Roman degree + case | Position in mode; casing by chord quality | Letter names (F# vs Gb is a regime choice) |
 
-Ground-truth encoder: letter-sequential spelling (seven letters, once each; fewest accidentals; sharp-tie policy documented). It matches conservatory practice, so its spellings deliberately differ from regime-A app output - both are correct under their respective regimes; only pc/quality/degree are asserted as facts. [STABLE]
+Ground-truth encoder: letter-sequential spelling (seven letters, once each; fewest
+accidentals; sharp-tie policy documented). The core assertions compare pitch class,
+quality, and degree rather than display letters. Display spelling is guarded separately
+by test/key-spelling.test.js. [STABLE]
 
 ## Professor adversarial verdict [STABLE]
 
-Independent adversarial review (GPT-5.5 senior-professor persona, instructed to refute; 56K tokens; full 48-context app dump + both regimes):
+Adversarial model review (GPT-5.5 senior-professor prompt, instructed to refute; 56K
+tokens; full 48-context app dump + both spelling regimes):
 
 | Section | Verdict |
 |---|---|
@@ -29,7 +33,10 @@ Independent adversarial review (GPT-5.5 senior-professor persona, instructed to 
 | Roman convention | Both conventions legitimate; Roman-style SETTING recommended (S-ROMAN, wave 2) |
 | Regime B | 12 golden trap cases delivered (see [note-spelling.md](note-spelling.md)) |
 
-Theory credibility bar: MET, twice independently (deterministic canon + adversarial professor). Source: docs/plans/theory-professor-review-20260703.md. [STABLE]
+Internal theory credibility bar: met by the deterministic canon and strengthened by an
+adversarial model pass. These are different controls, but the model pass is not an
+independent human-expert validation. Source:
+docs/plans/theory-professor-review-20260703.md. [STABLE]
 
 ## What a red canon test means [STABLE]
 
@@ -47,7 +54,10 @@ Rule: no hand-coded scale/chord table anywhere else in the codebase. Everything 
 
 ## S-BLUES canon additions [STABLE]
 
-test/solo-scales.test.js carries the pentatonic/blues fixtures (12 roots x 3 scales) and the subset proofs; theory-canon carries the regime-A literals (incl. `A blues = A C D D# E G`) with the REGIME-A comment marking the deliberate change point for S-BLUES-B.
+test/solo-scales.test.js carries the pentatonic/blues fixtures (12 roots x 3 scales)
+and subset proofs. theory-canon locks the legacy `soloScale()` canonical-token literals
+(including the D# token in A blues), while test/key-spelling.test.js proves that the
+active stated-key display uses Eb for the b5.
 
 ## BLUES_KEY_CANON (M-GUIDE W2) [STABLE]
 

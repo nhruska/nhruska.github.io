@@ -1,6 +1,10 @@
 # M-GUIDE Adversarial Fold Record (2026-07-04)
 
-> Four adversarial rounds, ten substantive catches, all dispositioned. The two-lens design (theory professor x seasoned player) caught errors the OTHER lens passed - including each correcting the other's corrections. Deterministic canon stayed green throughout; every catch lived in seams or judgment the tests could not see.
+> Four adversarial rounds, thirteen substantive catches, all dispositioned. The
+> two-lens design (theory professor x seasoned player) caught errors the OTHER lens
+> passed - including each correcting the other's corrections. Deterministic canon
+> stayed green throughout; every catch lived in seams or judgment the tests could not
+> see. Count reconciled to the 3 + 3 + 5 + 2 findings enumerated below.
 
 | Round | Adversary | Catches | Disposition |
 |---|---|---|---|
