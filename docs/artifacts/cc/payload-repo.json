@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-26T19:08:47Z",
+  "generatedAt": "2026-11-27T19:03:51Z",
   "generator": "command-center-gen.py@0.4.1 (panelkit 0.1.0)",
   "source_repo": "nhruska/nhruska.github.io",
   "freshness_seconds_at_render": null,
@@ -13,12 +13,18 @@
     "defaultBranch": "main"
   },
   "head": {
-    "date": "2026-11-25T19:26:05Z",
-    "sha": "333c0076c92d516422eb0d363e258ef405797256",
+    "date": "2026-11-26T19:09:00Z",
+    "sha": "d86dd16984d0c627b718828bce848f6dc8488792",
     "subject": "cc: nightly snapshot refresh",
-    "url": "https://github.com/nhruska/nhruska.github.io/commit/333c0076c92d516422eb0d363e258ef405797256"
+    "url": "https://github.com/nhruska/nhruska.github.io/commit/d86dd16984d0c627b718828bce848f6dc8488792"
   },
   "commits": [
+    {
+      "date": "2026-11-26T19:09:00Z",
+      "sha": "d86dd16984d0c627b718828bce848f6dc8488792",
+      "subject": "cc: nightly snapshot refresh",
+      "url": "https://github.com/nhruska/nhruska.github.io/commit/d86dd16984d0c627b718828bce848f6dc8488792"
+    },
     {
       "date": "2026-11-25T19:26:05Z",
       "sha": "333c0076c92d516422eb0d363e258ef405797256",
@@ -84,12 +90,6 @@
       "sha": "540fbe159329471d9684aa3b6953b319cae21028",
       "subject": "cc: nightly snapshot refresh",
       "url": "https://github.com/nhruska/nhruska.github.io/commit/540fbe159329471d9684aa3b6953b319cae21028"
-    },
-    {
-      "date": "2026-11-14T15:52:56Z",
-      "sha": "b4458b84a1d6cbdcf2b45ef216611dca97d0b627",
-      "subject": "cc: nightly snapshot refresh",
-      "url": "https://github.com/nhruska/nhruska.github.io/commit/b4458b84a1d6cbdcf2b45ef216611dca97d0b627"
     }
   ],
   "openPRs": [
@@ -325,9 +325,9 @@
     "workflowName": "cc-nightly",
     "status": "in_progress",
     "conclusion": null,
-    "runStartedAt": "2026-11-26T19:08:37Z",
+    "runStartedAt": "2026-11-27T19:03:46Z",
     "durationSeconds": 3,
-    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/45881390145",
+    "url": "https://github.com/nhruska/nhruska.github.io/actions/runs/46053983333",
     "headBranch": "main"
   },
   "velocity": {
